@@ -62,7 +62,7 @@ function LoginForm() {
           .from('users')
           .select('username')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
 
         if (!profile?.username) {
           router.push('/setup')
@@ -70,8 +70,9 @@ function LoginForm() {
           router.push('/')
         }
       }
-    } catch {
-      setError('Network error. Please check your connection and try again.')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Network error. Please check your connection and try again.'
+      setError(message)
     } finally {
       setLoading(false)
     }
