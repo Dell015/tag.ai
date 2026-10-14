@@ -7,14 +7,33 @@
  */
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { safeStorage } from '@/lib/storage';
+import { steerNextCard } from '@/lib/game/steering';
 import { calculateHeat, QueuedCard } from '@/lib/game/escalation-engine';
 import { advanceTurn, TurnState } from '@/lib/game/turn-rotation';
 import { buildCardQueue, CardQueueConfig } from '@/lib/game/card-queue-builder';
 import { GAME_MODES } from '@/lib/game/game-modes';
 import { decrementHeatSpike, decrementCrownImmunity, applyShuffleWildCard } from '@/lib/game/wild-cards';
-import { WildCardType } from '@/types/game';
+import { GameMode, WildCardType } from '@/types/game';
 
 // ─── State Interface ─────────────────────────────────────────────────────────
+
+/** Everything an undo needs to put the table back where it was. */
+export interface UndoSnapshot {
+  cardQueue: QueuedCard[];
+  bufferCards: QueuedCard[];
+  currentCardIndex: number;
+  cardsPlayed: number;
+  heatLevel: number;
+  consecutiveSkips: number;
+  heatSpikeRemaining: number;
+  preSpikeHeat: number;
+  turnRotation: TurnState;
+  crownImmunityRemaining: number;
+  sessionPhase: 'lobby' | 'setup' | 'play' | 'end';
+  kind: 'dismiss' | 'trash' | 'skip';
+}
 
 export interface GameState {
   // Queue state
@@ -25,6 +44,10 @@ export interface GameState {
   // Session metrics
   cardsPlayed: number;
   cardCountTarget: number;
+  gameMode: GameMode;
+  skippedCount: number;
+  heartedCount: number;
+  peakHeat: number;
 
   // Escalation
   heatLevel: number;
@@ -41,285 +64,312 @@ export interface GameState {
   showPassPrompt: boolean;
   sessionPhase: 'lobby' | 'setup' | 'play' | 'end';
 
+  // Undo
+  undoSnapshot: UndoSnapshot | null;
+
   // Actions
   flipCard: () => void;
   dismissCard: () => void;
+  skipCard: () => void;
   trashCard: () => void;
   heartCard: () => void;
+  undoLastCard: () => void;
   advanceToNextCard: () => void;
+  dismissPassPrompt: () => void;
+  adjustHeat: (delta: number) => void;
+  removePlayerFromTurns: (playerId: string) => void;
+  endGame: () => void;
+  resetGame: () => void;
   initializeQueue: (config: CardQueueConfig, library: QueuedCard[]) => void;
   applyWildCardEffect: (wildCardType: WildCardType) => void;
 }
 
-// ─── Store Creation ──────────────────────────────────────────────────────────
+type CardAction = 'dismiss' | 'trash' | 'skip';
 
-export const useGameStore = create<GameState>((set, get) => ({
-  // Queue state
+const INITIAL: Pick<
+  GameState,
+  | 'cardQueue' | 'bufferCards' | 'currentCardIndex' | 'cardsPlayed' | 'cardCountTarget'
+  | 'gameMode' | 'skippedCount' | 'heartedCount' | 'peakHeat' | 'heatLevel'
+  | 'consecutiveSkips' | 'heatSpikeRemaining' | 'preSpikeHeat' | 'turnRotation'
+  | 'crownImmunityRemaining' | 'currentCardState' | 'showPassPrompt' | 'sessionPhase'
+  | 'undoSnapshot'
+> = {
   cardQueue: [],
   bufferCards: [],
   currentCardIndex: 0,
-
-  // Session metrics
   cardsPlayed: 0,
   cardCountTarget: 20,
-
-  // Escalation
+  gameMode: 'barkada',
+  skippedCount: 0,
+  heartedCount: 0,
+  peakHeat: 1.0,
   heatLevel: 1.0,
   consecutiveSkips: 0,
   heatSpikeRemaining: 0,
   preSpikeHeat: 0,
-
-  // Turn management
   turnRotation: { players: [], currentIndex: 0 },
   crownImmunityRemaining: 0,
-
-  // UI state
   currentCardState: 'face_down',
   showPassPrompt: false,
   sessionPhase: 'lobby',
+  undoSnapshot: null,
+};
 
-  // ─── Actions ─────────────────────────────────────────────────────────────
+function snapshot(state: GameState, kind: CardAction): UndoSnapshot {
+  return {
+    cardQueue: state.cardQueue,
+    bufferCards: state.bufferCards,
+    currentCardIndex: state.currentCardIndex,
+    cardsPlayed: state.cardsPlayed,
+    heatLevel: state.heatLevel,
+    consecutiveSkips: state.consecutiveSkips,
+    heatSpikeRemaining: state.heatSpikeRemaining,
+    preSpikeHeat: state.preSpikeHeat,
+    turnRotation: state.turnRotation,
+    crownImmunityRemaining: state.crownImmunityRemaining,
+    sessionPhase: state.sessionPhase,
+    kind,
+  };
+}
 
-  /**
-   * Flips the current card from face_down to revealed.
-   */
-  flipCard: () => {
-    set({ currentCardState: 'revealed' });
-  },
+/**
+ * Applies the effects shared by dismissing, skipping and trashing a card:
+ * heat, turn rotation, counters, heat-spike/crown countdowns, heat-driven
+ * steering of the next card, and the end-of-game check.
+ */
+function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
+  const event = action === 'skip' ? 'skip' : 'dismiss';
+  const consecutiveSkips = action === 'skip' ? state.consecutiveSkips + 1 : 0;
 
-  /**
-   * Dismisses the current card (swipe left/right).
-   * - Calculates new heat via escalation engine ('dismiss' event)
-   * - Advances turn rotation
-   * - Increments cardsPlayed and currentCardIndex
-   * - Resets consecutiveSkips to 0
-   * - Handles heat spike decrement
-   * - Handles crown immunity decrement
-   * - Ends session if cardCountTarget is reached
-   */
-  dismissCard: () => {
-    const state = get();
+  const { newHeat } = calculateHeat({
+    currentHeat: state.heatLevel,
+    event,
+    consecutiveSkips,
+    gameMode: state.gameMode,
+  });
 
-    // Calculate new heat
-    const { newHeat } = calculateHeat({
-      currentHeat: state.heatLevel,
-      event: 'dismiss',
-      consecutiveSkips: state.consecutiveSkips,
-      gameMode: 'barkada', // Will be pulled from session store in production
-    });
+  const newHeatSpikeRemaining = decrementHeatSpike(state.heatSpikeRemaining);
+  let effectiveHeat = newHeat;
+  if (state.heatSpikeRemaining > 0 && newHeatSpikeRemaining === 0) {
+    effectiveHeat = state.preSpikeHeat; // spike over: back to the pre-spike level
+  }
 
-    // Advance turn rotation
-    const newTurnRotation = advanceTurn(state.turnRotation);
+  let cardQueue = [...state.cardQueue];
+  let bufferCards = [...state.bufferCards];
 
-    // Handle heat spike decrement
-    const newHeatSpikeRemaining = decrementHeatSpike(state.heatSpikeRemaining);
+  if (action === 'trash' && bufferCards.length > 0) {
+    // The trashed card is gone for good: top the queue up from the buffer.
+    cardQueue.push(bufferCards.shift()!);
+  }
 
-    // If heat spike just expired, revert to pre-spike heat
-    let effectiveHeat = newHeat;
-    if (state.heatSpikeRemaining > 0 && newHeatSpikeRemaining === 0) {
-      effectiveHeat = state.preSpikeHeat;
-    }
+  const newCardsPlayed = state.cardsPlayed + 1;
+  const newCardIndex = state.currentCardIndex + 1;
+  const shouldEnd = newCardsPlayed >= state.cardCountTarget;
 
-    // Handle crown immunity decrement
-    const newCrownImmunity = decrementCrownImmunity(state.crownImmunityRemaining);
+  if (!shouldEnd) {
+    cardQueue = steerNextCard(cardQueue, newCardIndex, effectiveHeat);
+  }
 
-    const newCardsPlayed = state.cardsPlayed + 1;
-    const newCardIndex = state.currentCardIndex + 1;
+  return {
+    cardQueue,
+    bufferCards,
+    heatLevel: effectiveHeat,
+    peakHeat: Math.max(state.peakHeat, effectiveHeat),
+    turnRotation: advanceTurn(state.turnRotation),
+    cardsPlayed: newCardsPlayed,
+    currentCardIndex: newCardIndex,
+    currentCardState: 'face_down',
+    consecutiveSkips,
+    skippedCount: state.skippedCount + (action === 'skip' ? 1 : 0),
+    heatSpikeRemaining: newHeatSpikeRemaining,
+    crownImmunityRemaining: decrementCrownImmunity(state.crownImmunityRemaining),
+    sessionPhase: shouldEnd ? 'end' : state.sessionPhase,
+    showPassPrompt: !shouldEnd,
+    undoSnapshot: snapshot(state, action),
+  };
+}
 
-    // Check if session should end
-    const shouldEnd = newCardsPlayed >= state.cardCountTarget;
+// ─── Store Creation ──────────────────────────────────────────────────────────
 
-    set({
-      heatLevel: effectiveHeat,
-      turnRotation: newTurnRotation,
-      cardsPlayed: newCardsPlayed,
-      currentCardIndex: newCardIndex,
-      currentCardState: 'face_down',
-      consecutiveSkips: 0,
-      heatSpikeRemaining: newHeatSpikeRemaining,
-      crownImmunityRemaining: newCrownImmunity,
-      sessionPhase: shouldEnd ? 'end' : state.sessionPhase,
-      showPassPrompt: !shouldEnd,
-    });
-  },
+export const useGameStore = create<GameState>()(
+  persist(
+    (set, get) => ({
+      ...INITIAL,
 
-  /**
-   * Trashes the current card.
-   * - Replaces current card from buffer (shift buffer)
-   * - Calls calculateHeat with 'dismiss' event (same escalation as dismiss)
-   * - Advances turn rotation
-   * - Increments cardsPlayed and currentCardIndex
-   * - Resets consecutiveSkips to 0
-   * - Handles heat spike and crown immunity decrement
-   * - Ends session if cardCountTarget is reached
-   */
-  trashCard: () => {
-    const state = get();
+      flipCard: () => set({ currentCardState: 'revealed' }),
 
-    // Replace current card from buffer
-    const newCardQueue = [...state.cardQueue];
-    const newBuffer = [...state.bufferCards];
+      /** Swipe / "Next": heat +0.3, advances the turn. */
+      dismissCard: () => set((state) => resolveCard(state, 'dismiss')),
 
-    if (newBuffer.length > 0) {
-      // Shift first buffer card into the queue at current position
-      const replacementCard = newBuffer.shift()!;
-      newCardQueue.splice(state.currentCardIndex, 0, replacementCard);
-    }
+      /** "Skip": heat −0.2 (−1.0 on the 3rd skip in a row), advances the turn. */
+      skipCard: () => set((state) => resolveCard(state, 'skip')),
 
-    // Calculate new heat (trash uses 'dismiss' event)
-    const { newHeat } = calculateHeat({
-      currentHeat: state.heatLevel,
-      event: 'dismiss',
-      consecutiveSkips: state.consecutiveSkips,
-      gameMode: 'barkada',
-    });
+      /** Trash: like a dismiss, and the buffer tops the queue back up. */
+      trashCard: () => set((state) => resolveCard(state, 'trash')),
 
-    // Advance turn rotation
-    const newTurnRotation = advanceTurn(state.turnRotation);
-
-    // Handle heat spike decrement
-    const newHeatSpikeRemaining = decrementHeatSpike(state.heatSpikeRemaining);
-
-    // If heat spike just expired, revert to pre-spike heat
-    let effectiveHeat = newHeat;
-    if (state.heatSpikeRemaining > 0 && newHeatSpikeRemaining === 0) {
-      effectiveHeat = state.preSpikeHeat;
-    }
-
-    // Handle crown immunity decrement
-    const newCrownImmunity = decrementCrownImmunity(state.crownImmunityRemaining);
-
-    const newCardsPlayed = state.cardsPlayed + 1;
-    const newCardIndex = state.currentCardIndex + 1;
-
-    // Check if session should end
-    const shouldEnd = newCardsPlayed >= state.cardCountTarget;
-
-    set({
-      cardQueue: newCardQueue,
-      bufferCards: newBuffer,
-      heatLevel: effectiveHeat,
-      turnRotation: newTurnRotation,
-      cardsPlayed: newCardsPlayed,
-      currentCardIndex: newCardIndex,
-      currentCardState: 'face_down',
-      consecutiveSkips: 0,
-      heatSpikeRemaining: newHeatSpikeRemaining,
-      crownImmunityRemaining: newCrownImmunity,
-      sessionPhase: shouldEnd ? 'end' : state.sessionPhase,
-      showPassPrompt: !shouldEnd,
-    });
-  },
-
-  /**
-   * Hearts (saves) the current card.
-   * - Calls calculateHeat with 'heart' event
-   * - Increments heat
-   * - Does NOT advance turn or increment cardsPlayed (heart is supplementary)
-   * - Handles heat spike decrement
-   * - Handles crown immunity decrement
-   */
-  heartCard: () => {
-    const state = get();
-
-    // Calculate new heat
-    const { newHeat } = calculateHeat({
-      currentHeat: state.heatLevel,
-      event: 'heart',
-      consecutiveSkips: state.consecutiveSkips,
-      gameMode: 'barkada',
-    });
-
-    // Handle heat spike decrement
-    const newHeatSpikeRemaining = decrementHeatSpike(state.heatSpikeRemaining);
-
-    // If heat spike just expired, revert to pre-spike heat
-    let effectiveHeat = newHeat;
-    if (state.heatSpikeRemaining > 0 && newHeatSpikeRemaining === 0) {
-      effectiveHeat = state.preSpikeHeat;
-    }
-
-    // Handle crown immunity decrement
-    const newCrownImmunity = decrementCrownImmunity(state.crownImmunityRemaining);
-
-    set({
-      heatLevel: effectiveHeat,
-      heatSpikeRemaining: newHeatSpikeRemaining,
-      crownImmunityRemaining: newCrownImmunity,
-    });
-  },
-
-  /**
-   * Advances to the next card in the queue.
-   * Sets currentCardState to face_down.
-   */
-  advanceToNextCard: () => {
-    set((state) => ({
-      currentCardIndex: state.currentCardIndex + 1,
-      currentCardState: 'face_down',
-      showPassPrompt: false,
-    }));
-  },
-
-  /**
-   * Initializes the card queue from configuration and library.
-   * - Calls buildCardQueue to construct the queue
-   * - Stores result in cardQueue/bufferCards
-   * - Sets cardCountTarget
-   * - Initializes heat from GAME_MODES[gameMode].entryHeat
-   * - Sets sessionPhase to 'play'
-   */
-  initializeQueue: (config: CardQueueConfig, library: QueuedCard[]) => {
-    const result = buildCardQueue(config, library);
-    const modeConfig = GAME_MODES[config.gameMode];
-
-    set({
-      cardQueue: result.cards,
-      bufferCards: result.buffer,
-      cardCountTarget: config.cardCountTarget,
-      heatLevel: modeConfig.entryHeat,
-      currentCardIndex: 0,
-      cardsPlayed: 0,
-      consecutiveSkips: 0,
-      heatSpikeRemaining: 0,
-      preSpikeHeat: 0,
-      crownImmunityRemaining: 0,
-      currentCardState: 'face_down',
-      showPassPrompt: false,
-      sessionPhase: 'play',
-    });
-  },
-
-  /**
-   * Applies the effect of a wild card based on its type.
-   * - 'shuffle': reshuffles the next 5 cards in the queue
-   * - 'heat_spike': sets heatSpikeRemaining to 3 and stores current heat as preSpikeHeat
-   * - 'crown': sets crownImmunityRemaining to 2
-   * - Other types: no state mutation (display-only effects)
-   */
-  applyWildCardEffect: (wildCardType: WildCardType) => {
-    const state = get();
-
-    switch (wildCardType) {
-      case 'shuffle': {
-        const newQueue = applyShuffleWildCard(state.cardQueue, state.currentCardIndex);
-        set({ cardQueue: newQueue });
-        break;
-      }
-      case 'heat_spike': {
-        set({
-          heatSpikeRemaining: 3,
-          preSpikeHeat: state.heatLevel,
+      /** Heart: heat +0.5. Does not advance the turn or count as a played card. */
+      heartCard: () => {
+        const state = get();
+        const { newHeat } = calculateHeat({
+          currentHeat: state.heatLevel,
+          event: 'heart',
+          consecutiveSkips: state.consecutiveSkips,
+          gameMode: state.gameMode,
         });
-        break;
-      }
-      case 'crown': {
-        set({ crownImmunityRemaining: 2 });
-        break;
-      }
-      default:
-        // Other wild card types are display-only (role_reversal, pick_your_target, etc.)
-        break;
+
+        const newHeatSpikeRemaining = decrementHeatSpike(state.heatSpikeRemaining);
+        let effectiveHeat = newHeat;
+        if (state.heatSpikeRemaining > 0 && newHeatSpikeRemaining === 0) {
+          effectiveHeat = state.preSpikeHeat;
+        }
+
+        set({
+          heatLevel: effectiveHeat,
+          peakHeat: Math.max(state.peakHeat, effectiveHeat),
+          heartedCount: state.heartedCount + 1,
+          heatSpikeRemaining: newHeatSpikeRemaining,
+          crownImmunityRemaining: decrementCrownImmunity(state.crownImmunityRemaining),
+        });
+      },
+
+      /** Puts the table back to just before the last dismiss/skip/trash. */
+      undoLastCard: () => {
+        const snap = get().undoSnapshot;
+        if (!snap) return;
+        const { kind, ...restore } = snap;
+        void kind;
+        set({
+          ...restore,
+          skippedCount: Math.max(0, get().skippedCount - (kind === 'skip' ? 1 : 0)),
+          currentCardState: 'revealed',
+          showPassPrompt: false,
+          undoSnapshot: null,
+        });
+      },
+
+      /** Legacy: moves one card forward without any scoring. */
+      advanceToNextCard: () =>
+        set((state) => ({
+          currentCardIndex: state.currentCardIndex + 1,
+          currentCardState: 'face_down',
+          showPassPrompt: false,
+        })),
+
+      /** Hides the "Pass to X" prompt (the card index already advanced). */
+      dismissPassPrompt: () => set({ showPassPrompt: false }),
+
+      /** Host heat override from the pause menu. */
+      adjustHeat: (delta) =>
+        set((state) => {
+          const cap = state.gameMode === 'family' ? 2 : 5;
+          const heatLevel = Math.max(1, Math.min(cap, state.heatLevel + delta));
+          return { heatLevel, peakHeat: Math.max(state.peakHeat, heatLevel) };
+        }),
+
+      removePlayerFromTurns: (playerId) =>
+        set((state) => {
+          const players = state.turnRotation.players.filter((p) => p.id !== playerId);
+          if (players.length === 0) return {};
+          const removedIndex = state.turnRotation.players.findIndex((p) => p.id === playerId);
+          let currentIndex = state.turnRotation.currentIndex;
+          if (removedIndex !== -1 && removedIndex < currentIndex) currentIndex -= 1;
+          return { turnRotation: { players, currentIndex: currentIndex % players.length } };
+        }),
+
+      endGame: () => set({ sessionPhase: 'end', showPassPrompt: false }),
+
+      resetGame: () => set({ ...INITIAL }),
+
+      /**
+       * Builds the queue and enters the play phase. If the library is too small
+       * for the requested count, cardCountTarget shrinks to what is available.
+       */
+      initializeQueue: (config, library) => {
+        const result = buildCardQueue(config, library);
+        const modeConfig = GAME_MODES[config.gameMode];
+        const target = Math.max(1, Math.min(config.cardCountTarget, result.cards.length || config.cardCountTarget));
+
+        set({
+          ...INITIAL,
+          cardQueue: result.cards,
+          bufferCards: result.buffer,
+          cardCountTarget: result.cards.length > 0 ? target : config.cardCountTarget,
+          gameMode: config.gameMode,
+          heatLevel: modeConfig.entryHeat,
+          peakHeat: modeConfig.entryHeat,
+          turnRotation: get().turnRotation,
+          sessionPhase: 'play',
+        });
+      },
+
+      /**
+       * Wild card effects. Every wild card is +0.5 heat; additionally:
+       * - shuffle: reshuffles the next 5 cards
+       * - heat_spike: +1 level for the next 3 cards, then back to the pre-spike level
+       * - crown: 2-card immunity
+       */
+      applyWildCardEffect: (wildCardType) => {
+        const state = get();
+        const cap = state.gameMode === 'family' ? 2 : 5;
+        const { newHeat } = calculateHeat({
+          currentHeat: state.heatLevel,
+          event: 'wild_card',
+          consecutiveSkips: state.consecutiveSkips,
+          gameMode: state.gameMode,
+        });
+
+        switch (wildCardType) {
+          case 'shuffle':
+            set({
+              heatLevel: newHeat,
+              cardQueue: applyShuffleWildCard(state.cardQueue, state.currentCardIndex),
+            });
+            break;
+          case 'heat_spike': {
+            const spiked = Math.min(newHeat + 1.0, cap);
+            set({
+              preSpikeHeat: newHeat,
+              heatLevel: spiked,
+              heatSpikeRemaining: 3,
+              peakHeat: Math.max(state.peakHeat, spiked),
+            });
+            break;
+          }
+          case 'crown':
+            set({ heatLevel: newHeat, crownImmunityRemaining: 2 });
+            break;
+          default:
+            set({ heatLevel: newHeat });
+        }
+        set({ peakHeat: Math.max(get().peakHeat, get().heatLevel) });
+      },
+    }),
+    {
+      name: 'tagai-game',
+      version: 1,
+      storage: safeStorage(),
+      skipHydration: true,
+      partialize: (state) => ({
+        cardQueue: state.cardQueue,
+        bufferCards: state.bufferCards,
+        currentCardIndex: state.currentCardIndex,
+        cardsPlayed: state.cardsPlayed,
+        cardCountTarget: state.cardCountTarget,
+        gameMode: state.gameMode,
+        skippedCount: state.skippedCount,
+        heartedCount: state.heartedCount,
+        peakHeat: state.peakHeat,
+        heatLevel: state.heatLevel,
+        consecutiveSkips: state.consecutiveSkips,
+        heatSpikeRemaining: state.heatSpikeRemaining,
+        preSpikeHeat: state.preSpikeHeat,
+        turnRotation: state.turnRotation,
+        crownImmunityRemaining: state.crownImmunityRemaining,
+        currentCardState: state.currentCardState,
+        showPassPrompt: state.showPassPrompt,
+        sessionPhase: state.sessionPhase,
+        undoSnapshot: state.undoSnapshot,
+      }),
     }
-  },
-}));
+  )
+);
