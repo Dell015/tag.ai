@@ -1,134 +1,49 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+'use client';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Avatar, Button, Logo } from '@/components/ui';
+import { useProfileStore } from '@/stores/profile-store';
+import { rooms } from '@/lib/data/rooms';
 
 export default function HomePage() {
-  const [coinBalance, setCoinBalance] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [hostingLoading, setHostingLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+  const router = useRouter();
+  const profile = useProfileStore((s) => s.profile)!;
 
-  useEffect(() => {
-    async function loadUserData() {
-      const supabase = createClient()
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.replace('/login')
-        return
-      }
-
-      const { data } = await supabase
-        .from('users')
-        .select('coin_balance')
-        .eq('id', user.id)
-        .single()
-
-      if (data) {
-        setCoinBalance(data.coin_balance)
-      }
-
-      setLoading(false)
-    }
-
-    loadUserData()
-  }, [router])
-
-  const handleHostGame = async () => {
-    setError(null)
-    setHostingLoading(true)
-
-    try {
-      const response = await fetch('/api/sessions', {
-        method: 'POST',
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        setError(data.error || "Couldn't create the room. Try again.")
-        setHostingLoading(false)
-        return
-      }
-
-      const { roomCode } = await response.json()
-      router.push(`/game/${roomCode}`)
-    } catch {
-      setError("Couldn't create the room. Try again.")
-      setHostingLoading(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-gray-700 border-t-white rounded-full animate-spin" />
-          <p className="text-sm text-gray-400">Loading...</p>
-        </div>
-      </div>
-    )
-  }
+  const host = () => {
+    const room = rooms.create({ id: profile.id, name: profile.username, avatar: profile.avatar });
+    router.push(`/game/${room.code}`);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-950 text-white font-[family-name:var(--font-geist-sans)]">
-      <div className="w-full max-w-sm flex flex-col items-center gap-8">
-        {/* App Title */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold">Tag.ai</h1>
-          <p className="mt-2 text-gray-400 text-sm">The social card game</p>
-        </div>
-
-        {/* Coin Wallet Display */}
-        <div className="flex items-center gap-3 bg-gray-900 rounded-xl px-6 py-4 border border-gray-800">
-          <span className="text-3xl" role="img" aria-label="Gold coin">
-            🪙
-          </span>
-          <span className="text-2xl font-mono font-semibold tabular-nums">
-            {coinBalance ?? 0}
-          </span>
-          <span className="text-sm text-gray-400 ml-1">coins</span>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="w-full rounded-lg bg-red-500/10 border border-red-500/20 p-4">
-            <p className="text-sm text-red-400 text-center">{error}</p>
-          </div>
-        )}
-
-        {/* Main CTAs */}
-        <div className="w-full flex flex-col gap-4">
-          <button
-            onClick={handleHostGame}
-            disabled={hostingLoading}
-            className="w-full rounded-xl bg-indigo-600 px-6 py-4 text-lg font-semibold text-white shadow-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-950 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {hostingLoading ? 'Creating room...' : '🎮 Host a Game'}
-          </button>
-
-          <Link
-            href="/game/join"
-            className="w-full rounded-xl border border-gray-700 bg-gray-800 px-6 py-4 text-lg font-semibold text-white text-center shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-950 transition-colors"
-          >
-            🎯 Join a Game
-          </Link>
-        </div>
-
-        {/* Profile Navigation */}
-        <Link
-          href="/profile"
-          className="text-sm text-gray-400 hover:text-white transition-colors"
-        >
-          View Profile →
+    <div className="px-4 safe-top">
+      <header className="flex items-center justify-between">
+        <Logo className="text-3xl" />
+        <Link href="/profile" className="flex h-tap items-center gap-2 rounded-full bg-surface pl-4 pr-1.5 ring-1 ring-white/10">
+          <span className="font-bold tabular-nums">🪙 {profile.coins}</span>
+          <Avatar value={profile.avatar} size={44} />
         </Link>
-      </div>
+      </header>
+
+      <section className="mt-10">
+        <p className="text-lg text-muted">Kumusta, {profile.username}!</p>
+        <h1 className="text-balance text-5xl font-extrabold leading-[1.05]">Who&apos;s drinking tonight?</h1>
+      </section>
+
+      <section className="mt-8 space-y-3">
+        <Button size="lg" full onClick={host}>🎮 Host a game</Button>
+        <Link href="/join" className="block">
+          <Button size="lg" variant="secondary" full>🎯 Join with a code</Button>
+        </Link>
+      </section>
+
+      <section className="mt-8 rounded-card bg-surface p-5 ring-1 ring-white/10">
+        <h2 className="text-xl font-extrabold">How it works</h2>
+        <ol className="mt-3 space-y-3 text-base text-muted">
+          <li><b className="text-ink">1.</b> Host a room, barkada joins with the code (or the host adds friends by name).</li>
+          <li><b className="text-ink">2.</b> Pick a vibe and the house rules.</li>
+          <li><b className="text-ink">3.</b> Pass the phone. Read the card out loud. Dare or drink.</li>
+        </ol>
+      </section>
     </div>
-  )
+  );
 }

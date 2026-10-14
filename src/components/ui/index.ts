@@ -7,3 +7,5 @@ export { Logo } from './Logo';
 export { BottomNav } from './BottomNav';
 export { Stepper } from './Stepper';
 export { toast } from '@/stores/toast-store';
+export { Splash } from './Splash';
+export { AvatarPicker, AVATARS } from './AvatarPicker';

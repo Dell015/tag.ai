@@ -1,96 +1,43 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-
-interface UserProfile {
-  username: string
-  avatar_url: string | null
-  coin_balance: number
-}
+'use client';
+import { useRouter } from 'next/navigation';
+import { Avatar, AvatarPicker, Button, Screen, toast } from '@/components/ui';
+import { useProfileStore } from '@/stores/profile-store';
+import { useState } from 'react';
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
-
-  useEffect(() => {
-    async function loadProfile() {
-      const supabase = createClient()
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.replace('/login')
-        return
-      }
-
-      const { data } = await supabase
-        .from('users')
-        .select('username, avatar_url, coin_balance')
-        .eq('id', user.id)
-        .single()
-
-      if (!data) {
-        router.replace('/login')
-        return
-      }
-
-      setProfile(data)
-      setLoading(false)
-    }
-
-    loadProfile()
-  }, [router])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-gray-700 border-t-white rounded-full animate-spin" />
-          <p className="text-sm text-gray-400">Loading profile...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!profile) {
-    return null
-  }
+  const router = useRouter();
+  const profile = useProfileStore((s) => s.profile)!;
+  const update = useProfileStore((s) => s.updateProfile);
+  const signOut = useProfileStore((s) => s.signOut);
+  const saved = useProfileStore((s) => s.savedCardIds.length);
+  const [name, setName] = useState(profile.username);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-950 text-white font-[family-name:var(--font-geist-sans)]">
-      <div className="w-full max-w-sm flex flex-col items-center gap-6">
-        {/* Avatar */}
-        <div className="w-24 h-24 rounded-full bg-gray-800 flex items-center justify-center text-5xl border-2 border-gray-700">
-          {profile.avatar_url || '😀'}
-        </div>
-
-        {/* Username */}
-        <h1 className="text-2xl font-bold">{profile.username}</h1>
-
-        {/* Coin Balance */}
-        <div className="flex items-center gap-3 bg-gray-900 rounded-xl px-6 py-4 border border-gray-800">
-          <span className="text-3xl" role="img" aria-label="Gold coin">
-            🪙
-          </span>
-          <span className="text-2xl font-mono font-semibold tabular-nums">
-            {profile.coin_balance}
-          </span>
-          <span className="text-sm text-gray-400 ml-1">coins</span>
-        </div>
-
-        {/* Back link */}
-        <a
-          href="/"
-          className="mt-4 text-sm text-gray-400 hover:text-white transition-colors"
-        >
-          ← Back to Home
-        </a>
+    <Screen title="Me">
+      <div className="flex items-center gap-4">
+        <Avatar value={profile.avatar} size={72} />
+        <input
+          value={name}
+          maxLength={16}
+          aria-label="Nickname"
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => {
+            if (name.trim().length >= 2 && name.trim() !== profile.username) {
+              update({ username: name.trim() });
+              toast('Saved', { tone: 'ok' });
+            } else setName(profile.username);
+          }}
+          className="h-cta min-w-0 flex-1 rounded-2xl bg-surface px-4 text-2xl font-bold ring-1 ring-white/10"
+        />
       </div>
-    </div>
-  )
+      <div className="mt-5"><AvatarPicker value={profile.avatar} onChange={(a) => update({ avatar: a })} /></div>
+      <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="rounded-card bg-surface p-4 ring-1 ring-white/10"><div className="text-3xl font-extrabold">🪙 {profile.coins}</div><div className="text-muted">coins</div></div>
+        <div className="rounded-card bg-surface p-4 ring-1 ring-white/10"><div className="text-3xl font-extrabold">❤️ {saved}</div><div className="text-muted">saved cards</div></div>
+      </div>
+      <Button variant="danger" full className="mt-8" onClick={() => { if (window.confirm('Reset your profile on this phone?')) { signOut(); router.replace('/welcome'); } }}>
+        Reset profile
+      </Button>
+    </Screen>
+  );
 }
