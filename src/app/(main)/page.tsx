@@ -15,34 +15,24 @@ export default function HomePage() {
   };
 
   return (
-    <div className="px-4 safe-top">
+    <div className="flex min-h-[calc(100dvh-4.25rem)] flex-col px-4 safe-top">
       <header className="flex items-center justify-between">
         <Logo className="text-3xl" />
-        <Link href="/profile" className="flex h-tap items-center gap-2 rounded-full bg-surface pl-4 pr-1.5 ring-1 ring-white/10">
-          <span className="font-bold tabular-nums">🪙 {profile.coins}</span>
-          <Avatar value={profile.avatar} size={44} />
+        <Link href="/profile" aria-label="Your profile" className="flex h-tap items-center gap-3 rounded-full border-2 border-line pl-4 pr-1.5">
+          <span className="font-extrabold tabular-nums">{profile.coins} coins</span>
+          <Avatar value={profile.avatar} name={profile.username} size={42} />
         </Link>
       </header>
 
-      <section className="mt-10">
-        <p className="text-lg text-muted">Kumusta, {profile.username}!</p>
-        <h1 className="text-balance text-5xl font-extrabold leading-[1.05]">Who&apos;s drinking tonight?</h1>
+      <section className="mt-12">
+        <p className="text-xl font-bold text-muted">Kumusta, {profile.username}.</p>
+        <h1 className="mt-2 text-[4.5rem] leading-[0.92]">Who&apos;s drinking tonight?</h1>
       </section>
 
-      <section className="mt-8 space-y-3">
-        <Button size="lg" full onClick={host}>🎮 Host a game</Button>
-        <Link href="/join" className="block">
-          <Button size="lg" variant="secondary" full>🎯 Join with a code</Button>
-        </Link>
-      </section>
-
-      <section className="mt-8 rounded-card bg-surface p-5 ring-1 ring-white/10">
-        <h2 className="text-xl font-extrabold">How it works</h2>
-        <ol className="mt-3 space-y-3 text-base text-muted">
-          <li><b className="text-ink">1.</b> Host a room, barkada joins with the code (or the host adds friends by name).</li>
-          <li><b className="text-ink">2.</b> Pick a vibe and the house rules.</li>
-          <li><b className="text-ink">3.</b> Pass the phone. Read the card out loud. Dare or drink.</li>
-        </ol>
+      <section className="mt-auto space-y-3 pb-6 pt-10">
+        <Button size="lg" full onClick={host}>Host a game</Button>
+        <Link href="/join" className="block"><Button size="lg" variant="secondary" full>Join with a code</Button></Link>
+        <p className="pt-2 text-center text-muted">Host picks the vibe. Everyone agrees to the rules. Then pass the phone.</p>
       </section>
     </div>
   );

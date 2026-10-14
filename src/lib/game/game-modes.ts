@@ -6,7 +6,6 @@ import { GameMode } from '@/types/game';
  */
 export interface GameModeConfig {
   name: string;
-  emoji: string;
   description: string;
   audienceTag: string;
   entryHeat: number;
@@ -27,8 +26,7 @@ export interface GameModeConfig {
 export const GAME_MODES: Record<GameMode, GameModeConfig> = {
   icebreaker: {
     name: 'Icebreaker',
-    emoji: '🧊',
-    description: 'Light and easy — perfect for new groups',
+    description: 'Light and easy, perfect for new groups',
     audienceTag: 'New friends',
     entryHeat: 1,
     poolDistribution: {
@@ -42,8 +40,7 @@ export const GAME_MODES: Record<GameMode, GameModeConfig> = {
   },
   barkada: {
     name: 'Barkada',
-    emoji: '🤙',
-    description: 'For the squad — fun with a bit of heat',
+    description: 'For the squad, fun with a bit of heat',
     audienceTag: 'Close friends',
     entryHeat: 2,
     poolDistribution: {
@@ -57,8 +54,7 @@ export const GAME_MODES: Record<GameMode, GameModeConfig> = {
   },
   lovers: {
     name: 'Lovers',
-    emoji: '💕',
-    description: 'Intimate and revealing — for couples or close pairs',
+    description: 'Intimate and revealing, for couples or close pairs',
     audienceTag: 'Couples',
     entryHeat: 2,
     poolDistribution: {
@@ -72,8 +68,7 @@ export const GAME_MODES: Record<GameMode, GameModeConfig> = {
   },
   spicy: {
     name: 'Spicy',
-    emoji: '🌶️',
-    description: 'High intensity — no holding back',
+    description: 'High intensity, no holding back',
     audienceTag: 'Adventurous groups',
     entryHeat: 3,
     poolDistribution: {
@@ -87,8 +82,7 @@ export const GAME_MODES: Record<GameMode, GameModeConfig> = {
   },
   chaos: {
     name: 'Chaos',
-    emoji: '🎲',
-    description: 'Fully random — anything goes',
+    description: 'Fully random, anything goes',
     audienceTag: 'Thrill seekers',
     entryHeat: 2,
     poolDistribution: {
@@ -102,8 +96,7 @@ export const GAME_MODES: Record<GameMode, GameModeConfig> = {
   },
   family: {
     name: 'Family',
-    emoji: '👨‍👩‍👧‍👦',
-    description: 'Clean and wholesome — safe for all ages',
+    description: 'Clean and wholesome, safe for all ages',
     audienceTag: 'All ages',
     entryHeat: 1,
     poolDistribution: {

@@ -1,30 +1,27 @@
 'use client';
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
+import { AVATAR_COLORS } from './Avatar';
+import { Icon } from './Icon';
 
-export const AVATARS = ['😎','🥳','😈','🤪','😏','🥴','🤠','👻','🦄','🐯','🐸','🐼','🦊','🐙','🍺','🍹','🔥','💀','👑','🌶️','🍕','🎤','🌴','⚡'];
+export const AVATARS = AVATAR_COLORS.map((_, i) => `c${i}`);
 
 export function AvatarPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="grid grid-cols-6 gap-2" role="radiogroup" aria-label="Pick an avatar">
-      {AVATARS.map((a) => (
-        <button
-          key={a}
-          role="radio"
-          aria-checked={value === a}
-          aria-label={a}
-          onClick={() => {
-            haptic('tap');
-            onChange(a);
-          }}
-          className={cn(
-            'flex aspect-square items-center justify-center rounded-2xl text-3xl transition active:scale-90',
-            value === a ? 'bg-accent-gradient shadow-glow' : 'bg-surface ring-1 ring-white/10',
-          )}
-        >
-          {a}
-        </button>
-      ))}
+    <div className="grid grid-cols-5 gap-3" role="radiogroup" aria-label="Pick a colour">
+      {AVATARS.map((a, i) => {
+        const on = value === a;
+        return (
+          <button
+            key={a} role="radio" aria-checked={on} aria-label={`Colour ${i + 1}`}
+            onClick={() => { haptic('tap'); onChange(a); }}
+            style={{ background: AVATAR_COLORS[i].bg, color: AVATAR_COLORS[i].fg }}
+            className={cn('flex aspect-square items-center justify-center rounded-full transition-transform active:scale-90', on && 'ring-4 ring-text ring-offset-4 ring-offset-bg')}
+          >
+            {on && <Icon name="check" size={26} />}
+          </button>
+        );
+      })}
     </div>
   );
 }

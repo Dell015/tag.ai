@@ -12,7 +12,7 @@ export const WELCOME_COINS = 10;
 export interface Profile {
   id: string;
   username: string;
-  avatar: string; // emoji
+  avatar: string; // "c0".."c9" colour key (see components/ui/Avatar)
   coins: number;
   createdAt: number;
 }

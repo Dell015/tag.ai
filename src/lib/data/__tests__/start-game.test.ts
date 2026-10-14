@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { allAgreed } from '../start-game';
 import { DEFAULT_CONFIG, type Room } from '../rooms';
 
-const p = (id: string, order: number) => ({ id, userId: id, displayName: id, avatarUrl: '😎', turnOrder: order, agreedToRules: false });
+const p = (id: string, order: number) => ({ id, userId: id, displayName: id, avatarUrl: 'c0', turnOrder: order, agreedToRules: false });
 const room = (ids: string[], agreed: string[]): Room => ({
   code: 'ABC123', hostId: 'a', status: 'lobby', players: ids.map(p), agreedPlayers: agreed, config: DEFAULT_CONFIG, createdAt: 0,
 });

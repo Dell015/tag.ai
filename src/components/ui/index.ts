@@ -1,11 +1,13 @@
 export { Button } from './Button';
-export { Avatar } from './Avatar';
+export { Avatar, AVATAR_COLORS } from './Avatar';
+export { AvatarPicker, AVATARS } from './AvatarPicker';
 export { Chip } from './Chip';
 export { Sheet } from './Sheet';
 export { Screen } from './Screen';
 export { Logo } from './Logo';
 export { BottomNav } from './BottomNav';
 export { Stepper } from './Stepper';
-export { toast } from '@/stores/toast-store';
 export { Splash } from './Splash';
-export { AvatarPicker, AVATARS } from './AvatarPicker';
+export { Icon } from './Icon';
+export { toast } from '@/stores/toast-store';
+export { DeckFan } from './DeckFan';

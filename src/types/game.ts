@@ -47,7 +47,7 @@ export interface SessionPlayer {
   id: string;
   userId: string;
   displayName: string;
-  /** An emoji (preset avatar) or an image URL. Use <Avatar/> to render it. */
+  /** Colour key "c0".."c9" (legacy: emoji or URL). Use <Avatar/> to render it. */
   avatarUrl: string;
   turnOrder: number;
   agreedToRules: boolean;

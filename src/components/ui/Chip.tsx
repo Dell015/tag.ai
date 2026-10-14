@@ -3,22 +3,14 @@ import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
 
-export function Chip({
-  selected,
-  className,
-  onClick,
-  ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { selected?: boolean }) {
+export function Chip({ selected, className, onClick, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { selected?: boolean }) {
   return (
     <button
       aria-pressed={selected}
-      onClick={(e) => {
-        haptic('tap');
-        onClick?.(e);
-      }}
+      onClick={(e) => { haptic('tap'); onClick?.(e); }}
       className={cn(
-        'min-h-tap rounded-full border px-5 text-base font-semibold transition active:scale-95',
-        selected ? 'border-transparent bg-accent-gradient text-white shadow-glow' : 'border-white/10 bg-surface text-muted',
+        'min-h-tap rounded-full border-2 px-5 text-base font-bold transition-colors active:scale-95',
+        selected ? 'border-accent bg-accent text-onaccent' : 'border-line bg-transparent text-text',
         className,
       )}
       {...rest}

@@ -108,7 +108,7 @@ Numbered so they can be referenced in commits.
 | D9 | **Guest players:** the host can add friends by name on their own phone, no account needed. Guests have `isGuest: true`. | Owner flow is "only my phone". |
 | D10 | **Mock account.** Stage A has no auth: a local profile (`profile-store`) with 10 welcome coins, saved and trashed card ids. Login/signup/callback pages were deleted. | Stage B reintroduces Supabase auth. |
 | D11 | **Repository seam.** UI talks only to `rooms` (`src/lib/data/rooms.ts`). Stage B adds a Supabase `RoomRepository` and swaps one export. | |
-| D12 | **Visual direction:** dark nightlife, pink→orange accent (per-mode accent pairs via `data-mode`), violet for wild cards, 28px card radius, Bricolage Grotesque + Inter via fontsource. Tokens are RGB-triplet CSS vars in `globals.css`. | See §7. |
+| D12 | **Visual direction (v2, replaces the first dark/gradient version the owner rejected as "looks AI"):** type-first and flat. One family, Archivo variable (condensed heavy for headlines via `font-stretch`, normal width for body). Warm bottle-brown dark base; each game mode is a flat printed-deck colour (jeepney-paint palette) set through `data-mode` (`--accent`/`--on-accent`). Chunky key-style buttons (thick bottom edge, no glow). Hand-drawn SVG icon set (`components/ui/Icon.tsx`). Avatars are a flat colour plus the first letter (`c0`..`c9`). | See §7. |
 | D13 | **Drunk-proof rules enforced in code:** buttons ≥56px, card text ≥24px, every swipe has a button, 5s Undo toast on done/skip/trash, current player always shown, reduced-motion respected, haptics. | |
 
 Open / unknown (owner can't remember — decide when it comes up, then record it above):
@@ -152,13 +152,12 @@ src/
       join/                      Redirects to /join?code=
     api/sessions/route.ts        Stage B (Supabase), unused by UI
   components/
-    ui/      Button, Sheet, Toast, Avatar, AvatarPicker, Chip, Screen, Stepper, BottomNav, Logo, Splash
+    ui/      Button, Sheet, Toast, Icon, Avatar, AvatarPicker, Chip, Screen, Stepper, BottomNav, Logo, Splash, DeckFan
     play/    PlayCard, HeatBar, PassOverlay, PauseSheet, Recap
     lobby/   PlayerRow
-    setup/   (legacy) only constants are still imported: PRESET_COUNTS, DRINK_RULE_TEMPLATES, ...
   hooks/     use-room (room <-> session-store sync), use-realtime-lobby + use-game-actions (Stage B, unused)
   lib/
-    game/    game-modes, escalation-engine, card-queue-builder, steering, comfort-filters, turn-rotation, wild-cards
+    game/    game-modes, escalation-engine, card-queue-builder, steering, comfort-filters, turn-rotation, wild-cards, setup-options
     data/    cards (131 generated from the seed: scripts/seed-to-ts.mjs), rooms (repository), join, start-game
     cn.ts, haptics.ts, hydration.ts, storage.ts, use-profile.ts, validators.ts, supabase/ (Stage B)
   stores/    game-store (persisted), session-store, profile-store (persisted), toast-store
@@ -213,23 +212,23 @@ Stage A leftovers: QR code for the invite, sound hooks, wild-card-specific inter
 
 ## 7. UI/UX direction (replaces `design_plan.md`)
 
-Owner brief (2026-10-15): **modern, aesthetic, super easy to navigate for drunk people.** The old look was rejected as ugly.
+Owner brief (2026-10-15): **modern, aesthetic, super easy to navigate for drunk people. It must not look "AI-made".**
 
-**Drunk-proof UX rules (non-negotiable):**
-1. One primary action per screen; giant, obvious. Thumb-reachable, bottom-anchored. Tap targets ≥ 56px, spacing ≥ 12px.
-2. No small text in-game: card text ≥ 24px, UI labels ≥ 16px. High contrast (WCAG AA minimum, aim AAA for card text).
-3. No precision gestures required: every swipe/drag has a big button alternative (Next, Skip, Trash, Save).
-4. Forgiving: undo toast for trash/skip/remove-player (5s), confirm only for truly destructive actions, never auto-advance without a clear signal.
-5. Minimal reading: icons + one short line; plain Taglish-friendly copy; no jargon ("heat" shown as 🔥 bars with a word).
-6. Always show *whose turn it is* and *what to do next* in plain words ("Pass the phone to Ana").
-7. Dark by default for dim bars, glare-safe; no pure white backgrounds; no flashing/strobing.
-8. Fast: no spinners longer than 1s without feedback, optimistic UI, skeletons.
-9. Persist everything locally so an accidental refresh/closed tab never loses a game.
-10. Respect `prefers-reduced-motion`; haptic feedback on key actions.
+### Hard rules (the owner has rejected these)
+- **No emojis anywhere in the UI** (not as icons, avatars, bullets or decoration). Use `<Icon/>` or type. Data files must not carry emoji either.
+- **No gradients, glows, aurora/radial backgrounds, film grain, glassmorphism**, no purple/indigo, no pink-to-orange.
+- No em dashes in UI copy. Sentence case. No all-caps eyebrow labels, no accenting a single word in a headline, no numbered markers unless the content is a sequence.
+- Do not wrap everything in rounded cards with the same shadow. Use rules (`border-line`), whitespace and type for grouping; flat colour blocks only where colour means something (a deck, a player).
 
-**Visual direction (proposal, owner to approve/change in the next session — record the final choice here):** dark "nightlife" theme with a vivid gradient accent (hot pink → orange for heat, violet for wild cards), glassy elevated surfaces, big rounded cards (28px radius), bold display font for headings and card text (e.g. *Bricolage Grotesque* or *Space Grotesk*; *Inter* for UI), subtle grain/noise and glow, each game mode has its own accent palette. Cards feel like physical objects (3D flip, spring swipes, shadows). Navigation = a single bottom bar on home (Play / Decks / Shop / Me) and zero nav chrome during the game.
+### Visual language
+- **Colour:** neutral base `--bg` warm dark brown; text near-white; accent = the current deck's flat colour (icebreaker blue, barkada yellow, lovers pink, spicy red, chaos orange, family green). Outside a game the accent is barkada yellow. Player colours come from `AVATAR_COLORS`.
+- **Type:** Archivo variable only. Headlines `font-stretch: 72%`, weight 800, tight leading; body 500. Card text is 32px or larger and scales down by length, never below 28px.
+- **Memorable moments (spend boldness here, keep the rest quiet):** the fanned deck on the welcome screen, the full-screen player-colour "Pass the phone" screen, the printed-card look of the play card.
+- **Controls:** 56px minimum (68px for primary), chunky key buttons, a button for every gesture, 5s Undo toast, current player always visible.
+- **Motion:** only in response to input (card flip, sheet). No decorative entrance animations. `prefers-reduced-motion` respected.
 
-Status: **not started.** Use the `frontend-design` skill and generate 2–3 style options for the owner to pick from before building A0.
+### Research notes (2026-10-15)
+Sources used when deciding the above: thefountaininstitute.com "7 signs a UI has been vibe coded" (emoji icons, purple gradients, glow on dark, nested cards are the tells); superdesign.dev "make AI UI less generic"; daisyui 2026 trends (type-first, bold borders, sticker/flat colour suit party apps).
 
 ---
 
@@ -268,6 +267,8 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-15 (redesign v2)** — Owner rejected the first look (emoji, gradients, glow). Researched and rebuilt every screen: Archivo type-first system, flat deck colours, SVG icons, colour+initial avatars, no emoji in code or data, removed the legacy `components/setup`. See §7 hard rules.
 
 - **2026-10-15 (Stage A build)** — Fixed store/logic bugs (#6–#10, #14, #15), added comfort-filter map, heat steering, persisted game store with undo. Added design system, mock data layer (`rooms`, `profile-store`, `cards.ts`), and all screens (welcome, home, join, lobby with guests, 5-step setup, play, recap, profile, saved, decks). Removed login backend and the old Kiro-era UI components. Delivered as git patches `0001`–`0006`.
 

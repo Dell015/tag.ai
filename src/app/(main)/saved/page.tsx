@@ -12,20 +12,19 @@ export default function SavedPage() {
   return (
     <Screen title="Saved cards">
       {cards.length === 0 ? (
-        <div className="mt-16 text-center">
-          <div className="text-6xl">🤍</div>
-          <p className="mt-4 text-xl font-bold">Nothing saved yet</p>
-          <p className="mt-1 text-muted">Tap Save on a card during a game and it lands here.</p>
-          <Link href="/" className="mt-6 block"><Button full>Start a game</Button></Link>
+        <div className="mt-10">
+          <p className="display text-6xl">Nothing saved yet.</p>
+          <p className="mt-4 text-lg text-muted">Tap Save on a card during a game and it shows up here.</p>
+          <Link href="/" className="mt-8 block"><Button size="lg" full>Start a game</Button></Link>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul>
           {cards.map((c) => (
-            <li key={c!.id} className="rounded-card bg-surface p-5 ring-1 ring-white/10">
-              <p className="font-display text-xl font-bold leading-snug">{c!.text}</p>
-              <div className="mt-3 flex items-center justify-between text-sm text-muted">
-                <span>{c!.category.replace(/_/g, ' ')} · {'🔥'.repeat(c!.intensity)}</span>
-                <button onClick={() => unsave(c!.id)} className="h-tap rounded-xl px-3 font-semibold text-accent">Remove</button>
+            <li key={c!.id} className="border-b-2 border-line/60 py-5">
+              <p className="display text-3xl" style={{ lineHeight: 1.05 }}>{c!.text}</p>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-base text-muted">{c!.category.replace(/_/g, ' ')}, intensity {c!.intensity} of 5</span>
+                <button onClick={() => unsave(c!.id)} className="h-tap px-2 text-base font-extrabold text-accent">Remove</button>
               </div>
             </li>
           ))}

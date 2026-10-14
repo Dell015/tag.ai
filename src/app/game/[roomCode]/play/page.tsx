@@ -3,8 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
-import { Avatar, Button, toast } from '@/components/ui';
-import { Splash } from '@/components/ui/Splash';
+import { Avatar, Button, Icon, Splash, toast } from '@/components/ui';
 import { HeatBar } from '@/components/play/HeatBar';
 import { PlayCard } from '@/components/play/PlayCard';
 import { PassOverlay } from '@/components/play/PassOverlay';
@@ -47,9 +46,8 @@ export default function PlayPage() {
   const isHost = room?.hostId === profile.id;
   if (status === 'missing' || !room || !isHost || (g.cardQueue.length === 0 && !ended)) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
-        <div className="text-6xl">🃏</div>
-        <h1 className="text-3xl font-extrabold">No game running here</h1>
+      <div className="flex min-h-dvh flex-col items-start justify-center gap-4 px-5">
+        <h1 className="text-6xl">No game running here</h1>
         <p className="text-muted">The game is played on the host&apos;s phone. Head back to the lobby to start one.</p>
         <Link href={`/game/${code}`} className="w-full max-w-xs"><Button full>Go to lobby</Button></Link>
       </div>
@@ -108,7 +106,7 @@ export default function PlayPage() {
     saveCard(card.id);
     setHearted((h) => [...h, card.id]);
     haptic('success');
-    toast('Saved to your hearts ❤️', {
+    toast('Saved', {
       tone: 'ok',
       action: { label: 'Undo', onClick: () => { unsaveCard(card.id); setHearted((h) => h.filter((i) => i !== card.id)); } },
     });
@@ -117,18 +115,18 @@ export default function PlayPage() {
   return (
     <div data-mode={g.gameMode} className="flex h-dvh flex-col px-4 safe-top safe-bottom">
       <header className="space-y-3 pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Avatar value={current.avatarUrl} size={52} className="shadow-glow" />
+            <Avatar value={current.avatarUrl} name={current.name} size={52} />
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-muted">Now playing</p>
-              <p className="truncate font-display text-2xl font-extrabold leading-tight">{current.name}</p>
+              <p className="text-sm font-bold text-muted">Your turn</p>
+              <p className="display truncate text-4xl">{current.name}</p>
             </div>
           </div>
-          <button onClick={() => setPause(true)} aria-label="Pause menu" className="h-tap w-tap shrink-0 rounded-2xl bg-surface text-2xl ring-1 ring-white/10">⏸</button>
+          <button onClick={() => setPause(true)} aria-label="Pause menu" className="flex h-tap w-tap shrink-0 items-center justify-center rounded-xl border-2 border-line"><Icon name="pause" /></button>
         </div>
         <HeatBar level={g.heatLevel} spiking={g.heatSpikeRemaining > 0} />
-        <p className="text-center text-sm font-semibold text-muted">Card {Math.min(g.cardsPlayed + 1, g.cardCountTarget)} of {g.cardCountTarget}{g.crownImmunityRemaining > 0 && ' · 👑 immune'}</p>
+        <p className="text-sm font-bold text-muted">Card {Math.min(g.cardsPlayed + 1, g.cardCountTarget)} of {g.cardCountTarget}{g.crownImmunityRemaining > 0 && ', crown immunity on'}</p>
       </header>
 
       <main className="min-h-0 flex-1 [perspective:1200px]">
@@ -136,10 +134,10 @@ export default function PlayPage() {
       </main>
 
       <footer className={cn('grid grid-cols-4 gap-2 pt-3 transition-opacity', !revealed && 'pointer-events-none opacity-30')}>
-        <Button variant="secondary" className="!px-0 flex-col !gap-0 !h-[4.5rem] text-sm" onClick={() => resolve('trash')} aria-label="Trash this card"><span className="text-2xl">🗑</span>Trash</Button>
-        <Button variant="secondary" className="!px-0 flex-col !gap-0 !h-[4.5rem] text-sm" onClick={() => resolve('skip')} aria-label="Skip"><span className="text-2xl">⏭</span>Skip</Button>
-        <Button variant="secondary" className={cn('!px-0 flex-col !gap-0 !h-[4.5rem] text-sm', isHearted && '!bg-accent/20 !text-accent')} onClick={heart} aria-label="Save card"><span className="text-2xl">{isHearted ? '❤️' : '🤍'}</span>Save</Button>
-        <Button className="!px-0 flex-col !gap-0 !h-[4.5rem] text-sm" onClick={() => resolve('dismiss')} aria-label="Done"><span className="text-2xl">✓</span>Done</Button>
+        <Button variant="secondary" className="!h-[4.75rem] flex-col !gap-1 !px-0 text-sm" onClick={() => resolve('trash')} aria-label="Trash this card"><Icon name="trash" />Trash</Button>
+        <Button variant="secondary" className="!h-[4.75rem] flex-col !gap-1 !px-0 text-sm" onClick={() => resolve('skip')} aria-label="Skip"><Icon name="skip" />Skip</Button>
+        <Button variant="secondary" className={cn('!h-[4.75rem] flex-col !gap-1 !px-0 text-sm', isHearted && '!text-accent')} onClick={heart} aria-label="Save card"><Icon name="heart" filled={isHearted} />{isHearted ? 'Saved' : 'Save'}</Button>
+        <Button className="!h-[4.75rem] flex-col !gap-1 !px-0 text-sm" onClick={() => resolve('dismiss')} aria-label="Done"><Icon name="check" />Done</Button>
       </footer>
 
       <AnimatePresence>

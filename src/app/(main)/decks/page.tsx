@@ -6,32 +6,30 @@ import type { GameMode } from '@/types/game';
 
 const MODES: GameMode[] = ['icebreaker', 'barkada', 'lovers', 'spicy', 'chaos', 'family'];
 const PACKS = [
-  { e: '🎤', n: 'Videoke Night', d: 'Sing-or-drink dares', c: 25 },
-  { e: '🌴', n: 'Outing Edition', d: 'Beach and roadtrip cards', c: 25 },
-  { e: '💼', n: 'Office Party', d: 'Safe-for-HR chaos', c: 40 },
+  { n: 'Videoke night', d: 'Sing-or-drink dares', c: 25 },
+  { n: 'Outing edition', d: 'Beach and road trip cards', c: 25 },
+  { n: 'Office party', d: 'Safe-for-HR chaos', c: 40 },
 ];
 
 export default function DecksPage() {
   const coins = useProfileStore((s) => s.profile?.coins ?? 0);
   return (
     <Screen title="Decks">
-      <h2 className="mb-3 text-xl font-bold">Included</h2>
-      <ul className="space-y-3">
+      <ul className="grid grid-cols-2 gap-3">
         {MODES.map((k) => (
-          <li key={k} data-mode={k} className="flex items-center gap-4 rounded-card bg-surface p-4 ring-1 ring-white/10">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-gradient text-3xl">{GAME_MODES[k].emoji}</span>
-            <div><div className="text-xl font-extrabold">{GAME_MODES[k].name}</div><div className="text-sm text-muted">{GAME_MODES[k].description}</div></div>
+          <li key={k} data-mode={k} className="flex min-h-[9rem] flex-col justify-between rounded-card bg-accent p-4 text-onaccent">
+            <span className="display text-4xl">{GAME_MODES[k].name}</span>
+            <span className="text-base font-semibold leading-snug">{GAME_MODES[k].audienceTag}</span>
           </li>
         ))}
       </ul>
-      <h2 className="mb-1 mt-8 text-xl font-bold">Premium packs</h2>
-      <p className="mb-3 text-muted">You have 🪙 {coins}. Packs arrive in a future update.</p>
-      <ul className="space-y-3">
+      <h2 className="mb-1 mt-10 text-4xl">Premium packs</h2>
+      <p className="mb-2 text-lg text-muted">You have {coins} coins. Packs arrive in a later update.</p>
+      <ul>
         {PACKS.map((p) => (
-          <li key={p.n} className="flex items-center gap-4 rounded-card bg-surface/60 p-4 opacity-80 ring-1 ring-white/10">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-wild/30 text-3xl">{p.e}</span>
-            <div className="flex-1"><div className="text-xl font-extrabold">{p.n}</div><div className="text-sm text-muted">{p.d}</div></div>
-            <span className="rounded-full bg-elevated px-3 py-1.5 text-sm font-bold">🔒 {p.c}</span>
+          <li key={p.n} className="flex items-center gap-3 border-b-2 border-line/60 py-4 opacity-70">
+            <div className="flex-1"><div className="display text-3xl">{p.n}</div><div className="text-base text-muted">{p.d}</div></div>
+            <span className="flex items-center gap-1.5 rounded-full border-2 border-line px-3 py-1.5 text-base font-extrabold">{p.c} coins</span>
           </li>
         ))}
       </ul>
