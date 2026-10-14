@@ -27,7 +27,13 @@ Design principles that still hold: face-down ritual; generous coins; every sessi
 
 ---
 
-## 2. Current status — honest recap (as of 2026-10-15)
+## 2. Current status (updated 2026-10-15, end of Stage A)
+
+**Stage A is built: the whole frontend runs against a mock data layer (localStorage + BroadcastChannel). No Supabase calls are made by any page.** Flow that works end to end in a browser: `/welcome` (local profile, 10 welcome coins) → home → host (`rooms.create`) or `/join` (code / pasted link) → lobby (`/game/[code]`, guests by name) → 5-step setup (`/game/[code]/setup`) → play (`/game/[code]/play`) → recap. Also `/profile`, `/saved`, `/decks` (premium packs are UI only). Next: Stage B (backend) — see §6.
+
+*Historical audit below (kept so bug numbers in commits stay meaningful). Status of each bug is in the table that follows it.*
+
+**Original audit:**
 
 **Phase 1 ("core game loop") was generated with Kiro and is marked complete in `.kiro/specs/core-game-loop/tasks.md`, but the owner tried it on a phone and found the UI very ugly and gave up. The code was never verified end-to-end with multiple devices.** Treat everything beyond the pure game logic as "written, not trusted".
 
@@ -66,7 +72,24 @@ Numbered so they can be referenced in commits.
 19. The 7 optional property tests in the spec are unwritten, and `fast-check` is not installed.
 20. Middleware only refreshes the Supabase session; there is **no route protection** (each page redirects itself).
 
-Do not assume any of the above are fixed unless §11 (Changelog) says so.
+**Status after Stage A:**
+
+| Bug | Status |
+|---|---|
+| #1 session hydration | Fixed for the mock layer (`useRoom`). Re-verify in Stage B. |
+| #2 `player_joined` broadcast | Mock layer syncs via BroadcastChannel; real Realtime is Stage B. |
+| #3, #4, #13 RLS / join lookup / profile row | Open — Stage B (SQL + RPC). |
+| #5 `/game/join` link | Fixed: real `/join` page; `/game/[code]/join` redirects to it. |
+| #6 comfort filters, #7 family cap, #8 heat spike, #9 steering, #10 trash (store side), #14 wild ids, #15 small library | Fixed in `src/lib/game` + `game-store` (tests added). |
+| #11 offline retry queue | Open — `use-game-actions` still unused; saved/trashed cards are local in `profile-store`. |
+| #12 avatars | Fixed: avatars are emoji, rendered by `<Avatar/>`. |
+| #16 | Fixed (page rewritten). |
+| #17 | Partly: pause menu, recap, decks (UI), skip, undo exist. Mid-game join, shop purchases, leaderboard do not. |
+| #18 drink-rule text in game | Open: rules are shown in the pause sheet only. |
+| #19 property tests | Open. |
+| #20 route protection | Replaced: middleware is a pass-through; pages use `useRequireProfile`. Stage B must protect `/api/*`. |
+| #21 (new) old PassPrompt never dismissed | Fixed: `PassOverlay` calls `dismissPassPrompt`. |
+
 
 ---
 
@@ -82,6 +105,11 @@ Do not assume any of the above are fixed unless §11 (Changelog) says so.
 | D6 | Deploy target: **Vercel**, project `tag-ai` (https://vercel.com/dels-projects-8a034708/tag-ai). | Production URL not recorded — fill in §9. |
 | D7 | PWA first, no app stores until 5k+ users. | From the original plan. |
 | D8 | Gameplay is **host-phone only** (single device passed around); other phones are used for lobby/setup/house-rules agreement. Joining after start is blocked in Phase 1. | Still the plan; revisit when mid-game controls are designed. |
+| D9 | **Guest players:** the host can add friends by name on their own phone, no account needed. Guests have `isGuest: true`. | Owner flow is "only my phone". |
+| D10 | **Mock account.** Stage A has no auth: a local profile (`profile-store`) with 10 welcome coins, saved and trashed card ids. Login/signup/callback pages were deleted. | Stage B reintroduces Supabase auth. |
+| D11 | **Repository seam.** UI talks only to `rooms` (`src/lib/data/rooms.ts`). Stage B adds a Supabase `RoomRepository` and swaps one export. | |
+| D12 | **Visual direction:** dark nightlife, pink→orange accent (per-mode accent pairs via `data-mode`), violet for wild cards, 28px card radius, Bricolage Grotesque + Inter via fontsource. Tokens are RGB-triplet CSS vars in `globals.css`. | See §7. |
+| D13 | **Drunk-proof rules enforced in code:** buttons ≥56px, card text ≥24px, every swipe has a button, 5s Undo toast on done/skip/trash, current player always shown, reduced-motion respected, haptics. | |
 
 Open / unknown (owner can't remember — decide when it comes up, then record it above):
 - Whether phone-OTP login is still wanted (docs said email/Google/phone; code has email + Google only).
@@ -110,32 +138,33 @@ Open / unknown (owner can't remember — decide when it comes up, then record it
 ### Source map (what lives where)
 ```
 src/
-  middleware.ts                  Supabase session refresh only (no route guard)
+  middleware.ts                  Pass-through (Stage A). Re-add Supabase refresh in Stage B.
   app/
-    layout.tsx, globals.css      Root layout (metadata still default), Tailwind base
-    (auth)/login|signup|setup    Email+Google auth; /setup = username + 8 emoji avatars
-    (auth)/auth/callback/route   OAuth code exchange; redirects to /setup if no username
-    (main)/page.tsx              Home: coin balance, Host / Join buttons
-    (main)/profile/page.tsx      Username, avatar, coins
-    api/sessions/route.ts        POST: create session + host row, returns roomCode/joinUrl/QR
-    game/[roomCode]/page.tsx     The orchestrator: lobby → setup → play → end
-    game/[roomCode]/join/page    Enter code & join
+    layout.tsx, globals.css      Fonts, metadata, tokens, StoreHydrator, ToastHost
+    welcome/                     Splash + nickname/avatar -> local profile
+    join/                        Enter code or paste link
+    (main)/                      Layout = profile guard + BottomNav
+      page.tsx                   Home (host / join)
+      profile/, saved/, decks/   Profile, saved cards, decks (premium = UI only)
+    game/[roomCode]/             Lobby (+ guests)
+      setup/                     5-step wizard + tap-to-agree house rules + Start
+      play/                      Card game + pause sheet + recap
+      join/                      Redirects to /join?code=
+    api/sessions/route.ts        Stage B (Supabase), unused by UI
   components/
-    game/    CardBack, CardFace, CardFlip, CardStack, SwipeHandler, TrashZone, HeartButton,
-             HeatMeter, TurnIndicator, PassPrompt, WildCardOverlay, ActionCard, EndScreen
-    lobby/   RoomCodeDisplay, LobbyPlayerList
-    setup/   CardCountSelector, ComfortFilters, GameModeSelector, DrinkRules, HouseRules, PreGameSummary
-  hooks/     use-realtime-lobby (broadcast subscriptions), use-game-actions (offline sync queue — unused)
+    ui/      Button, Sheet, Toast, Avatar, AvatarPicker, Chip, Screen, Stepper, BottomNav, Logo, Splash
+    play/    PlayCard, HeatBar, PassOverlay, PauseSheet, Recap
+    lobby/   PlayerRow
+    setup/   (legacy) only constants are still imported: PRESET_COUNTS, DRINK_RULE_TEMPLATES, ...
+  hooks/     use-room (room <-> session-store sync), use-realtime-lobby + use-game-actions (Stage B, unused)
   lib/
-    game/    game-modes, escalation-engine, card-queue-builder, turn-rotation, wild-cards
-    supabase/client.ts, server.ts   Browser / server clients
-    validators.ts                   validateUsername, generateRoomCode, validateCardCount
-  stores/    game-store (gameplay state on host device), session-store (lobby/setup state)
-  types/     game.ts, supabase.ts (hand-written DB types), index.ts
-supabase/migrations/001_initial_schema.sql   users, cards, sessions, session_players,
-                                             user_trashed_cards, saved_cards + RLS
-supabase/seed/cards.sql                      131 curated cards
-.kiro/specs/core-game-loop/                  Legacy Kiro spec (requirements/design/tasks)
+    game/    game-modes, escalation-engine, card-queue-builder, steering, comfort-filters, turn-rotation, wild-cards
+    data/    cards (131 generated from the seed: scripts/seed-to-ts.mjs), rooms (repository), join, start-game
+    cn.ts, haptics.ts, hydration.ts, storage.ts, use-profile.ts, validators.ts, supabase/ (Stage B)
+  stores/    game-store (persisted), session-store, profile-store (persisted), toast-store
+  types/
+scripts/seed-to-ts.mjs          Regenerates src/lib/data/cards.ts from supabase/seed/cards.sql
+supabase/                       Migration + seed (Stage B)
 ```
 
 ### Architecture in one paragraph
@@ -163,14 +192,16 @@ Gaps: `cards.deck_id` has no FK (no `decks` table yet); no `coin_transactions`, 
 
 Revised plan after the 2026-10-15 decisions. Original 7 phases remain in `build_plan.md` as feature inventory.
 
-**Stage A — Frontend rebuild with mock data (CURRENT)**
+**Stage A — Frontend rebuild with mock data (DONE except polish items below)**
 - A0. Design system: tokens, fonts, primitives (Button, Sheet, Toast, Avatar, Chip, Card), motion presets, icon set. Pick the visual direction (§7) and record it.
 - A1. App shell + routing + mock data layer (`src/lib/data/` repository interface with an in-memory/mock implementation and a `localStorage` "fake multiplayer"; swappable for Supabase later).
 - A2. Screens: splash/onboarding, sign-up/login, profile setup, home, join (enter code/scan QR), lobby, setup wizard (6 steps), house rules, game screen (card stack, flip, swipe, trash, heart, heat, pass prompt, wild overlay, action cards), pause menu, end/recap, profile, saved cards, shop (UI only), decks/discover (UI only).
 - A3. Polish: motion, haptics (`navigator.vibrate`), sound hooks, accessibility, PWA manifest/icons, empty states, loading/error states, responsive 360–430px.
 - A4. Component tests for critical flows (Vitest + Testing Library) and fix the pure-logic bugs (#7, #8, #9, #14, #15).
 
-**Stage B — Backend wiring (after A)**
+Stage A leftovers: QR code for the invite, sound hooks, wild-card-specific interactions (e.g. pick a target), drink-rule text shown on cards, component tests for the new screens, real PWA icons (PNG), a visual review on a real phone.
+
+**Stage B — Backend wiring (CURRENT NEXT)**
 - New Supabase project; fix migration/RLS (#3, #4, #13), `join_session` RPC, profile trigger, realtime hydration (#1, #2), route protection, replace mock repository with Supabase implementation, offline sync queue wiring (#10, #11).
 - Verify with 2+ real devices.
 
@@ -237,6 +268,8 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-15 (Stage A build)** — Fixed store/logic bugs (#6–#10, #14, #15), added comfort-filter map, heat steering, persisted game store with undo. Added design system, mock data layer (`rooms`, `profile-store`, `cards.ts`), and all screens (welcome, home, join, lobby with guests, 5-step setup, play, recap, profile, saved, decks). Removed login backend and the old Kiro-era UI components. Delivered as git patches `0001`–`0006`.
 
 - **2026-10-15** — Full audit of repo and docs. Created this `CLAUDE.md` and `.kiro/steering/project.md`. Recorded decisions D1–D8, bug list (§2), roadmap (§6) and UI direction (§7). No application code changed.
 
