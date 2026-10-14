@@ -15,6 +15,7 @@
 import { GameMode, WildCardType } from '@/types/game';
 import { QueuedCard } from './escalation-engine';
 import { GAME_MODES } from './game-modes';
+import { expandComfortFilters, isCardFiltered } from './comfort-filters';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,16 @@ function shuffle<T>(arr: T[], random: () => number = Math.random): T[] {
   return result;
 }
 
+let wildCounter = 0;
+
+/** Unique id for a generated wild card (UUID when available, counter fallback). */
+function nextWildId(): string {
+  wildCounter += 1;
+  const uuid =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : null;
+  return `wild-${uuid ?? `${Date.now().toString(36)}-${wildCounter}`}`;
+}
+
 /**
  * Generates a wild card placeholder with a random type.
  */
@@ -67,7 +78,7 @@ function generateWildCard(random: () => number = Math.random): QueuedCard {
   const wildType = WILD_CARD_TYPES[typeIndex];
 
   return {
-    id: `wild-${Date.now()}-${Math.floor(random() * 100000)}`,
+    id: nextWildId(),
     text: '',
     cardType: 'wild',
     intensity: 0,
@@ -183,12 +194,12 @@ export function buildCardQueue(
   const modeConfig = GAME_MODES[gameMode];
 
   // Step 1: Filter the card library
-  const comfortFilterSet = new Set(comfortFilters.map((f) => f.toLowerCase()));
+  const expandedFilters = expandComfortFilters(comfortFilters);
   const trashedIdSet = new Set(trashedCardIds);
 
   let filteredCards = cardLibrary.filter((card) => {
     // Remove cards matching comfort filter topics
-    if (card.topics.some((topic) => comfortFilterSet.has(topic.toLowerCase()))) {
+    if (isCardFiltered(card, expandedFilters)) {
       return false;
     }
     // Remove trashed cards

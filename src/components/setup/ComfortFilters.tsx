@@ -2,21 +2,10 @@
 
 import { useState, useCallback, type KeyboardEvent, type ChangeEvent } from 'react';
 import { useSessionStore } from '@/stores/session-store';
+import { PRESET_TOPICS, type PresetTopic } from '@/lib/game/comfort-filters';
 
-export const PRESET_TOPICS = [
-  'Politics',
-  'Religion',
-  'Trauma/Mental Health',
-  'Money/Finances',
-  'Family Drama',
-  'Sexual Content',
-  'Past Relationships',
-  'Physical Appearance',
-  'Career/Work Stress',
-  'Death/Loss',
-] as const;
-
-export type PresetTopic = (typeof PRESET_TOPICS)[number];
+export { PRESET_TOPICS };
+export type { PresetTopic };
 
 interface ComfortFiltersProps {
   /** Callback to broadcast comfort filter changes to other players via Realtime */
