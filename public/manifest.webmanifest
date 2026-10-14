@@ -1,0 +1,13 @@
+{
+  "name": "tag.ai",
+  "short_name": "tag.ai",
+  "description": "The pass-the-phone drinking game for barkadas.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E0A14",
+  "theme_color": "#0E0A14",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

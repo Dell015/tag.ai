@@ -47,9 +47,12 @@ export interface SessionPlayer {
   id: string;
   userId: string;
   displayName: string;
+  /** An emoji (preset avatar) or an image URL. Use <Avatar/> to render it. */
   avatarUrl: string;
   turnOrder: number;
   agreedToRules: boolean;
+  /** Added by name on the host's phone, without an account. */
+  isGuest?: boolean;
 }
 
 export interface Session {

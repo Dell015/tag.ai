@@ -155,7 +155,7 @@ function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
   }
 
   let cardQueue = [...state.cardQueue];
-  let bufferCards = [...state.bufferCards];
+  const bufferCards = [...state.bufferCards];
 
   if (action === 'trash' && bufferCards.length > 0) {
     // The trashed card is gone for good: top the queue up from the buffer.
