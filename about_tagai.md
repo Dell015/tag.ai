@@ -1220,3 +1220,16 @@ We do not read every card by hand. The pipeline is:
 - **Next card, same turn:** a new button gives the current player another card without passing the phone.
 - **Wild cards** glow around the edge in the deck colours. **Free Drink** shows a large "Take a drink" banner ("Do a forfeit" when the table is not drinking).
 - **18+ cards** are now a normal skip topic called "18+ Cards", skipped by default. The hidden toggle is gone (this replaces 23.12's switch).
+
+### 23.16 Heavy topics, consent and terms (Proposed, 2026-10-16)
+
+- **Principle (owner):** the heart of an inuman is the interaction between the drinkers. It can be a distraction, but often it is closer to therapy. Opening up about hard things is welcome **when everyone has agreed to it**.
+- **Hard times** (trauma-adjacent) cards live in a **Deep** deck, never in Icebreaker, Family or Chaos, and are opt-in.
+- **Layers of consent:**
+  1. **Terms and Privacy** accepted at sign-up (18 or older, drink responsibly, the app is a game and not therapy or medical advice, limits of the owner's responsibility).
+  2. **House rules** "I Agree" screen before each game, with a short responsibility line.
+  3. **Heavy deck opt-in:** Deep, Adult and Social media each ask every player to confirm before the deck can be used in that game.
+  4. **In-game safety:** skipping is always free (no drink, no coin cost), a pause and "I need a break" option, and a short list of support resources.
+- **Drink responsibly copy:** never required to drink, non-drinking mode, do not drive, no pressure on anyone.
+- **Privacy:** the app does not record conversations, only game stats.
+- **Needs a lawyer:** the Terms and Privacy drafts must be reviewed by Philippine counsel before launch. A terms page limits risk but cannot remove all liability, and the Data Privacy Act applies once accounts exist.
