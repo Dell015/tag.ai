@@ -31,6 +31,10 @@ function roomFromStore(base: Room): Room {
       drinkRuleTemplate: s.drinkRuleTemplate,
       customDrinkRules: s.customDrinkRules,
       nonDrinkingMode: s.nonDrinkingMode,
+      potCoins: s.potCoins,
+      potStyle: s.potStyle,
+      deckIds: s.deckIds,
+      slotFills: s.slotFills,
     },
   };
 }

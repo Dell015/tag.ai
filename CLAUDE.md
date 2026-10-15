@@ -29,7 +29,12 @@ Design principles that still hold: face-down ritual; generous coins; every sessi
 
 ## 2. Current status (updated 2026-10-15, end of Stage A)
 
-**Stage A is built: the whole frontend runs against a mock data layer (localStorage + BroadcastChannel). No Supabase calls are made by any page.** Flow that works end to end in a browser: `/welcome` (local profile, 10 welcome coins) → home → host (`rooms.create`) or `/join` (code / pasted link) → lobby (`/game/[code]`, guests by name) → 5-step setup (`/game/[code]/setup`) → play (`/game/[code]/play`) → recap. Also `/profile`, `/saved`, `/decks` (premium packs are UI only). Next: Stage B (backend) — see §6.
+**Stage A frontend is built and runs entirely on a mock data layer (localStorage + BroadcastChannel). No Supabase calls are made by any page.** After the overnight run of 2026-10-15 (milestones F1 to F9 of `docs/FRONTEND_PLAN.md`), these work end to end in a browser:
+
+- `/welcome` (intro, 18+ gate, nickname and colour, 10 welcome coins) then four tabs: **Play** (`/`), **Library** (`/library`: My decks, Saved, Discover sample), **Shop** (`/shop`: Coins, Tools, Packs, Style), **Me** (`/me`: wallet, saved cards, leaderboard sample, invite sample, settings, help).
+- Host or join, lobby with guests by name, then a **7-step setup**: deck, card source (Auto or your own decks, with `[SLOT]` blanks), length, topics, coin pot, drink rules, house rules. Play: coin pot charged per card, tools tray, all nine wild-card interactions, dare timers, 3 second resume, change mood, focus next cards, add and reorder players, report a card, undo. Recap: card of the night, saved tonight, share image.
+- Settings (`/me/settings`) apply for real: vibration, sounds, wake lock, swipe off, undo time, confirm trash, pips, rules line, left-handed, text size, motion, contrast, game defaults prefill new rooms.
+- **Not built yet:** F7 real data (Discover, leaderboard and invite are labelled Sample), jsdom component tests, Filipino strings, QR invite, payments. Next: Stage B (backend), see §6.
 
 *Historical audit below (kept so bug numbers in commits stay meaningful). Status of each bug is in the table that follows it.*
 
@@ -111,6 +116,13 @@ Numbered so they can be referenced in commits.
 | D12 | **Visual direction (v2, replaces the first dark/gradient version the owner rejected as "looks AI"):** type-first and flat. One family, Archivo variable (condensed heavy for headlines via `font-stretch`, normal width for body). Warm bottle-brown dark base; each game mode is a flat printed-deck colour (jeepney-paint palette) set through `data-mode` (`--accent`/`--on-accent`). Chunky key-style buttons (thick bottom edge, no glow). Hand-drawn SVG icon set (`components/ui/Icon.tsx`). Avatars are a flat colour plus the first letter (`c0`..`c9`). | See §7. |
 | D13 | **Drunk-proof rules enforced in code:** buttons ≥56px, card text ≥24px, every swipe has a button, 5s Undo toast on done/skip/trash, current player always shown, reduced-motion respected, haptics. | |
 
+| D14 | **Coin pot is required** to start a game (minimum 3 coins). Card cost per type (`lib/game/pot.ts`), wild cards free, heat up costs 2 coins, unused pot refunded at the end. The host's wallet funds the pot, guests pay the host in cash. | Owner approval 2026-10-15. |
+| D15 | **Shop catalogue** as in `docs/FRONTEND_PLAN.md` 6.3: tools, packs and cosmetics paid with coins; coin packages are real money later (Payments open soon, test purchases toggle by tapping Version five times in Settings). Pack contents are short sample sets. | Owner approval 2026-10-15. |
+| D16 | **Social features are visible but labelled Sample** (Discover, leaderboard, invite) until accounts exist. | Owner approval 2026-10-15. |
+| D17 | **Own decks play alone.** Choosing "My decks" as the card source uses only those cards, so a small deck makes a shorter game. `[SLOT]` blanks are filled from three words the host types, or those cards are left out. | Decided in the run. |
+| D18 | Bottom tabs show only on the four top-level screens. Retired routes `/profile`, `/saved`, `/decks` stay as redirect stubs because the device tools cannot delete files. | |
+| D19 | Display settings are mirrored to `<html data-text|motion|contrast|hand>` by `SettingsApplier`; CSS reads them. Equipped accent theme sets `--accent` on `<html>` outside games. | |
+
 Open / unknown (owner can't remember — decide when it comes up, then record it above):
 - Whether phone-OTP login is still wanted (docs said email/Google/phone; code has email + Google only).
 - Skip button and its coin cost; pot mechanics details; creator-reward economics.
@@ -145,22 +157,26 @@ src/
     join/                        Enter code or paste link
     (main)/                      Layout = profile guard + BottomNav
       page.tsx                   Home (host / join)
-      profile/, saved/, decks/   Profile, saved cards, decks (premium = UI only)
-    game/[roomCode]/             Lobby (+ guests)
+      library/                   My decks, Saved, Discover; decks/new, decks/[id], decks/[id]/edit; discover/[id]
+      shop/                      Coins, Tools, Packs, Style
+      me/                        Hub; wallet/, leaderboard/, referral/, settings/, settings/trashed/
+      profile/, saved/, decks/   Redirect stubs to /me, /library?tab=saved, /library
+    help/, legal/terms, legal/privacy   Help, FAQ, draft legal pages    game/[roomCode]/             Lobby (+ guests)
       setup/                     5-step wizard + tap-to-agree house rules + Start
       play/                      Card game + pause sheet + recap
       join/                      Redirects to /join?code=
     api/sessions/route.ts        Stage B (Supabase), unused by UI
   components/
-    ui/      Button, Sheet, Toast, Icon, Avatar, AvatarPicker, Chip, Screen, Stepper, BottomNav, Logo, Splash, DeckFan
-    play/    PlayCard, HeatBar, PassOverlay, PauseSheet, Recap
+    ui/      Button, Sheet, Toast, Icon, Avatar (frames), AvatarPicker, Chip, Screen, Stepper, BottomNav, Logo, Splash, DeckFan, SegmentedControl, Toggle, ListRow, ConfirmSheet, EmptyState, Skeleton, TextField, NumberStepper, CoinAmount, Badge, SettingsApplier, OfflineBanner
+    play/    PlayCard, HeatBar, PassOverlay, PauseSheet, Recap, TopUpSheet, ToolsSheet, WildExtras, InstallSheet, TargetPicker
+    library/ MyDecks, Discover, SavedList, CardEditorSheet, AddToDeckSheet, common
     lobby/   PlayerRow
   hooks/     use-room (room <-> session-store sync), use-realtime-lobby + use-game-actions (Stage B, unused)
   lib/
-    game/    game-modes, escalation-engine, card-queue-builder, steering, comfort-filters, turn-rotation, wild-cards, setup-options
-    data/    cards (131 generated from the seed: scripts/seed-to-ts.mjs), rooms (repository), join, start-game
-    cn.ts, haptics.ts, hydration.ts, storage.ts, use-profile.ts, validators.ts, supabase/ (Stage B)
-  stores/    game-store (persisted), session-store, profile-store (persisted), toast-store
+    game/    game-modes, escalation-engine, card-queue-builder, steering, comfort-filters, turn-rotation, wild-cards, setup-options, pot, mid-game
+    data/    cards (131 generated from the seed: scripts/seed-to-ts.mjs), rooms (repository), join, start-game (buildLibrary), shop-catalogue, discover-seed
+    cn.ts, card-back.ts, share-image.ts, sound.ts, haptics.ts, hydration.ts, storage.ts, use-profile.ts, validators.ts, supabase/ (Stage B)
+  stores/    game-store (persisted, includes pot), session-store, profile-store, settings-store, wallet-store, shop-store, deck-store (all persisted), toast-store
   types/
 scripts/seed-to-ts.mjs          Regenerates src/lib/data/cards.ts from supabase/seed/cards.sql
 supabase/                       Migration + seed (Stage B)
@@ -191,14 +207,14 @@ Gaps: `cards.deck_id` has no FK (no `decks` table yet); no `coin_transactions`, 
 
 Revised plan after the 2026-10-15 decisions. Original 7 phases remain in `build_plan.md` as feature inventory.
 
-**Stage A — Frontend rebuild with mock data (DONE except polish items below)**
+**Stage A — Frontend rebuild with mock data. The full build spec and milestone order (F1 to F10) is `docs/FRONTEND_PLAN.md`; follow it. Owner direction 2026-10-15: focus purely on the frontend before any backend work.**
 - A0. Design system: tokens, fonts, primitives (Button, Sheet, Toast, Avatar, Chip, Card), motion presets, icon set. Pick the visual direction (§7) and record it.
 - A1. App shell + routing + mock data layer (`src/lib/data/` repository interface with an in-memory/mock implementation and a `localStorage` "fake multiplayer"; swappable for Supabase later).
 - A2. Screens: splash/onboarding, sign-up/login, profile setup, home, join (enter code/scan QR), lobby, setup wizard (6 steps), house rules, game screen (card stack, flip, swipe, trash, heart, heat, pass prompt, wild overlay, action cards), pause menu, end/recap, profile, saved cards, shop (UI only), decks/discover (UI only).
 - A3. Polish: motion, haptics (`navigator.vibrate`), sound hooks, accessibility, PWA manifest/icons, empty states, loading/error states, responsive 360–430px.
 - A4. Component tests for critical flows (Vitest + Testing Library) and fix the pure-logic bugs (#7, #8, #9, #14, #15).
 
-Stage A leftovers: QR code for the invite, sound hooks, wild-card-specific interactions (e.g. pick a target), drink-rule text shown on cards, component tests for the new screens, real PWA icons (PNG), a visual review on a real phone.
+Stage A leftovers: QR code for the invite (low value while play is single-phone), sound hooks, component tests for the new screens (needs jsdom + Testing Library), a visual review on a real phone. Done since: target picker on wild cards, rule line during play, first-game swipe hint, Resume button on home, screen wake lock, branded 404/error pages, PNG PWA icons, single bottom toast.
 
 **Stage B — Backend wiring (CURRENT NEXT)**
 - New Supabase project; fix migration/RLS (#3, #4, #13), `join_session` RPC, profile trigger, realtime hydration (#1, #2), route protection, replace mock repository with Supabase implementation, offline sync queue wiring (#10, #11).
@@ -267,6 +283,12 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-15 (overnight run, F1 to F9)** — Autonomous run per `docs/OVERNIGHT_RUN.md`, files written straight into the owner's folder. F1 shell (4 tabs, 12 shared components). F2 settings store and page with every row applied, Me hub, trashed cards. F3 wallet ledger and coin pot (`lib/game/pot.ts`, pot step, per-card charge, low and empty states, top up, refund, wallet history; 20+ new tests). F4 shop (catalogue, buy and equip, avatar frames, card backs, accent themes, packs feed the Auto pool). F5 play depth (tools tray, wild-card flows, dare timers, 3 s resume, change mood, focus next cards, add and reorder players, report card; `lib/game/mid-game.ts` with tests). F6 library (deck store, editor with `[SLOT]`, saved list with search, filter and multi-select, card source step). Extras: Help and FAQ, draft legal pages, 18+ gate, Discover, leaderboard and invite samples, recap upgrades and share image, install and offline prompts, sounds (off by default), home tips. 161 tests pass, lint clean, build OK.
+
+- **2026-10-15 (plan)** — Wrote `docs/FRONTEND_PLAN.md`: sitemap, every screen and control, settings list, shop catalogue, coin pot rules, data model, milestones F1 to F10, QA checklist, open questions.
+
+- **2026-10-15 (polish)** — Player-facing wild card copy (`wildDescription`, non-drinking aware), `TargetPicker`, `ruleLine`, wake lock hook, not-found/error pages, PNG icons + apple-touch-icon, one toast at a time anchored above the action buttons, Resume game on home. Files are now written straight into the owner's folder (no more patches or commit instructions: owner's request).
 
 - **2026-10-15 (redesign v2)** — Owner rejected the first look (emoji, gradients, glow). Researched and rebuilt every screen: Archivo type-first system, flat deck colours, SVG icons, colour+initial avatars, no emoji in code or data, removed the legacy `components/setup`. See §7 hard rules.
 

@@ -1,6 +1,24 @@
 import { rooms, type Room } from '@/lib/data/rooms';
 import { CURATED_CARDS } from '@/lib/data/cards';
+import { PACK_CARDS } from '@/lib/data/shop-catalogue';
+import { useShopStore } from '@/stores/shop-store';
+import { applySlots, toQueuedCards, useDeckStore } from '@/stores/deck-store';
 import { useGameStore } from '@/stores/game-store';
+import { useProfileStore } from '@/stores/profile-store';
+import { useWalletStore } from '@/stores/wallet-store';
+import { isPotValid, potTotal } from '@/lib/game/pot';
+
+export const LAST_ROOM_KEY = 'tagai-last-room';
+
+/** The cards a game draws from: the Auto pool, or only the chosen decks (a small deck makes a shorter game). */
+export function buildLibrary(room: Room) {
+  const auto = [...CURATED_CARDS, ...useShopStore.getState().owned.flatMap((id) => PACK_CARDS[id] ?? [])];
+  const ids = room.config.deckIds ?? [];
+  if (ids.length === 0) return auto;
+  const decks = useDeckStore.getState().decks.filter((d) => ids.includes(d.id));
+  const own = applySlots(decks.flatMap(toQueuedCards), room.config.slotFills ?? []);
+  return own.length > 0 ? own : auto;
+}
 
 export function allAgreed(room: Room): boolean {
   return room.players.length >= 2 && room.players.every((p) => room.agreedPlayers.includes(p.userId));
@@ -14,6 +32,9 @@ export function allAgreed(room: Room): boolean {
 export function startGame(room: Room, trashedCardIds: string[]): boolean {
   if (!room.config.gameMode || !allAgreed(room)) return false;
   const players = [...room.players].sort((a, b) => a.turnOrder - b.turnOrder);
+  const total = potTotal(room.config.potStyle ?? 'solo', room.config.potCoins ?? 0, players.length);
+  const coins = useProfileStore.getState().profile?.coins ?? 0;
+  if (!isPotValid(total) || coins + 1e-9 < total) return false;
 
   useGameStore.getState().initializeQueue(
     {
@@ -23,8 +44,10 @@ export function startGame(room: Room, trashedCardIds: string[]): boolean {
       trashedCardIds,
       playerCount: players.length,
     },
-    CURATED_CARDS,
+    buildLibrary(room),
   );
+  useWalletStore.getState().apply('pot', -total, `Pot for a ${room.config.gameMode} game`);
+  useGameStore.getState().fundPot(total);
   useGameStore.setState({
     turnRotation: {
       players: players.map((p) => ({ id: p.userId, name: p.displayName, avatarUrl: p.avatarUrl, turnOrder: p.turnOrder })),
@@ -32,5 +55,6 @@ export function startGame(room: Room, trashedCardIds: string[]): boolean {
     },
   });
   rooms.update(room.code, (r) => ({ ...r, status: 'active' }));
+  try { window.localStorage.setItem(LAST_ROOM_KEY, room.code); } catch { /* ignore */ }
   return true;
 }

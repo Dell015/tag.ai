@@ -23,10 +23,19 @@ export function avatarColor(value: string | undefined | null, name = '') {
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
-export function Avatar({ value, name = '', size = 48, className }: { value?: string | null; name?: string; size?: number; className?: string }) {
+const frameStyle = (f: string, size: number): { wrap: React.CSSProperties; pad: number } | null => {
+  const pad = Math.max(3, Math.round(size * 0.08));
+  if (f === 'stripe') return { pad, wrap: { background: 'repeating-linear-gradient(45deg, rgb(var(--accent)) 0 4px, rgb(var(--bg)) 4px 8px)' } };
+  if (f === 'dots') return { pad, wrap: { backgroundImage: 'radial-gradient(circle, rgb(var(--accent)) 1.8px, transparent 2.4px)', backgroundSize: '7px 7px' } };
+  if (f === 'double') return { pad: pad + 2, wrap: { boxShadow: 'inset 0 0 0 2px rgb(var(--accent)), 0 0 0 2px rgb(var(--accent))', margin: 2 } };
+  return null;
+};
+
+export function Avatar({ value, name = '', size = 48, className, frame }: { value?: string | null; name?: string; size?: number; className?: string; frame?: string }) {
   const c = avatarColor(value, name);
   const initial = (name.trim()[0] ?? '?').toUpperCase();
-  return (
+  const fr = frame ? frameStyle(frame, size) : null;
+  const face = (
     <span
       aria-hidden
       style={{ width: size, height: size, fontSize: size * 0.5, background: c.bg, color: c.fg }}
@@ -35,4 +44,5 @@ export function Avatar({ value, name = '', size = 48, className }: { value?: str
       {initial}
     </span>
   );
+  return fr ? <span className="inline-flex shrink-0 rounded-full" style={{ padding: fr.pad, ...fr.wrap }}>{face}</span> : face;
 }

@@ -1,4 +1,6 @@
 /** Tiny wrapper around the Vibration API (Android; silently ignored elsewhere). */
+import { useSettingsStore } from '@/stores/settings-store';
+
 type Kind = 'tap' | 'success' | 'warn' | 'heavy';
 const PATTERNS: Record<Kind, number | number[]> = {
   tap: 12,
@@ -8,6 +10,7 @@ const PATTERNS: Record<Kind, number | number[]> = {
 };
 
 export function haptic(kind: Kind = 'tap'): void {
+  if (!useSettingsStore.getState().vibration) return;
   if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
   try {
     navigator.vibrate(PATTERNS[kind]);

@@ -15,6 +15,8 @@ import { advanceTurn, TurnState } from '@/lib/game/turn-rotation';
 import { buildCardQueue, CardQueueConfig } from '@/lib/game/card-queue-builder';
 import { GAME_MODES } from '@/lib/game/game-modes';
 import { decrementHeatSpike, decrementCrownImmunity, applyShuffleWildCard } from '@/lib/game/wild-cards';
+import { cardCost, round3 } from '@/lib/game/pot';
+import { focusUpcoming, addToTurns, movePlayer as movePlayerInTurns, type FocusKind } from '@/lib/game/mid-game';
 import { GameMode, WildCardType } from '@/types/game';
 
 // ─── State Interface ─────────────────────────────────────────────────────────
@@ -32,6 +34,7 @@ export interface UndoSnapshot {
   turnRotation: TurnState;
   crownImmunityRemaining: number;
   sessionPhase: 'lobby' | 'setup' | 'play' | 'end';
+  pot: number;
   kind: 'dismiss' | 'trash' | 'skip';
 }
 
@@ -64,6 +67,11 @@ export interface GameState {
   showPassPrompt: boolean;
   sessionPhase: 'lobby' | 'setup' | 'play' | 'end';
 
+  // Coin pot (remaining and starting coins; refunded is what went back at the end)
+  pot: number;
+  potStart: number;
+  potRefunded: number;
+
   // Undo
   undoSnapshot: UndoSnapshot | null;
 
@@ -82,6 +90,20 @@ export interface GameState {
   resetGame: () => void;
   initializeQueue: (config: CardQueueConfig, library: QueuedCard[]) => void;
   applyWildCardEffect: (wildCardType: WildCardType) => void;
+  /** Pulls deep questions or dares forward in the queue. Returns how many cards matched. */
+  focusNext: (kind: FocusKind) => number;
+  /** Switches deck for the rest of the game. */
+  changeMood: (mode: GameMode, library: QueuedCard[], opts: { comfortFilters: string[]; trashedCardIds: string[] }) => void;
+  addPlayerToTurns: (p: { id: string; name: string; avatarUrl: string }) => void;
+  movePlayer: (id: string, dir: -1 | 1) => void;
+  /** Sets the pot at game start. */
+  fundPot: (coins: number) => void;
+  /** Adds coins mid-game. */
+  topUpPot: (coins: number) => void;
+  /** Takes coins out of the pot (heat up). Returns false when the pot cannot cover it. */
+  spendPot: (coins: number) => boolean;
+  /** Marks what was returned to the wallet and empties the pot. */
+  settlePot: () => number;
 }
 
 type CardAction = 'dismiss' | 'trash' | 'skip';
@@ -92,7 +114,7 @@ const INITIAL: Pick<
   | 'gameMode' | 'skippedCount' | 'heartedCount' | 'peakHeat' | 'heatLevel'
   | 'consecutiveSkips' | 'heatSpikeRemaining' | 'preSpikeHeat' | 'turnRotation'
   | 'crownImmunityRemaining' | 'currentCardState' | 'showPassPrompt' | 'sessionPhase'
-  | 'undoSnapshot'
+  | 'undoSnapshot' | 'pot' | 'potStart' | 'potRefunded'
 > = {
   cardQueue: [],
   bufferCards: [],
@@ -113,6 +135,9 @@ const INITIAL: Pick<
   showPassPrompt: false,
   sessionPhase: 'lobby',
   undoSnapshot: null,
+  pot: 0,
+  potStart: 0,
+  potRefunded: 0,
 };
 
 function snapshot(state: GameState, kind: CardAction): UndoSnapshot {
@@ -128,6 +153,7 @@ function snapshot(state: GameState, kind: CardAction): UndoSnapshot {
     turnRotation: state.turnRotation,
     crownImmunityRemaining: state.crownImmunityRemaining,
     sessionPhase: state.sessionPhase,
+    pot: state.pot,
     kind,
   };
 }
@@ -185,6 +211,7 @@ function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
     crownImmunityRemaining: decrementCrownImmunity(state.crownImmunityRemaining),
     sessionPhase: shouldEnd ? 'end' : state.sessionPhase,
     showPassPrompt: !shouldEnd,
+    pot: round3(Math.max(0, state.pot - (state.cardQueue[state.currentCardIndex] ? cardCost(state.cardQueue[state.currentCardIndex]) : 0))),
     undoSnapshot: snapshot(state, action),
   };
 }
@@ -197,6 +224,46 @@ export const useGameStore = create<GameState>()(
       ...INITIAL,
 
       flipCard: () => set({ currentCardState: 'revealed' }),
+
+      focusNext: (kind) => {
+        if (kind === 'mix') return 0;
+        const st = get();
+        const r = focusUpcoming(st.cardQueue, st.bufferCards, st.currentCardIndex, kind);
+        set({ cardQueue: r.queue, bufferCards: r.buffer });
+        return r.matched;
+      },
+      changeMood: (mode, library, opts) => {
+        const st = get();
+        const seen = st.cardQueue.slice(0, st.currentCardIndex + 1).map((c) => c.id);
+        const remaining = st.cardCountTarget - st.currentCardIndex - 1;
+        if (remaining <= 0) { set({ gameMode: mode }); return; }
+        const built = buildCardQueue(
+          { gameMode: mode, cardCountTarget: remaining, comfortFilters: opts.comfortFilters, trashedCardIds: [...opts.trashedCardIds, ...seen], playerCount: st.turnRotation.players.length },
+          library,
+        );
+        if (built.cards.length === 0) return;
+        set({
+          gameMode: mode,
+          cardQueue: [...st.cardQueue.slice(0, st.currentCardIndex + 1), ...built.cards],
+          bufferCards: built.buffer,
+        });
+      },
+      addPlayerToTurns: (p) => set((s) => ({ turnRotation: addToTurns(s.turnRotation, p) })),
+      movePlayer: (id, dir) => set((s) => ({ turnRotation: movePlayerInTurns(s.turnRotation, id, dir) })),
+
+      fundPot: (coins) => set({ pot: coins, potStart: coins, potRefunded: 0 }),
+      topUpPot: (coins) => set((s) => ({ pot: round3(s.pot + coins), potStart: round3(s.potStart + coins) })),
+      spendPot: (coins) => {
+        if (get().pot + 1e-9 < coins) return false;
+        set((s) => ({ pot: round3(s.pot - coins) }));
+        return true;
+      },
+      settlePot: () => {
+        const left = get().pot;
+        if (left <= 0) return 0;
+        set({ pot: 0, potRefunded: left });
+        return left;
+      },
 
       /** Swipe / "Next": heat +0.3, advances the turn. */
       dismissCard: () => set((state) => resolveCard(state, 'dismiss')),
@@ -369,6 +436,9 @@ export const useGameStore = create<GameState>()(
         showPassPrompt: state.showPassPrompt,
         sessionPhase: state.sessionPhase,
         undoSnapshot: state.undoSnapshot,
+        pot: state.pot,
+        potStart: state.potStart,
+        potRefunded: state.potRefunded,
       }),
     }
   )

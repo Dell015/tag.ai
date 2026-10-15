@@ -74,3 +74,17 @@ h1, h2, h3, .display {
     scroll-behavior: auto !important;
   }
 }
+
+/* Settings: display options (set on <html> by SettingsApplier) */
+[data-motion="reduce"] *, [data-motion="reduce"] *::before, [data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+[data-contrast="high"] { --line: 190 180 168; --muted: 224 217 208; }
+.card-text { font-size: calc(var(--card-size, 1) * 1em); }
+[data-text="large"] { --card-scale: 1.12; }
+[data-text="xlarge"] { --card-scale: 1.25; }
+
+/* While a sheet is open the toast moves to the top so it never covers the sheet's buttons. */
+body:has([role="dialog"]) .toast-host { bottom: auto; top: 0.75rem; }

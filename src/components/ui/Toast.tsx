@@ -7,7 +7,7 @@ export function ToastHost() {
   const toasts = useToastStore((s) => s.toasts);
   const dismiss = useToastStore((s) => s.dismiss);
   return (
-    <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-0 z-50 mx-auto flex w-full max-w-md flex-col gap-2 px-4 safe-top">
+    <div aria-live="polite" className="toast-host pointer-events-none fixed inset-x-0 bottom-[7.75rem] z-50 mx-auto flex w-full max-w-md flex-col gap-2 px-4">
       {toasts.map((t) => (
         <div key={t.id} role="status"
           className={cn('pointer-events-auto flex min-h-tap animate-toast-in items-center justify-between gap-3 rounded-xl border-2 bg-panel py-2 pl-4 pr-2 text-lg font-bold',

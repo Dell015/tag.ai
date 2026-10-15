@@ -25,7 +25,7 @@ interface ProfileState {
   hydrated: boolean;
 
   createProfile: (username: string, avatar: string) => Profile;
-  updateProfile: (patch: Partial<Pick<Profile, 'username' | 'avatar'>>) => void;
+  updateProfile: (patch: Partial<Pick<Profile, 'username' | 'avatar' | 'coins'>>) => void;
   saveCard: (id: string) => void;
   unsaveCard: (id: string) => void;
   trashCard: (id: string) => void;

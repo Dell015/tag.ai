@@ -25,7 +25,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
   show: (message, opts = {}) => {
     const id = ++seq;
     const item: ToastItem = { id, message, tone: opts.tone ?? 'info', action: opts.action, duration: opts.duration ?? 3000 };
-    set({ toasts: [...get().toasts.slice(-2), item] });
+    set({ toasts: [item] }); // one at a time so messages never stack over the game
     if (typeof window !== 'undefined') {
       window.setTimeout(() => get().dismiss(id), item.duration);
     }

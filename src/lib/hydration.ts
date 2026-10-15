@@ -2,6 +2,10 @@
 import { useEffect, useState } from 'react';
 import { useProfileStore } from '@/stores/profile-store';
 import { useGameStore } from '@/stores/game-store';
+import { useWalletStore } from '@/stores/wallet-store';
+import { useDeckStore } from '@/stores/deck-store';
+import { useShopStore } from '@/stores/shop-store';
+import { useSettingsStore } from '@/stores/settings-store';
 
 /**
  * Persisted stores use `skipHydration` so the server render and the first client
@@ -16,6 +20,10 @@ function hydrateAll(): Promise<void> {
     started = Promise.all([
       useProfileStore.persist.rehydrate(),
       useGameStore.persist.rehydrate(),
+      useSettingsStore.persist.rehydrate(),
+      useWalletStore.persist.rehydrate(),
+      useShopStore.persist.rehydrate(),
+      useDeckStore.persist.rehydrate(),
     ]).then(() => {
       useProfileStore.setState({ hydrated: true });
       done = true;

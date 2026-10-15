@@ -1,5 +1,6 @@
 'use client';
 import { Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Logo, Avatar, AvatarPicker, DeckFan, Icon, Splash } from '@/components/ui';
 import { useProfileStore, WELCOME_COINS } from '@/stores/profile-store';
@@ -13,7 +14,7 @@ function WelcomeInner() {
   const createProfile = useProfileStore((s) => s.createProfile);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('c0');
-  const [step, setStep] = useState<0 | 1>(0);
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0); // 0 intro, 1 age, 2 name, 3 closed
 
   if (!hydrated) return <Splash />;
   const dest = next && next.startsWith('/') ? next : '/';
@@ -38,9 +39,32 @@ function WelcomeInner() {
     );
   }
 
+  if (step === 1) {
+    return (
+      <div className="flex min-h-dvh flex-col px-5 safe-top safe-bottom">
+        <button onClick={() => setStep(0)} aria-label="Back" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="back" /></button>
+        <h1 className="mt-5 text-6xl">Are you 18 or older?</h1>
+        <p className="mt-4 text-lg text-muted">tag.ai is a drinking game, so it is for adults only.</p>
+        <div className="mt-auto space-y-3 pt-8">
+          <Button size="lg" full onClick={() => setStep(2)}>Yes, I&apos;m 18 or older</Button>
+          <Button full variant="secondary" onClick={() => setStep(3)}>No</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className="flex min-h-dvh flex-col justify-center px-5 safe-top safe-bottom">
+        <h1 className="text-6xl">tag.ai is for adults.</h1>
+        <p className="mt-4 text-lg text-muted">Come back when you&apos;re 18.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-dvh flex-col px-5 safe-top safe-bottom">
-      <button onClick={() => setStep(0)} aria-label="Back" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="back" /></button>
+      <button onClick={() => setStep(1)} aria-label="Back" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="back" /></button>
       <h1 className="mt-5 text-6xl">What do your friends call you?</h1>
       <div className="mt-6 flex items-center gap-4">
         <Avatar value={avatar} name={name || '?'} size={72} />
@@ -53,7 +77,7 @@ function WelcomeInner() {
       <AvatarPicker value={avatar} onChange={setAvatar} />
       <div className="mt-auto pt-8">
         <Button size="lg" full disabled={!valid} onClick={() => { createProfile(name, avatar); router.replace(dest); }}>Start playing</Button>
-        <p className="mt-3 text-center text-sm text-muted">You start with {WELCOME_COINS} free coins.</p>
+        <p className="mt-3 text-center text-sm text-muted">You start with {WELCOME_COINS} free coins. By continuing you accept the <Link href="/legal/terms" className="underline">Terms</Link> and <Link href="/legal/privacy" className="underline">Privacy</Link> notes.</p>
       </div>
     </div>
   );

@@ -110,49 +110,61 @@ export const WILD_CARD_DEFINITIONS: Record<WildCardType, WildCardEffect> = {
   role_reversal: {
     type: 'role_reversal',
     title: 'Role Reversal',
-    description: 'The drawer asks the question to a player of their choice',
+    description: 'Ask the question yourself. Pick a player to answer it.',
   },
   pick_your_target: {
     type: 'pick_your_target',
     title: 'Pick Your Target',
-    description: 'The drawer directs the card at one specific player',
+    description: 'Choose one player. This round is aimed at them.',
   },
   everyone_answers: {
     type: 'everyone_answers',
     title: 'Everyone Answers',
-    description: 'All players answer the same question in turn order',
+    description: 'Everyone takes a turn answering, starting with you.',
   },
   shuffle: {
     type: 'shuffle',
     title: 'Shuffle',
-    description: 'Reshuffle the next 5 cards in the queue',
+    description: 'The next 5 cards are shuffled.',
     applyToQueue: applyShuffleWildCard,
   },
   heat_spike: {
     type: 'heat_spike',
     title: 'Heat Spike',
-    description: 'Increases heat by 1 level for the next 3 cards, then reverts',
+    description: 'The next 3 cards turn up the heat.',
     heatModifier: 1.0,
   },
   act_it_out: {
     type: 'act_it_out',
     title: 'Act It Out',
-    description: 'The next card must be answered through charades',
+    description: 'Answer the next card in charades. No talking.',
   },
   whisper_round: {
     type: 'whisper_round',
     title: 'Whisper Round',
-    description: 'Current player whispers their answer to the person on their left only',
+    description: 'Whisper your answer to the player on your left. Nobody else hears it.',
   },
   free_drink: {
     type: 'free_drink',
     title: 'Free Drink',
-    description: 'Everyone drinks! No question — just vibes',
+    description: 'Everyone drinks. No question this time.',
   },
   crown: {
     type: 'crown',
     title: 'Crown',
-    description: 'You are immune to drink assignments for the next 2 cards',
+    description: 'You are immune to drink assignments for the next 2 cards.',
     immunityCards: 2,
   },
 };
+
+/** Player-facing text for a wild card, adapted when the table is not drinking. */
+export function wildDescription(type: WildCardType, nonDrinking: boolean): string {
+  const text = WILD_CARD_DEFINITIONS[type].description;
+  if (!nonDrinking) return text;
+  return text
+    .replace('Everyone drinks.', 'Everyone does a forfeit.')
+    .replace('drink assignments', 'forfeit assignments');
+}
+
+/** Wild cards that name a player. */
+export const TARGET_WILD_CARDS: WildCardType[] = ['role_reversal', 'pick_your_target'];

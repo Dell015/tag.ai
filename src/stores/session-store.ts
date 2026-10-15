@@ -18,6 +18,10 @@ export interface SessionState {
   drinkRuleTemplate: string | null;
   customDrinkRules: string[];
   nonDrinkingMode: boolean;
+  potCoins: number;
+  potStyle: 'solo' | 'split';
+  deckIds: string[];
+  slotFills: string[];
 
   // House rules
   agreedPlayers: string[]; // user IDs who tapped "I Agree"
@@ -49,6 +53,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   drinkRuleTemplate: null,
   customDrinkRules: [],
   nonDrinkingMode: false,
+  potCoins: 0,
+  potStyle: 'solo' as 'solo' | 'split',
+  deckIds: [] as string[],
+  slotFills: [] as string[],
 
   // House rules
   agreedPlayers: [],

@@ -28,6 +28,7 @@
 20. [MVP Build Order](#20-mvp-build-order)
 21. [Full Feature Map](#21-full-feature-map)
 22. [Design Principles](#22-design-principles)
+23. [Design Decisions Log (running)](#23-design-decisions-log-running)
 
 ---
 
@@ -321,7 +322,7 @@ The card is the centerpiece of the screen. All interactions are gesture-based an
 |---|---|
 | **Tap** | Reveal the card (card starts face-down, tap flips it) |
 | **Swipe left or right** | Dismiss the card — move to the next one, card is spent from the pot |
-| **Hold + drag to trash icon** | Permanently remove this card from your account's draw pool — you will never see it again |
+| **Hold + drag to trash icon** | "Not for me": hides this card from you. It never lands on your turn again, but the rest of the group can still get it (see 23.2) |
 | **Tap ❤️ (heart icon)** | Save this card to your Saved Cards library for future use |
 
 ### Card States
@@ -1086,3 +1087,79 @@ BUSINESS
 ---
 
 *Document version 2.0 — updated to reflect confirmed game mechanics, gesture interactions, onboarding flow, mid-game controls, wild card system, drink rules structure, relaxed escalation engine, deferred AI planning, and revised coin economy. Built for the Philippine social market.*
+
+---
+
+## 23. Design Decisions Log (running)
+
+This section records every mechanic decision as it is made, newest last. Items marked **Built** exist in the prototype; **Designed** are agreed but not built yet. When the project is finished this log becomes the source for the full explanation.
+
+### 23.1 How the card pool is mixed for a game (Designed, 2026-10-16)
+
+- Today the cards are a **pre-made curated library** (about 120 cards). No AI runs inside the app. Auto mode picks by rules: vibe, intensity, length, topics.
+- Each account has **saved cards**, sorted by category.
+- When a game starts, the deck is built from two sources:
+  - **Personal share:** each player contributes cards from their own saved cards in the selected category. Example: 100-card game, 4 players, 20 cards per player (80 cards).
+  - **Fresh share:** the remaining cards (20 in the example) come from the **unused pool**, cards nobody in the room has saved. Part of the fresh share is weighted toward **popular** cards, the rest is "explore" so new cards get tested.
+- **Shortfall rule:** if a player has fewer saved cards in the chosen category than their quota, the missing amount is added to the fresh share. Example: one player has 12 of 20, so the fresh share becomes 28.
+- A card saved by two players is used once; the freed slot also goes to the fresh share.
+- Saved cards are not "owned" by the player who saved them. They go into the shared draw and can land on anyone's turn. Trashed cards are excluded (see 23.2).
+- Cards carry an **ID** and **stats** (shown, finished, skipped, saved, reported). Popularity is a **rate with smoothing**, not a raw count, so new cards are not buried. Roughly 80% of fresh picks go to proven cards and 20% to untested ones.
+- Pool size: do not pre-make a million cards. Start with a few thousand good cards and grow only where players run out. Storage cost is not the concern for text; generation and moderation are.
+
+### 23.2 Trashed cards (Designed, 2026-10-16)
+
+- Problem: if one player trashes a card everyone else likes, a global trash would remove it for the whole group.
+- Rule: **trash is personal.** It hides the card **for that player only**.
+  - It is never drawn for that player's own turn and never counted in that player's personal share.
+  - If it comes up on their turn, it is swapped for another card of the same category and intensity.
+  - Everyone else can still get it.
+- Trash is a weak signal for popularity. **Report** is the strong one: reports retire a card for everyone after review.
+- Group-level "off limits" stays with **comfort filters** (topic level, host-controlled, private flagging).
+- Current prototype behaviour: trashing removes the card for the rest of that game and saves it to that account's trash list. The per-player swap above is **not built yet**.
+
+### 23.3 Handling new card requests, topics and mechanics (Designed, 2026-10-16)
+
+We do not read every card by hand. The pipeline is:
+1. **Intake:** a submitted card or request is cleaned (trim, lowercase for comparison).
+2. **Duplicate check, automatic:** exact match by hash, near match by text embedding similarity (pgvector). Near duplicates are rejected or merged.
+3. **Safety check, automatic:** a moderation pass. Spicy, deep and dare tiers go to a **human approval queue**; casual and standard tiers can auto-approve.
+4. **Trial:** new cards start as "pending" and are shown to a small share of games first.
+5. **Retire:** cards with high skip or report rates are retired.
+- **New topic:** add it to the topic list, then label existing cards in a batch (model-assisted), review a sample.
+- **New mechanic:** a mechanic is a **card type or card field**, not a card. It gets a spec in this document first, then a schema change, then cards that use it.
+
+### 23.4 The "Why?" follow-up (Designed, 2026-10-16)
+
+- Applies to **yes/no style questions**, for example "If you could erase one person from your past completely, would you?" Each such card gets a "Why?" follow-up.
+- Drink rule for these cards:
+  - Answers yes or no and **explains why**: no drink (assumed, to confirm).
+  - Answers **yes or no only**: **1 shot**.
+  - **Cannot answer** the why: **2 shots**.
+  - **Skipping** the card means taking a shot. This is "common knowledge" at the table, so the app does not need to enforce it (reading of the owner's note, to confirm).
+- Implementation idea: a `followUp: 'why'` field on the card, shown as a second line on the card with the penalty line under it.
+
+### 23.5 Seat sequence (Designed, partly built, 2026-10-16)
+
+- Drinking sessions sit in a circle with a fixed order. The turn order **is** the seating order.
+- **Before the game:** the host arranges players in a circle on a seat screen (drag to reorder) and picks direction (clockwise or counter-clockwise).
+- **During the game:** the pause menu lets the host move players. When someone **joins**, the host picks where they sit (between two named people). When someone **leaves**, the gap closes and the "next up" pointer is kept.
+- **Built:** turn order exists, and the pause menu can add, reorder and remove players mid-game.
+- **Not built:** the pre-game seat screen, the circle view, direction, and "sits between" placement.
+
+### 23.6 Player limit (Decided, 2026-10-16)
+
+- The old cap of 12 players was an arbitrary default, not a technical limit.
+- Real reasons to have any limit: waiting time between turns grows with every player, and the screen has to show everyone.
+- Decision: **soft cap of 20**. Above 12, the app shows a note that turns will be far apart. A host-set cap is a later option.
+- Built: the cap constant is now 20.
+
+### 23.7 Players who do not drink (Designed, 2026-10-16)
+
+- The existing **Non-Drinking Mode** is a whole-room switch.
+- Per-player option: each player can be marked **not drinking** in the lobby, privately, without the group seeing why.
+- Their penalties change instead of disappearing, so the game stays fair:
+  - A shot becomes a **sip of any drink** (water counts) or an **alternative** chosen by the group: a short dare or an extra question.
+  - Optional: they **give** the drink to someone else instead.
+- Penalty wording uses neutral units ("1 penalty") in rooms with mixed players.
+- **Not built.** Today the setting applies to the whole room only.

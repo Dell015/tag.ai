@@ -1,0 +1,80 @@
+'use client';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Screen } from '@/components/ui';
+import { cn } from '@/lib/cn';
+
+const STEPS = [
+  ['Host a game', 'Tap Host a game on the home screen and add your friends by name. They do not need the app.'],
+  ['Pick a deck', 'Choose a deck, how many cards, the topics to skip and how many coins go in the pot.'],
+  ['Pass the phone', 'The phone shows whose turn it is. Tap the card to reveal it, then answer or take the dare.'],
+  ['Done or skip', 'Tap Done when it is played. Skip is always allowed. Nobody has to answer anything.'],
+];
+
+const GLOSSARY = [
+  ['Deck', 'A set of cards with its own mood, like Barkada or Spicy.'],
+  ['Heat', 'How intense the cards are right now, from 1 to 5. It rises when cards are played and falls when they are skipped.'],
+  ['Wild card', 'A special card that changes the game, such as Shuffle or Free Drink. It never costs coins.'],
+  ['Pot', 'The coins that pay for the cards in one game. Whatever is left comes back to you.'],
+  ['Dare', 'A card that asks you to do something instead of answer.'],
+  ['Forfeit', 'What you do instead of drinking in non-drinking mode.'],
+];
+
+const FAQ = [
+  ['Do my friends need the app?', 'No. You add them by name and pass one phone around. If they want to join from their own phone, they can enter your room code.'],
+  ['What do coins do?', 'Coins pay for the cards in a game, through the pot. You can also spend them in the Shop on tools, card packs and looks.'],
+  ['Can I play without alcohol?', 'Yes. Turn on non-drinking mode in the drink rules step. Drinks become dares and forfeits.'],
+  ['How do I remove a card?', 'Tap Trash while a card is showing. It will not come back in your games. You can restore it in Settings, under Trashed cards.'],
+  ['Does it work offline?', 'Yes. Once a game starts, it runs on your phone without a connection.'],
+  ['What is heat?', 'Heat is how intense the next cards are. Play more cards and it climbs. Skip and it cools. You can change it from the pause menu.'],
+  ['Who sees my saved cards?', 'Only you. Saved cards live on your phone.'],
+  ['How do I report a card?', 'Open the pause menu during a game and tap Report this card.'],
+];
+
+function Item({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b-2 border-line/60">
+      <button aria-expanded={open} onClick={() => setOpen(!open)} className="flex min-h-[4.25rem] w-full items-center justify-between gap-3 py-3 text-left">
+        <span className="text-xl font-bold">{q}</span>
+        <span aria-hidden className={cn('text-2xl font-extrabold text-muted transition-transform', open && 'rotate-45')}>+</span>
+      </button>
+      {open && <p className="pb-4 text-lg text-muted">{a}</p>}
+    </div>
+  );
+}
+
+export default function HelpPage() {
+  const router = useRouter();
+  return (
+    <Screen title="Help" onBack={() => router.back()}>
+      <h2 className="mb-2 text-3xl">How to play</h2>
+      <ol className="space-y-4">
+        {STEPS.map(([t, d], i) => (
+          <li key={t} className="flex gap-4">
+            <span className="display flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-2xl text-onaccent">{i + 1}</span>
+            <span><span className="block text-xl font-extrabold">{t}</span><span className="text-lg text-muted">{d}</span></span>
+          </li>
+        ))}
+      </ol>
+
+      <h2 className="mb-1 mt-10 text-3xl">Words we use</h2>
+      <dl>
+        {GLOSSARY.map(([t, d]) => (
+          <div key={t} className="border-b-2 border-line/60 py-3"><dt className="text-xl font-extrabold">{t}</dt><dd className="text-lg text-muted">{d}</dd></div>
+        ))}
+      </dl>
+
+      <h2 className="mb-1 mt-10 text-3xl">Questions</h2>
+      <div>{FAQ.map(([q, a]) => <Item key={q} q={q} a={a} />)}</div>
+
+      <h2 className="mb-2 mt-10 text-3xl">Drinking responsibly</h2>
+      <ul className="space-y-2 text-lg text-muted">
+        <li>Drink water between rounds.</li>
+        <li>Anyone can skip any card, any time. Nobody has to drink.</li>
+        <li>Plan your ride home before you start. Never drive after drinking.</li>
+        <li>Stop the game if someone is not okay.</li>
+      </ul>
+    </Screen>
+  );
+}

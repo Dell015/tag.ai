@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, Icon, Screen, Splash, toast } from '@/components/ui';
+import { Button, ConfirmSheet, Icon, Screen, Splash, toast } from '@/components/ui';
 import { PlayerRow } from '@/components/lobby/PlayerRow';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
@@ -17,6 +17,7 @@ export default function LobbyPage() {
   const { status, room } = useRoom(code);
   const [guest, setGuest] = useState('');
   const joined = useRef(false);
+  const [leaving, setLeaving] = useState(false);
 
   // Arriving from an invite link: join automatically while the room is in the lobby.
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function LobbyPage() {
 
   return (
     <Screen
-      back="/"
+      onBack={isHost && room.players.length > 1 ? () => setLeaving(true) : () => router.push('/')}
       footer={
         isHost ? (
           <>
@@ -128,6 +129,8 @@ export default function LobbyPage() {
         </form>
       )}
       {isHost && <p className="mt-2 text-sm text-muted">No account needed. Friends without the app play from your phone.</p>}
+      <ConfirmSheet open={leaving} title="Leave this room?" body="Everyone you added will be removed from the lobby." confirmLabel="Leave room" danger
+        onConfirm={() => { rooms.remove(code); router.push('/'); }} onClose={() => setLeaving(false)} />
     </Screen>
   );
 }

@@ -17,6 +17,13 @@ export interface RoomConfig {
   drinkRuleTemplate: string | null;
   customDrinkRules: string[];
   nonDrinkingMode: boolean;
+  /** Coin pot: 0 means "not chosen yet" (the setup step fills in a suggestion). */
+  potCoins: number;
+  potStyle: 'solo' | 'split';
+  /** Empty means the Auto pool (curated cards plus owned packs). */
+  deckIds: string[];
+  /** Words that fill [SLOT] blanks in the chosen decks. */
+  slotFills: string[];
 }
 
 export interface Room {
@@ -45,6 +52,10 @@ export const DEFAULT_CONFIG: RoomConfig = {
   drinkRuleTemplate: null,
   customDrinkRules: [],
   nonDrinkingMode: false,
+  potCoins: 0,
+  potStyle: 'solo',
+  deckIds: [],
+  slotFills: [],
 };
 
 const KEY = (code: string) => `tagai-room:${code}`;
@@ -150,7 +161,7 @@ export const rooms: RoomRepository = localRoomRepository;
 
 // ─── Helpers shared by the UI ────────────────────────────────────────────────
 
-export const MAX_PLAYERS = 12;
+export const MAX_PLAYERS = 20;
 
 export function nextTurnOrder(room: Room): number {
   return room.players.reduce((max, p) => Math.max(max, p.turnOrder), -1) + 1;

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/archivo/wdth.css";
 import "./globals.css";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
+import { SettingsApplier } from "@/components/ui/SettingsApplier";
+import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ToastHost } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
@@ -10,6 +12,7 @@ export const metadata: Metadata = {
     "Pass the phone, answer the card, take the shot. A drinking game built for Filipino barkadas.",
   applicationName: "tag.ai",
   manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg", apple: "/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "tag.ai", statusBarStyle: "black-translucent" },
 };
 
@@ -26,7 +29,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className="antialiased">
         <StoreHydrator />
+        <SettingsApplier />
         <div className="mx-auto min-h-dvh w-full max-w-md">{children}</div>
+        <OfflineBanner />
         <ToastHost />
       </body>
     </html>

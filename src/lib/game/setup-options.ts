@@ -58,3 +58,10 @@ export const DRINK_RULE_TEMPLATES: DrinkRuleTemplate[] = [
 ];
 
 export const MAX_CUSTOM_RULES = 5;
+
+/** One short line describing the table's rules, shown during play. */
+export function ruleLine(templateId: string | null, nonDrinking: boolean): string {
+  if (nonDrinking) return 'Forfeits instead of drinks';
+  const t = DRINK_RULE_TEMPLATES.find((x) => x.id === templateId);
+  return t ? `${t.name} rules` : 'Classic rules';
+}
