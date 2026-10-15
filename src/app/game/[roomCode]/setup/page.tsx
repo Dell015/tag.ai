@@ -19,11 +19,26 @@ import { useShopStore } from '@/stores/shop-store';
 import { TextField } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
+import { IntensityBars } from '@/components/library/parts';
+import { BROWSABLE } from '@/lib/data/taxonomy';
 import type { GameMode } from '@/types/game';
 
 type PotStyle = 'solo' | 'split';
 
-const MODE_KEYS: GameMode[] = ['icebreaker', 'barkada', 'lovers', 'spicy', 'chaos', 'family'];
+const DECK_GROUPS: { label: string; hint: string; modes: GameMode[] }[] = [
+  { label: 'Easy start', hint: 'Good for a first round or a mixed crowd', modes: ['icebreaker', 'family'] },
+  { label: 'Your crowd', hint: 'Made for who is at the table', modes: ['barkada', 'lovers'] },
+  { label: 'Turn it up', hint: 'Higher heat from the first card', modes: ['spicy', 'chaos'] },
+];
+/** A real card from the deck's own heaviest intensity, so the preview is honest. */
+function sampleLine(k: GameMode): string {
+  const w = GAME_MODES[k].poolDistribution;
+  const top = Number(Object.keys(w).sort((a, b) => w[Number(b)] - w[Number(a)] || Number(b) - Number(a))[0]);
+  const pool = BROWSABLE.filter((c) => c.cardType === 'question' && c.intensity === top);
+  return pool.length ? pool[k.length % pool.length].text : '';
+}
+const poolSize = (k: GameMode) => BROWSABLE.filter((c) => (GAME_MODES[k].poolDistribution[c.intensity] ?? 0) > 0).length;
+
 type StepKey = 'deck' | 'source' | 'length' | 'topics' | 'pot' | 'drinks' | 'house';
 const STEPS: StepKey[] = ['deck', 'source', 'length', 'topics', 'pot', 'drinks', 'house'];
 const TOTAL = STEPS.length;
@@ -124,20 +139,40 @@ export default function SetupPage() {
       )}
 
       {key === 'deck' && (
-        <div className="grid grid-cols-2 gap-3">
-          {MODE_KEYS.map((k) => {
-            const m = GAME_MODES[k];
-            const on = mode === k;
-            return (
-              <button key={k} data-mode={k} aria-pressed={on} onClick={() => { haptic('tap'); set({ gameMode: k }); }}
-                className={cn('relative flex min-h-[10.5rem] flex-col justify-between rounded-card bg-accent p-4 text-left text-onaccent transition-transform active:scale-[0.97]',
-                  on ? 'ring-4 ring-text ring-offset-4 ring-offset-bg' : '')}>
-                <span className="text-4xl font-extrabold" style={{ fontStretch: '72%' }}>{m.name}</span>
-                <span className="text-base font-semibold leading-snug">{m.description}</span>
-                {on && <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-text text-bg"><Icon name="check" size={18} /></span>}
-              </button>
-            );
-          })}
+        <div className="space-y-7">
+          {DECK_GROUPS.map((g) => (
+            <section key={g.label}>
+              <h3 className="text-3xl">{g.label}</h3>
+              <p className="mb-3 mt-1 text-base text-muted">{g.hint}</p>
+              <div className="space-y-3">
+                {g.modes.map((k) => {
+                  const m = GAME_MODES[k];
+                  const on = mode === k;
+                  const w = [1, 2, 3, 4, 5].map((n) => m.poolDistribution[n] ?? 0);
+                  return (
+                    <button key={k} data-mode={k} aria-pressed={on} onClick={() => { haptic('tap'); set({ gameMode: k }); }}
+                      className={cn('relative block w-full rounded-card bg-accent p-4 text-left text-onaccent transition-transform active:scale-[0.98]', on ? 'ring-4 ring-text ring-offset-4 ring-offset-bg' : '')}>
+                      <span className="flex items-start justify-between gap-3">
+                        <span className="min-w-0">
+                          <span className="block text-4xl font-extrabold leading-none" style={{ fontStretch: '72%' }}>{m.name}</span>
+                          <span className="mt-2 block text-base font-semibold leading-snug">{m.description}</span>
+                        </span>
+                        {on
+                          ? <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-text text-bg"><Icon name="check" size={18} /></span>
+                          : <IntensityBars values={w} className="mt-1 shrink-0" label={`Intensity mix of ${m.name}, level 1 to 5`} />}
+                      </span>
+                      <span className="mt-3 flex flex-wrap gap-1.5">
+                        {[m.audienceTag, `Starts at heat ${m.entryHeat}`, `Wild card about every ${m.wildCardFrequency.base}`, ...(m.maxHeat ? [`Heat stops at ${m.maxHeat}`] : []), `${poolSize(k)} cards`].map((t) => (
+                          <span key={t} className="rounded-full border-2 border-current px-2.5 py-0.5 text-sm font-bold">{t}</span>
+                        ))}
+                      </span>
+                      {on && sampleLine(k) && <span className="mt-3 block border-t-2 border-current/30 pt-3 text-lg font-bold leading-snug">Sample: {sampleLine(k)}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
 

@@ -1,7 +1,7 @@
 'use client';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Button, Chip, EmptyState, Icon, Screen, TextField, toast } from '@/components/ui';
+import { Button, Chip, EmptyState, Icon, Screen, Spot, TextField, toast } from '@/components/ui';
 import { CardEditorSheet } from '@/components/library/CardEditorSheet';
 import { categoryLabel } from '@/components/library/common';
 import { AUDIENCES, MAX_DECK_CARDS, hasSlot, useDeckStore, type DeckCard } from '@/stores/deck-store';
@@ -67,7 +67,7 @@ export default function EditDeckPage() {
       </div>
       {fromSaved.length === 0 && <p className="mt-2 text-sm text-muted">Cards you save in games can be added here.</p>}
 
-      {deck.cards.length === 0 ? <EmptyState title="Empty deck." body="Write your first card. A deck plays best with 10 or more." /> : (
+      {deck.cards.length === 0 ? <EmptyState art={<Spot name="bubble" />} title="Empty deck." body="Write your first card. A deck plays best with 10 or more." /> : (
         <ul className="mt-2">
           {deck.cards.map((c) => (
             <li key={c.id} className="border-b-2 border-line/60 py-4">

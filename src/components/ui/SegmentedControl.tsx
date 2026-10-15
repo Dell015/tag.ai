@@ -12,7 +12,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
         const on = o.id === value;
         return (
           <button key={o.id} role="tab" aria-selected={on} onClick={() => { haptic('tap'); onChange(o.id); }}
-            className={cn('h-12 min-w-0 flex-1 truncate rounded-lg px-2 text-base font-extrabold transition-colors', on ? 'bg-accent text-onaccent' : 'text-muted')}>
+            className={cn('h-12 min-w-0 flex-1 truncate rounded-lg px-1 text-[0.95rem] font-extrabold transition-colors', on ? 'bg-accent text-onaccent' : 'text-muted')}>
             {o.label}
           </button>
         );

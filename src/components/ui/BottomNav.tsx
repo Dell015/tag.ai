@@ -23,9 +23,10 @@ export function BottomNav() {
           return (
             <li key={i.href}>
               <Link href={i.href} aria-current={active ? 'page' : undefined}
-                className={cn('relative flex h-[4.25rem] flex-col items-center justify-center gap-1 text-sm font-bold', active ? 'text-text' : 'text-muted')}>
-                {active && <span className="absolute inset-x-6 top-0 h-1 rounded-b bg-accent" />}
-                <Icon name={i.icon} size={26} />
+                className={cn('relative flex h-[4.25rem] flex-col items-center justify-center gap-0.5 text-sm font-bold', active ? 'text-text' : 'text-muted')}>
+                <span className={cn('flex h-8 w-14 items-center justify-center rounded-full transition-colors', active && 'bg-accent text-onaccent')}>
+                  <Icon name={i.icon} size={26} />
+                </span>
                 {i.label}
               </Link>
             </li>

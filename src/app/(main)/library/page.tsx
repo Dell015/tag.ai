@@ -5,10 +5,12 @@ import { SegmentedControl } from '@/components/ui';
 import { SavedList } from '@/components/library/SavedList';
 import { Discover } from '@/components/library/Discover';
 import { MyDecks } from '@/components/library/MyDecks';
+import { Browse } from '@/components/library/Browse';
 
-type Tab = 'decks' | 'saved' | 'discover';
+type Tab = 'decks' | 'browse' | 'saved' | 'discover';
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'decks', label: 'My decks' },
+  { id: 'decks', label: 'Decks' },
+  { id: 'browse', label: 'Browse' },
   { id: 'saved', label: 'Saved' },
   { id: 'discover', label: 'Discover' },
 ];
@@ -30,6 +32,7 @@ function LibraryInner() {
       <SegmentedControl label="Library sections" options={TABS} value={tab} onChange={change} />
       <div className="mt-5">
         {tab === 'decks' && <MyDecks />}
+        {tab === 'browse' && <Browse />}
         {tab === 'saved' && <SavedList />}
         {tab === 'discover' && <Discover />}
       </div>

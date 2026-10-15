@@ -6,7 +6,7 @@ import { useShopStore } from '@/stores/shop-store';
 import { itemById } from '@/lib/data/shop-catalogue';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Avatar, Button, Logo } from '@/components/ui';
+import { Avatar, Button, Logo, TableScene } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
 import { rooms } from '@/lib/data/rooms';
 import { LAST_ROOM_KEY } from '@/lib/data/start-game';
@@ -71,12 +71,14 @@ export default function HomePage() {
         </Link>
       </header>
 
-      <section className="mt-12">
+      <section className="mt-8">
         <p className="text-xl font-bold text-muted">Kumusta, {profile.username}.</p>
-        <h1 className="mt-2 text-[4.5rem] leading-[0.92]">Who&apos;s drinking tonight?</h1>
+        <h1 className="mt-2 text-[3rem] leading-[0.92]">Who&apos;s drinking tonight?</h1>
       </section>
 
-      <section className="mt-auto space-y-3 pb-6 pt-10">
+      <TableScene letters={[profile.username.charAt(0).toUpperCase(), 'M', 'A', 'J', 'K', 'S']} className="mx-auto mt-1 aspect-[320/280] h-[30dvh] w-auto" />
+
+      <section className="mt-auto space-y-3 pb-4 pt-3">
         {resume && <Link href={`/game/${resume}/play`} className="block"><Button size="lg" full>Resume your game</Button></Link>}
         <Button size="lg" full variant={resume ? 'secondary' : 'primary'} onClick={host}>Host a game</Button>
         <Link href="/join" className="block"><Button size="lg" variant="secondary" full>Join with a code</Button></Link>

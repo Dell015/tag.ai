@@ -2,17 +2,19 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
+import { IconTile, type Paint } from './Art';
 
 /** One row of a settings-style list: label, optional hint, value or control on the right. */
-export function ListRow({ label, hint, value, right, href, onClick, danger, disabled }: {
-  label: string; hint?: string; value?: ReactNode; right?: ReactNode; href?: string; onClick?: () => void; danger?: boolean; disabled?: boolean;
+export function ListRow({ label, hint, value, right, href, onClick, danger, disabled, icon, tone }: {
+  icon?: IconName; tone?: Paint; label: string; hint?: string; value?: ReactNode; right?: ReactNode; href?: string; onClick?: () => void; danger?: boolean; disabled?: boolean;
 }) {
   const body = (
     <>
+      {icon && <IconTile icon={icon} tone={tone} />}
       <span className="min-w-0 flex-1">
-        <span className={cn('block text-xl font-bold leading-tight', danger && 'text-danger')}>{label}</span>
-        {hint && <span className="mt-0.5 block text-base leading-snug text-muted">{hint}</span>}
+        <span className={cn('block text-lg font-bold leading-tight', danger && 'text-danger')}>{label}</span>
+        {hint && <span className="mt-0.5 block text-sm leading-snug text-muted">{hint}</span>}
       </span>
       {value !== undefined && <span className="shrink-0 text-lg font-bold text-muted">{value}</span>}
       {right}

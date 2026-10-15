@@ -23,10 +23,10 @@ const config: Config = {
         display: ["'Archivo Variable'", "system-ui", "sans-serif"],
       },
       borderRadius: { card: "22px", sheet: "28px" },
-      minHeight: { tap: "3.5rem" },
-      minWidth: { tap: "3.5rem" },
-      height: { tap: "3.5rem", cta: "4.25rem" },
-      width: { tap: "3.5rem" },
+      minHeight: { tap: "3rem" },
+      minWidth: { tap: "3rem" },
+      height: { tap: "3rem", cta: "3.5rem" },
+      width: { tap: "3rem" },
       keyframes: {
         "toast-in": {
           "0%": { opacity: "0", transform: "translateY(10px)" },

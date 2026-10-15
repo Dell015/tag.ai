@@ -1163,3 +1163,21 @@ We do not read every card by hand. The pipeline is:
   - Optional: they **give** the drink to someone else instead.
 - Penalty wording uses neutral units ("1 penalty") in rooms with mixed players.
 - **Not built.** Today the setting applies to the whole room only.
+
+### 23.8 Card filing: groups and categories (Built, 2026-10-16)
+
+- Cards are filed in three groups, each holding three categories. This is the nested structure used in Library.
+  - **Get talking:** Hot takes, Hypotheticals, Memories
+  - **Get personal:** Relationships, Confessions, Deep
+  - **Get loud:** Dares, Roasts, Controversial
+- Library now has four tabs: **Decks** (grouped by audience), **Browse** (every card, by group then category, with a heat filter and search), **Saved** (the player's own cards, same nesting), **Discover** (sample public decks, grouped by audience, filter by card group).
+- Each category row shows an intensity bar chart (how many cards at levels 1 to 5).
+
+### 23.9 Deck picker (Built, 2026-10-16)
+
+- The six game modes are grouped by who they suit: **Easy start** (Icebreaker, Family), **Your crowd** (Barkada, Lovers), **Turn it up** (Spicy, Chaos).
+- Each deck shows its intensity mix, who it is for, starting heat, wild card frequency, any heat cap, how many cards it can draw on, and (when selected) a real sample card.
+
+### 23.10 Interface size (Built, 2026-10-16)
+
+- The owner found the interface too large. Base text size is now 15px, buttons are 48px (primary 56px), page titles and list rows are smaller. Card text during play keeps its own size setting.

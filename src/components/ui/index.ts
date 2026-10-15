@@ -21,3 +21,4 @@ export { TextField } from './TextField';
 export { NumberStepper } from './NumberStepper';
 export { CoinAmount } from './CoinAmount';
 export { Badge } from './Badge';
+export { TableScene, CoinStack, Spot, IconTile, PAINT, type Paint } from './Art';

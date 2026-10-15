@@ -1,5 +1,5 @@
 'use client';
-import { Button, EmptyState, Screen } from '@/components/ui';
+import { Button, EmptyState, Screen, Spot } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
 import { CURATED_CARDS } from '@/lib/data/cards';
 
@@ -12,7 +12,7 @@ export default function TrashedPage() {
     <Screen title="Trashed" back="/me/settings"
       footer={cards.length > 1 ? <Button full variant="secondary" className="mb-4" onClick={() => ids.forEach(untrash)}>Restore all</Button> : undefined}>
       {cards.length === 0 ? (
-        <EmptyState title="Nothing trashed." body="Cards you trash during a game show up here so you can bring them back." />
+        <EmptyState art={<Spot name="bottle" />} title="Nothing trashed." body="Cards you trash during a game show up here so you can bring them back." />
       ) : (
         <ul>
           {cards.map((c) => (

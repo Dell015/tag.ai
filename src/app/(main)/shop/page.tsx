@@ -1,7 +1,7 @@
 'use client';
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Avatar, Badge, Button, CoinAmount, Screen, SegmentedControl, Sheet, toast } from '@/components/ui';
+import { Avatar, Badge, Button, CoinAmount, CoinStack, IconTile, PAINT, Screen, SegmentedControl, Sheet, toast } from '@/components/ui';
 import { COIN_PACKAGES, PACK_CARDS, SHOP_ITEMS, packCardCount, packPreview, type CoinPackage, type ShopItem } from '@/lib/data/shop-catalogue';
 import { cardBack } from '@/lib/card-back';
 import { formatPot } from '@/lib/game/pot';
@@ -18,8 +18,12 @@ function Preview({ item }: { item: ShopItem }) {
   if (item.kind === 'frame') return <span className={box}><Avatar value="c0" name="A" size={40} frame={item.value} /></span>;
   if (item.kind === 'back') return <span className={cn(box, 'border-2 border-line')} style={cardBack(item.value).style} />;
   if (item.kind === 'theme') return <span className={box} style={{ background: `rgb(${item.value})` }} />;
-  if (item.kind === 'pack') return <span className={cn(box, 'bg-accent text-onaccent')}><span className="display text-3xl">{packCardCount(item.id)}</span></span>;
-  return <span className={cn(box, 'bg-raised')}><span className="display text-3xl">{item.name.slice(0, 2)}</span></span>;
+  if (item.kind === 'pack') {
+    const tones = Object.values(PAINT); const c = tones[Math.abs(item.id.split("").reduce((a, ch) => a + ch.charCodeAt(0), 0)) % tones.length];
+    return <span className={cn(box, 'rotate-[-4deg] border-[3px] border-[#181310] text-[#181310]')} style={{ background: c }}><span className="display text-3xl">{packCardCount(item.id)}</span></span>;
+  }
+  const toolIcon = item.id === 'tool-dice' ? 'dice' : item.id === 'tool-bottle' ? 'refresh' : item.id === 'tool-wheel' ? 'timer' : 'dice';
+  return <IconTile icon={toolIcon} tone={item.id === 'tool-dice' ? 'blue' : item.id === 'tool-bottle' ? 'green' : 'orange'} size={64} />;
 }
 
 function ShopInner() {
@@ -52,10 +56,12 @@ function ShopInner() {
 
       {seg === 'coins' && (
         <ul>
-          {COIN_PACKAGES.map((p) => (
+          {COIN_PACKAGES.map((p, idx) => (
             <li key={p.id} className="flex items-center gap-4 border-b-2 border-line/60 py-4">
+              <CoinStack count={idx + 2} size={48} className="shrink-0" />
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-2 text-2xl font-extrabold">{p.name}{p.badge && <Badge>{p.badge}</Badge>}</p>
+                <p className="text-2xl font-extrabold leading-tight">{p.name}</p>
+                {p.badge && <Badge>{p.badge}</Badge>}
                 <p className="text-lg text-muted">{p.coins} coins{p.bonus ? `, includes ${p.bonus} bonus` : ''}</p>
               </div>
               <Button onClick={() => setPkg(p)}>P{p.price}</Button>

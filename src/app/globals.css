@@ -30,6 +30,7 @@
 [data-mode="family"]     { --accent: 48 190 112;  --on-accent: 24 19 16; }
 
 html {
+  font-size: 93.75%; /* 15px base: the interface runs a little smaller than the browser default */
   background: rgb(var(--bg));
   -webkit-tap-highlight-color: transparent;
   text-size-adjust: 100%;
@@ -88,3 +89,7 @@ h1, h2, h3, .display {
 
 /* While a sheet is open the toast moves to the top so it never covers the sheet's buttons. */
 body:has([role="dialog"]) .toast-host { bottom: auto; top: 0.75rem; }
+
+/* One orchestrated moment: the seats around the table pop in once on the home screen. */
+@keyframes seat-pop { from { transform: scale(0); } 60% { transform: scale(1.12); } to { transform: scale(1); } }
+.seat-pop { animation: seat-pop 420ms cubic-bezier(0.3, 1.4, 0.5, 1) both; }

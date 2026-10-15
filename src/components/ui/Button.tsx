@@ -37,7 +37,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       }}
       className={cn(
         'inline-flex select-none items-center justify-center gap-2 rounded-xl px-6 font-extrabold transition-transform active:translate-y-[3px] active:border-b-[1px] disabled:opacity-35 disabled:active:translate-y-0 disabled:active:border-b-4',
-        size === 'lg' ? 'h-cta text-xl' : 'h-tap text-lg',
+        size === 'lg' ? 'h-cta text-lg' : 'h-tap text-base',
         full && 'w-full',
         VARIANTS[variant],
         className,

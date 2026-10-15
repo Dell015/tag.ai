@@ -1,5 +1,5 @@
 'use client';
-import { Avatar, AvatarPicker, CoinAmount, ListRow, Screen, toast } from '@/components/ui';
+import { Avatar, AvatarPicker, CoinAmount, CoinStack, ListRow, Screen, toast } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
 import { useState } from 'react';
 import { useShopStore } from '@/stores/shop-store';
@@ -32,20 +32,21 @@ export default function MePage() {
       <button onClick={() => setEditing((v) => !v)} className="mt-4 h-tap text-base font-extrabold text-accent">{editing ? 'Done' : 'Change colour'}</button>
       {editing && <div className="mb-2"><AvatarPicker value={profile.avatar} onChange={(a) => update({ avatar: a })} /></div>}
 
-      <div className="mt-6 flex items-end justify-between border-t-2 border-line pt-4">
+      <div className="mt-6 flex items-center justify-between rounded-2xl bg-[#FFC72C] px-5 py-4 text-[#181310]">
         <div>
-          <p className="text-base font-bold text-muted">Balance</p>
+          <p className="text-base font-extrabold">Balance</p>
           <CoinAmount value={profile.coins} className="display text-5xl" />
         </div>
+        <CoinStack count={Math.max(1, Math.min(5, Math.ceil(profile.coins / 10)))} size={72} />
       </div>
 
       <nav className="mt-6" aria-label="Me">
-        <ListRow label="Wallet" hint="Balance and history" href="/me/wallet" />
-        <ListRow label="Saved cards" value={saved} href="/library?tab=saved" />
-        <ListRow label="Leaderboard" hint="Sample data until accounts launch" href="/me/leaderboard" />
-        <ListRow label="Invite friends" hint="You and a friend each get 5 coins" href="/me/referral" />
-        <ListRow label="Settings" hint="Game defaults, playing, display" href="/me/settings" />
-        <ListRow label="Help" hint="How to play and FAQ" href="/help" />
+        <ListRow icon="coin" tone="yellow" label="Wallet" hint="Balance and history" href="/me/wallet" />
+        <ListRow icon="heart" tone="pink" label="Saved cards" value={saved} href="/library?tab=saved" />
+        <ListRow icon="up" tone="orange" label="Leaderboard" hint="Sample data until accounts launch" href="/me/leaderboard" />
+        <ListRow icon="users" tone="blue" label="Invite friends" hint="You and a friend each get 5 coins" href="/me/referral" />
+        <ListRow icon="sliders" tone="green" label="Settings" hint="Game defaults, playing, display" href="/me/settings" />
+        <ListRow icon="info" tone="red" label="Help" hint="How to play and FAQ" href="/help" />
       </nav>
     </Screen>
   );
