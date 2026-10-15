@@ -50,7 +50,7 @@ export const itemById = (id: string) => SHOP_ITEMS.find((i) => i.id === id);
 
 type P = [string, 'question' | 'action', number, CardCategory];
 function pack(id: string, rows: P[], adult = false): QueuedCard[] {
-  return rows.map(([text, cardType, intensity, category], i) => ({ id: `${id}-${i + 1}`, text, cardType, intensity, category, topics: adult ? ['sexual_content', 'adult'] : [], ...(adult ? { adult: true } : {}) }));
+  return rows.map(([text, cardType, intensity, category], i) => ({ id: `${id}-${i + 1}`, text, cardType, intensity, category, topics: adult ? ['adult'] : [], ...(adult ? { adult: true } : {}) }));
 }
 
 export const PACK_CARDS: Record<string, QueuedCard[]> = {

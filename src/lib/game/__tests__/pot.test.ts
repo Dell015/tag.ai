@@ -53,3 +53,21 @@ describe('pot rules', () => {
     expect(round3(0.1 + 0.2)).toBe(0.3);
   });
 });
+
+describe('chip in and cash owed', () => {
+  it('adds up what each person puts in', () => {
+    expect(potTotal('chipin', 0, 3, [5, 2, 3])).toBe(10);
+    expect(potTotal('chipin', 0, 3, [])).toBe(0);
+  });
+  it('lists what friends owe the host, never the host', async () => {
+    const { owedByPlayer, returnShares, plannedCards } = await import('../pot');
+    const players = [{ userId: 'h' }, { userId: 'a', isGuest: true }, { userId: 'b', isGuest: true }];
+    expect(owedByPlayer('solo', 6, players, 'h')).toEqual([]);
+    expect(owedByPlayer('split', 4, players, 'h')).toEqual([{ userId: 'a', pesos: 4 }, { userId: 'b', pesos: 4 }]);
+    const o = owedByPlayer('chipin', 0, players, 'h', { h: 5, a: 3, b: 2 });
+    expect(o).toEqual([{ userId: 'a', pesos: 3 }, { userId: 'b', pesos: 2 }]);
+    expect(returnShares(o, 10, 5)).toEqual([{ userId: 'a', pesos: 1.5 }, { userId: 'b', pesos: 1 }]);
+    expect(plannedCards(0.2, ['barkada'])).toBe(5);
+    expect(plannedCards(500, ['barkada'])).toBe(100);
+  });
+});

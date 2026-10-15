@@ -17,6 +17,7 @@ export const PRESET_TOPICS = [
   'Physical Appearance',
   'Career/Work Stress',
   'Death/Loss',
+  '18+ Cards',
 ] as const;
 
 export type PresetTopic = (typeof PRESET_TOPICS)[number];
@@ -32,6 +33,7 @@ export const PRESET_TOPIC_TAGS: Record<PresetTopic, string[]> = {
   'Physical Appearance': ['physical_appearance', 'physical', 'body'],
   'Career/Work Stress': ['career', 'work'],
   'Death/Loss': ['death', 'grief', 'loss'],
+  '18+ Cards': ['adult'],
 };
 
 /** "Past Relationships" -> "past_relationships" */

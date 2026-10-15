@@ -26,6 +26,7 @@ import { ConfirmSheet, Sheet } from '@/components/ui';
 import { TopUpSheet } from '@/components/play/TopUpSheet';
 import { ToolsSheet } from '@/components/play/ToolsSheet';
 import { autoPool } from '@/lib/data/card-pool';
+import { owedByPlayer, returnShares } from '@/lib/game/pot';
 import { useShopStore } from '@/stores/shop-store';
 import { withPlayer } from '@/lib/data/rooms';
 import { FOCUS_RULES } from '@/lib/game/mid-game';
@@ -48,7 +49,7 @@ export default function PlayPage() {
   const untrash = useProfileStore((s) => s.untrashCard);
   const [pause, setPause] = useState(false);
   const [hearted, setHearted] = useState<string[]>([]);
-  const last = useRef<{ id: string; kind: 'dismiss' | 'skip' | 'trash' } | null>(null);
+  const last = useRef<{ id: string; kind: 'dismiss' | 'skip' | 'trash' | 'again' } | null>(null);
 
   const card = g.cardQueue[g.currentCardIndex];
   const ended = g.sessionPhase === 'end';
@@ -105,6 +106,7 @@ export default function PlayPage() {
     return (
       <Recap
         potStart={g.potStart} potRefunded={g.potRefunded}
+        returns={returnShares(owedByPlayer(room.config.potStyle ?? 'solo', room.config.potCoins ?? 0, room.players, room.hostId, room.config.shares ?? {}), g.potStart, g.potRefunded).map((r) => ({ name: room.players.find((p) => p.userId === r.userId)?.displayName ?? '', pesos: r.pesos }))}
         saved={hearted.map((id) => g.cardQueue.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c)}
         mode={g.gameMode} played={g.cardsPlayed} skipped={g.skippedCount} hearted={g.heartedCount} peak={g.peakHeat}
         onHome={() => { g.resetGame(); router.replace('/'); }}
@@ -130,18 +132,19 @@ export default function PlayPage() {
     if (card?.cardType === 'wild' && card.wildCardType) g.applyWildCardEffect(card.wildCardType);
   };
 
-  const resolve = (kind: 'dismiss' | 'skip' | 'trash') => {
+  const resolve = (kind: 'dismiss' | 'skip' | 'trash' | 'again') => {
     if (!card) return;
     last.current = { id: card.id, kind };
     playSound(kind === 'skip' ? 'skip' : 'done');
     if (!hasSeenHints) markHintsSeen();
     if (kind === 'dismiss') g.dismissCard();
+    else if (kind === 'again') g.againCard();
     else if (kind === 'skip') g.skipCard();
     else {
       trashForever(card.id);
       g.trashCard();
     }
-    toast(kind === 'trash' ? 'Card trashed' : kind === 'skip' ? 'Skipped' : 'Done', {
+    toast(kind === 'trash' ? 'Card trashed' : kind === 'skip' ? 'Skipped' : kind === 'again' ? 'Another card for you' : 'Done', {
       duration: st.undoSeconds * 1000,
       action: { label: 'Undo', onClick: undo },
     });
@@ -201,6 +204,9 @@ export default function PlayPage() {
         <Button variant="secondary" className={cn('!h-[4.75rem] flex-col !gap-1 !px-0 text-sm', isHearted && '!text-accent')} onClick={heart} aria-label="Save card"><Icon name="heart" filled={isHearted} />{isHearted ? 'Saved' : 'Save'}</Button>
         <Button className="!h-[4.75rem] flex-col !gap-1 !px-0 text-sm" onClick={() => resolve('dismiss')} aria-label="Done"><Icon name="check" />Done</Button>
       </footer>
+      <button onClick={() => resolve('again')} disabled={!revealed} className={cn('mt-2 flex h-tap w-full items-center justify-center gap-2 rounded-xl border-2 border-line text-base font-extrabold transition-opacity', !revealed && 'pointer-events-none opacity-30')}>
+        <Icon name="refresh" size={20} />Another card, same turn
+      </button>
 
       <AnimatePresence>
         {g.showPassPrompt && !ended && <PassOverlay name={current.name} avatar={current.avatarUrl} onReady={() => { playSound('pass'); g.dismissPassPrompt(); }} />}
@@ -211,7 +217,7 @@ export default function PlayPage() {
         players={g.turnRotation.players} heat={g.heatLevel} pot={g.pot} onTopUp={() => { setPause(false); setTopUp(true); }}
         onTools={() => { setPause(false); setTools(true); }}
         mood={g.gameMode}
-        onMood={(m) => { g.changeMood(m, autoPool(ownedPacks, useSettingsStore.getState().adultContent), { comfortFilters: room.config.comfortFilters, trashedCardIds: useProfileStore.getState().trashedCardIds }); toast(`Switched to ${GAME_MODES[m].name}`, { tone: 'ok' }); }}
+        onMood={(m) => { g.changeMood(m, autoPool(ownedPacks, true), { comfortFilters: room.config.comfortFilters, trashedCardIds: useProfileStore.getState().trashedCardIds }); toast(`Switched to ${GAME_MODES[m].name}`, { tone: 'ok' }); }}
         onFocus={(k) => { const n = g.focusNext(k); toast(n > 0 ? `${FOCUS_RULES[k as 'deep' | 'dares'].label}` : 'No matching cards left', {}); }}
         onAddPlayer={(name) => { const id = `guest-${Math.random().toString(36).slice(2, 10)}`; const av = `c${(g.turnRotation.players.length + 2) % 10}`; g.addPlayerToTurns({ id, name, avatarUrl: av }); rooms.update(code, (r) => withPlayer(r, { id, userId: id, displayName: name, avatarUrl: av, isGuest: true })); }}
         onMove={g.movePlayer}

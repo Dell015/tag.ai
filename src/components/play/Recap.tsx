@@ -10,8 +10,8 @@ import { renderShareImage, shareImage } from '@/lib/share-image';
 import type { QueuedCard } from '@/lib/game/escalation-engine';
 import type { GameMode } from '@/types/game';
 
-export function Recap({ mode, played, skipped, hearted, peak, potStart, potRefunded, saved, onAgain, onHome }: {
-  mode: GameMode; played: number; skipped: number; hearted: number; peak: number; potStart: number; potRefunded: number; saved: QueuedCard[]; onAgain: () => void; onHome: () => void;
+export function Recap({ mode, played, skipped, hearted, peak, potStart, potRefunded, returns = [], saved, onAgain, onHome }: {
+  mode: GameMode; played: number; skipped: number; hearted: number; peak: number; potStart: number; potRefunded: number; returns?: { name: string; pesos: number }[]; saved: QueuedCard[]; onAgain: () => void; onHome: () => void;
 }) {
   const [sheet, setSheet] = useState(false);
   useEffect(() => { try { window.localStorage.setItem('tagai-games-finished', '1'); } catch { /* ignore */ } }, []);
@@ -47,7 +47,10 @@ export function Recap({ mode, played, skipped, hearted, peak, potStart, potRefun
       </dl>
       <p className="mt-6 text-xl font-bold">{funLine}</p>
       {potStart > 0 && (
-        <p className="mt-3 border-t-2 border-line pt-3 text-lg">Pot: <b>{formatPot(Math.max(0, potStart - potRefunded))}</b> of {formatPot(potStart)} coins used.{potRefunded > 0 && <> <b>{formatPot(potRefunded)}</b> returned to your wallet.</>}</p>
+        <div className="mt-3 border-t-2 border-line pt-3">
+        <p className="text-lg">Pot: <b>{formatPot(Math.max(0, potStart - potRefunded))}</b> of {formatPot(potStart)} coins used.{potRefunded > 0 && <> <b>{formatPot(potRefunded)}</b> returned to your wallet.</>}</p>
+        {returns.length > 0 && <p className="mt-1 text-lg">Hand back in cash: {returns.map((r) => `${r.name} P${formatPot(r.pesos)}`).join(', ')}.</p>}
+        </div>
       )}
 
       {best && (

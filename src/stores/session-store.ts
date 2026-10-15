@@ -20,7 +20,8 @@ export interface SessionState {
   customDrinkRules: string[];
   nonDrinkingMode: boolean;
   potCoins: number;
-  potStyle: 'solo' | 'split';
+  potStyle: 'solo' | 'split' | 'chipin';
+  shares: Record<string, number>;
   deckIds: string[];
   slotFills: string[];
 
@@ -56,7 +57,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   customDrinkRules: [],
   nonDrinkingMode: false,
   potCoins: 0,
-  potStyle: 'solo' as 'solo' | 'split',
+  potStyle: 'solo' as 'solo' | 'split' | 'chipin',
+  shares: {} as Record<string, number>,
   deckIds: [] as string[],
   slotFills: [] as string[],
 

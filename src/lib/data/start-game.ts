@@ -1,18 +1,17 @@
 import { rooms, type Room } from '@/lib/data/rooms';
 import { autoPool } from '@/lib/data/card-pool';
-import { useSettingsStore } from '@/stores/settings-store';
 import { useShopStore } from '@/stores/shop-store';
 import { applySlots, toQueuedCards, useDeckStore } from '@/stores/deck-store';
 import { useGameStore } from '@/stores/game-store';
 import { useProfileStore } from '@/stores/profile-store';
 import { useWalletStore } from '@/stores/wallet-store';
-import { isPotValid, potTotal } from '@/lib/game/pot';
+import { isPotValid, potTotal, plannedCards } from '@/lib/game/pot';
 
 export const LAST_ROOM_KEY = 'tagai-last-room';
 
 /** The cards a game draws from: the Auto pool, or only the chosen decks (a small deck makes a shorter game). */
 export function buildLibrary(room: Room) {
-  const auto = autoPool(useShopStore.getState().owned, useSettingsStore.getState().adultContent);
+  const auto = autoPool(useShopStore.getState().owned, true);
   const ids = room.config.deckIds ?? [];
   if (ids.length === 0) return auto;
   const decks = useDeckStore.getState().decks.filter((d) => ids.includes(d.id));
@@ -32,7 +31,8 @@ export function allAgreed(room: Room): boolean {
 export function startGame(room: Room, trashedCardIds: string[]): boolean {
   if (!room.config.gameMode || !allAgreed(room)) return false;
   const players = [...room.players].sort((a, b) => a.turnOrder - b.turnOrder);
-  const total = potTotal(room.config.potStyle ?? 'solo', room.config.potCoins ?? 0, players.length);
+  const shares = players.map((p) => room.config.shares?.[p.userId] ?? 0);
+  const total = potTotal(room.config.potStyle ?? 'solo', room.config.potCoins ?? 0, players.length, shares);
   const coins = useProfileStore.getState().profile?.coins ?? 0;
   if (!isPotValid(total) || coins + 1e-9 < total) return false;
 
@@ -40,7 +40,7 @@ export function startGame(room: Room, trashedCardIds: string[]): boolean {
     {
       gameMode: room.config.gameMode,
       extraModes: room.config.extraModes ?? [],
-      cardCountTarget: room.config.cardCountTarget,
+      cardCountTarget: plannedCards(total, [room.config.gameMode, ...(room.config.extraModes ?? [])]),
       comfortFilters: room.config.comfortFilters,
       trashedCardIds,
       playerCount: players.length,

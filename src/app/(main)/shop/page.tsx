@@ -7,6 +7,7 @@ import { cardBack } from '@/lib/card-back';
 import { formatPot } from '@/lib/game/pot';
 import { useProfileStore } from '@/stores/profile-store';
 import { useSettingsStore } from '@/stores/settings-store';
+import { useAdultOn } from '@/lib/adult';
 import { useShopStore } from '@/stores/shop-store';
 import { cn } from '@/lib/cn';
 
@@ -36,7 +37,7 @@ function ShopInner() {
   const shop = useShopStore();
   const test = useSettingsStore((s) => s.testPurchases);
 
-  const adultOn = useSettingsStore((s) => s.adultContent);
+  const adultOn = useAdultOn();
   const items = SHOP_ITEMS.filter((i) => (!i.adult || adultOn) && (seg === 'tools' ? i.kind === 'tool' : seg === 'packs' ? i.kind === 'pack' : seg === 'style' ? ['frame', 'back', 'theme'].includes(i.kind) : false));
   const owned = (i: ShopItem) => shop.owned.includes(i.id);
   const equippedNow = (i: ShopItem) => shop.equipped[i.kind as 'frame' | 'back' | 'theme'] === i.id;

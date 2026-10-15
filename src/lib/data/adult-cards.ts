@@ -37,5 +37,5 @@ const ROWS: Row[] = [
 ];
 
 export const ADULT_CARDS: QueuedCard[] = ROWS.map(([text, cardType, intensity, category], i) => ({
-  id: `adult-${String(i + 1).padStart(3, '0')}`, text, cardType, intensity, category, topics: ['sexual_content', 'adult'], adult: true,
+  id: `adult-${String(i + 1).padStart(3, '0')}`, text, cardType, intensity, category, topics: ['adult'], adult: true,
 }));

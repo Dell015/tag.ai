@@ -9,7 +9,7 @@ import { MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 
 export type TextSize = 'normal' | 'large' | 'xlarge';
 export type MotionPref = 'system' | 'reduce' | 'full';
-export type PotStyle = 'solo' | 'split';
+export type PotStyle = 'solo' | 'split' | 'chipin';
 export type Language = 'en' | 'fil' | 'taglish';
 
 export interface Settings {
@@ -37,8 +37,6 @@ export interface Settings {
   motion: MotionPref;
   highContrast: boolean;
   language: Language;
-  /** 18+ cards in games, Browse and the Shop. Hidden option, off by default. */
-  adultContent: boolean;
   /** Set once the hidden options were unlocked from Settings. */
   hiddenUnlocked: boolean;
   // Developer
@@ -48,7 +46,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   defaultDeck: 'barkada',
   defaultLength: 20,
-  skipTopics: [],
+  skipTopics: ['18+ Cards'],
   defaultDrinkRule: 'Classic',
   nonDrinkingDefault: false,
   customRules: [],
@@ -67,7 +65,6 @@ export const DEFAULT_SETTINGS: Settings = {
   motion: 'system',
   highContrast: false,
   language: 'en',
-  adultContent: false,
   hiddenUnlocked: false,
   testPurchases: false,
 };

@@ -1206,3 +1206,17 @@ We do not read every card by hand. The pipeline is:
 - **In games:** the Auto pool drops cards that do not fit the number of players. Your own decks are never filtered this way.
 - **In Browse:** a People filter (Any group size, 2 people, 3 to 4, 5 or more), and cards that need a bigger group are labelled, for example "3+ people".
 - The wording rules are a first pass. The seed cards should get explicit sizes over time.
+
+### 23.14 Category reference (2026-10-16)
+
+- `docs/CATEGORIES.md` documents every category: groups, intensity scale, counts per level, how decks weight intensity, the topic tags behind the skip list, wild and action cards, group size, 18+ cards, packs, the gaps found in the current categories, and open proposals.
+- Decision: **no more cards for now.** The categories get fixed first (balance per level, tag clean-up, Dares as a category or a type), then cards are added.
+
+### 23.15 Pot modes, no length step, cash settling (Built, 2026-10-16)
+
+- The **How long?** step is gone. The coin pot sets the length: the app shows "N coins is about X cards, ~Y min" and plays that many (5 to 100). The Default length setting is removed.
+- Three ways to fill the pot: **I pay it all**, **Split it** (same amount per person), **Chip in** (each person puts in their own amount, set by the host per player).
+- **Cash settling:** the host's wallet pays the whole pot. Friends settle with the host in cash, and the app lists what each person owes (1 coin is P1). At the end the recap lists what to hand back from any leftover pot, by share. Friends do not open their own phones to pay.
+- **Next card, same turn:** a new button gives the current player another card without passing the phone.
+- **Wild cards** glow around the edge in the deck colours. **Free Drink** shows a large "Take a drink" banner ("Do a forfeit" when the table is not drinking).
+- **18+ cards** are now a normal skip topic called "18+ Cards", skipped by default. The hidden toggle is gone (this replaces 23.12's switch).

@@ -21,7 +21,9 @@ export interface RoomConfig {
   nonDrinkingMode: boolean;
   /** Coin pot: 0 means "not chosen yet" (the setup step fills in a suggestion). */
   potCoins: number;
-  potStyle: 'solo' | 'split';
+  potStyle: 'solo' | 'split' | 'chipin';
+  /** Chip in: coins (pesos) each player puts in, by user id. Collected in cash by the host. */
+  shares?: Record<string, number>;
   /** Empty means the Auto pool (curated cards plus owned packs). */
   deckIds: string[];
   /** Words that fill [SLOT] blanks in the chosen decks. */

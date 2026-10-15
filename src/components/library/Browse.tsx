@@ -4,7 +4,7 @@ import { Chip, Icon } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
 import { BROWSABLE, CATEGORY_GROUPS, intensityCounts } from '@/lib/data/taxonomy';
 import { ADULT_CARDS } from '@/lib/data/adult-cards';
-import { useSettingsStore } from '@/stores/settings-store';
+import { useAdultOn } from '@/lib/adult';
 import { categoryLabel } from './common';
 import { Fold, IntensityBars } from './parts';
 import { PEOPLE_BANDS, fitsPlayers, peopleLabel } from '@/lib/game/players-needed';
@@ -28,7 +28,7 @@ export function Browse() {
   const test = HEATS.find((h) => h.id === heat)!.test;
   const sizes = PEOPLE_BANDS.find((b) => b.id === people)!.sizes;
   const term = q.trim().toLowerCase();
-  const adultOn = useSettingsStore((s) => s.adultContent);
+  const adultOn = useAdultOn();
   const base = useMemo(() => (adultOn ? [...BROWSABLE, ...ADULT_CARDS] : BROWSABLE), [adultOn]);
   const cards = useMemo(() => base.filter((c) => test(c.intensity) && (sizes.length === 0 || sizes.some((n) => fitsPlayers(c, n))) && (!term || c.text.toLowerCase().includes(term))), [base, test, sizes, term]);
 

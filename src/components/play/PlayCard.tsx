@@ -68,7 +68,7 @@ export function PlayCard({ card, revealed, onReveal, onDone, onSkip, others, non
         if (info.offset.x > SWIPE) { haptic('success'); onDone(); }
         else if (info.offset.x < -SWIPE) { haptic('warn'); onSkip(); }
       }}
-      className={cn('relative flex h-full w-full flex-col overflow-hidden rounded-card no-select', wild ? 'bg-text text-bg' : 'bg-accent text-onaccent')}
+      className={cn('relative flex h-full w-full flex-col overflow-hidden rounded-card no-select', wild ? 'wild-glow bg-text text-bg' : 'bg-accent text-onaccent')}
     >
       {wild && <div aria-hidden className="h-5 w-full shrink-0" style={{ background: 'repeating-linear-gradient(135deg, rgb(var(--accent)) 0 14px, rgb(var(--bg)) 14px 28px)' }} />}
       <motion.span style={{ opacity: doneOpacity }} className="pointer-events-none absolute right-5 top-8 rounded-lg border-4 border-current px-3 py-1 text-2xl font-extrabold">Done</motion.span>

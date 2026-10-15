@@ -7,7 +7,7 @@ import { categoryLabel } from '@/components/library/common';
 import { AUDIENCES, MAX_DECK_CARDS, hasSlot, useDeckStore, type DeckCard } from '@/stores/deck-store';
 import { GAME_MODES } from '@/lib/game/game-modes';
 import { findCard } from '@/lib/data/card-pool';
-import { useSettingsStore } from '@/stores/settings-store';
+import { useAdultOn } from '@/lib/adult';
 import { useProfileStore } from '@/stores/profile-store';
 import { Sheet } from '@/components/ui';
 import type { GameMode } from '@/types/game';
@@ -24,7 +24,7 @@ export default function EditDeckPage() {
   const [adding, setAdding] = useState(false);
   const [picker, setPicker] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
-  const adultOn = useSettingsStore((s) => s.adultContent);
+  const adultOn = useAdultOn();
 
   if (!deck) return <Screen title="Deck" back="/library"><EmptyState title="That deck is gone." /></Screen>;
 

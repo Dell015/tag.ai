@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Button, Chip, EmptyState, Icon, Spot } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
 import { findCard } from '@/lib/data/card-pool';
-import { useSettingsStore } from '@/stores/settings-store';
+import { useAdultOn } from '@/lib/adult';
 import { CATEGORIES, categoryLabel } from './common';
 import { Fold, IntensityBars } from './parts';
 import { CATEGORY_GROUPS, intensityCounts } from '@/lib/data/taxonomy';
@@ -20,7 +20,7 @@ export function SavedList() {
   const [picked, setPicked] = useState<string[]>([]);
   const [sheet, setSheet] = useState<string[] | null>(null);
 
-  const adultOn = useSettingsStore((s) => s.adultContent);
+  const adultOn = useAdultOn();
   const all = useMemo(() => ids.map((id) => findCard(id, adultOn)).filter((c) => !!c), [ids, adultOn]);
   const cards = all.filter((c) => (!cat || c!.category === cat) && c!.text.toLowerCase().includes(q.trim().toLowerCase()));
   const usedCats = CATEGORIES.filter((c) => all.some((x) => x!.category === c.id));

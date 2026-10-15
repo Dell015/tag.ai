@@ -2,7 +2,7 @@
  * Coin pot maths (docs/FRONTEND_PLAN.md section 6.2). Pure functions, no state.
  * Cost per card = 1 / questions-per-coin. Wild cards are free.
  */
-import { GAME_MODES } from '@/lib/game/game-modes';
+import { GAME_MODES, blendModes } from '@/lib/game/game-modes';
 import type { GameMode } from '@/types/game';
 
 export const MIN_POT = 3;
@@ -46,9 +46,44 @@ export function suggestedPot(cards: number, mode: GameMode): number {
   return Math.max(MIN_POT, Math.ceil(cards * averageCardCost(mode)));
 }
 
-/** Total the host funds. Split mode multiplies the per-player amount. */
-export function potTotal(style: 'solo' | 'split', coins: number, players: number): number {
+export type PotStyle = 'solo' | 'split' | 'chipin';
+
+/**
+ * Coins in the pot. Solo is one amount, split multiplies it by the players,
+ * chip in adds up what each person put in (`shares`). The host's wallet covers it all;
+ * everyone else settles with the host in cash (1 coin = 1 peso).
+ */
+export function potTotal(style: PotStyle, coins: number, players: number, shares: number[] = []): number {
+  if (style === 'chipin') return round3(shares.reduce((a, n) => a + Math.max(0, n), 0));
   return style === 'split' ? coins * Math.max(1, players) : coins;
+}
+
+/** What each person owes the host in pesos, for split and chip in. The host owes nobody. */
+export function owedByPlayer(style: PotStyle, coins: number, players: { userId: string; isGuest?: boolean }[], hostId: string, shares: Record<string, number> = {}): { userId: string; pesos: number }[] {
+  if (style === 'solo') return [];
+  return players.filter((p) => p.userId !== hostId).map((p) => ({ userId: p.userId, pesos: style === 'split' ? coins : Math.max(0, shares[p.userId] ?? 0) }));
+}
+
+/** Cards a pot covers when several decks are mixed. */
+export function estimateCardsFor(coins: number, modes: GameMode[]): number {
+  const dist = blendModes(modes).poolDistribution;
+  let total = 0;
+  let weight = 0;
+  for (const [level, w] of Object.entries(dist)) {
+    total += cardCost({ cardType: 'question', intensity: Number(level) }) * w;
+    weight += w;
+  }
+  const avg = weight ? total / weight : 0.1;
+  return Math.floor(coins / avg);
+}
+
+/** How many cards a game is planned for: what the pot covers, within 5 to 100. */
+export const plannedCards = (coins: number, modes: GameMode[]) => Math.max(5, Math.min(100, estimateCardsFor(coins, modes)));
+
+/** Share of the leftover pot each non-host player is owed back, in pesos. */
+export function returnShares(owed: { userId: string; pesos: number }[], total: number, left: number): { userId: string; pesos: number }[] {
+  if (total <= 0 || left <= 0) return [];
+  return owed.filter((o) => o.pesos > 0).map((o) => ({ userId: o.userId, pesos: round3((left * o.pesos) / total) }));
 }
 
 export function isPotValid(total: number): boolean {

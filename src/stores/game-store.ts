@@ -35,7 +35,7 @@ export interface UndoSnapshot {
   crownImmunityRemaining: number;
   sessionPhase: 'lobby' | 'setup' | 'play' | 'end';
   pot: number;
-  kind: 'dismiss' | 'trash' | 'skip';
+  kind: 'dismiss' | 'trash' | 'skip' | 'again';
 }
 
 export interface GameState {
@@ -78,6 +78,8 @@ export interface GameState {
   // Actions
   flipCard: () => void;
   dismissCard: () => void;
+  /** Done, then another card for the same player. */
+  againCard: () => void;
   skipCard: () => void;
   trashCard: () => void;
   heartCard: () => void;
@@ -106,7 +108,8 @@ export interface GameState {
   settlePot: () => number;
 }
 
-type CardAction = 'dismiss' | 'trash' | 'skip';
+/** `again` finishes this card and draws the next one for the same player (the phone is not passed). */
+type CardAction = 'dismiss' | 'trash' | 'skip' | 'again';
 
 const INITIAL: Pick<
   GameState,
@@ -201,7 +204,7 @@ function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
     bufferCards,
     heatLevel: effectiveHeat,
     peakHeat: Math.max(state.peakHeat, effectiveHeat),
-    turnRotation: advanceTurn(state.turnRotation),
+    turnRotation: action === 'again' ? state.turnRotation : advanceTurn(state.turnRotation),
     cardsPlayed: newCardsPlayed,
     currentCardIndex: newCardIndex,
     currentCardState: 'face_down',
@@ -210,7 +213,7 @@ function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
     heatSpikeRemaining: newHeatSpikeRemaining,
     crownImmunityRemaining: decrementCrownImmunity(state.crownImmunityRemaining),
     sessionPhase: shouldEnd ? 'end' : state.sessionPhase,
-    showPassPrompt: !shouldEnd,
+    showPassPrompt: !shouldEnd && action !== 'again',
     pot: round3(Math.max(0, state.pot - (state.cardQueue[state.currentCardIndex] ? cardCost(state.cardQueue[state.currentCardIndex]) : 0))),
     undoSnapshot: snapshot(state, action),
   };
@@ -269,6 +272,8 @@ export const useGameStore = create<GameState>()(
       dismissCard: () => set((state) => resolveCard(state, 'dismiss')),
 
       /** "Skip": heat −0.2 (−1.0 on the 3rd skip in a row), advances the turn. */
+      againCard: () => set((state) => resolveCard(state, 'again')),
+
       skipCard: () => set((state) => resolveCard(state, 'skip')),
 
       /** Trash: like a dismiss, and the buffer tops the queue back up. */

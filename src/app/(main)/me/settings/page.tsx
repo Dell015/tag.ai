@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { Button, Chip, ConfirmSheet, ListRow, Screen, SegmentedControl, TextField, Toggle, toast } from '@/components/ui';
 import { GAME_MODES } from '@/lib/game/game-modes';
 import { PRESET_TOPICS, normalizeTopic } from '@/lib/game/comfort-filters';
-import { DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES, PRESET_COUNTS } from '@/lib/game/setup-options';
+import { DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 import { useSettingsStore, type Language, type MotionPref, type PotStyle, type TextSize } from '@/stores/settings-store';
 import { useProfileStore } from '@/stores/profile-store';
 import { useGameStore } from '@/stores/game-store';
@@ -32,7 +32,7 @@ function Block({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-function ToggleRow({ label, hint, k }: { label: string; hint?: string; k: 'vibration' | 'sounds' | 'keepAwake' | 'swipe' | 'confirmTrash' | 'showPips' | 'showRules' | 'leftHanded' | 'highContrast' | 'nonDrinkingDefault' | 'testPurchases' | 'adultContent' }) {
+function ToggleRow({ label, hint, k }: { label: string; hint?: string; k: 'vibration' | 'sounds' | 'keepAwake' | 'swipe' | 'confirmTrash' | 'showPips' | 'showRules' | 'leftHanded' | 'highContrast' | 'nonDrinkingDefault' | 'testPurchases' }) {
   const v = useSettingsStore((s) => s[k]);
   const set = useSettingsStore((s) => s.set);
   return <ListRow label={label} hint={hint} right={<Toggle checked={v} onChange={(x) => set(k, x)} label={label} />} />;
@@ -46,7 +46,7 @@ export default function SettingsPage() {
   const resetGame = useGameStore((g) => g.resetGame);
   const [word, setWord] = useState('');
   const [rule, setRule] = useState('');
-  const [ask, setAsk] = useState<null | 'profile' | 'game' | 'all' | 'adult'>(null);
+  const [ask, setAsk] = useState<null | 'profile' | 'game' | 'all'>(null);
   const [taps, setTaps] = useState(0);
 
   const customTopics = s.skipTopics.filter((t) => !(PRESET_TOPICS as readonly string[]).includes(t));
@@ -85,11 +85,6 @@ export default function SettingsPage() {
             ))}
           </div>
         </Block>
-        <Block label="Default length" hint="Cards per game.">
-          <div className="flex flex-wrap gap-2">
-            {PRESET_COUNTS.map((n) => <Chip key={n} selected={s.defaultLength === n} onClick={() => s.set('defaultLength', n)}>{n}</Chip>)}
-          </div>
-        </Block>
         <Block label="Topics to skip" hint="Cards on these topics never show up.">
           <div className="flex flex-wrap gap-2">
             {PRESET_TOPICS.map((t) => <Chip key={t} selected={s.skipTopics.includes(t)} onClick={() => toggleTopic(t)}>{t}</Chip>)}
@@ -123,7 +118,7 @@ export default function SettingsPage() {
           )}
         </Block>
         <Block label="Default pot style" hint="Who covers the coin pot.">
-          <SegmentedControl<PotStyle> label="Pot style" value={s.potStyle} onChange={(v) => s.set('potStyle', v)} options={[{ id: 'solo', label: 'I pay it all' }, { id: 'split', label: 'Split' }]} />
+          <SegmentedControl<PotStyle> label="Pot style" value={s.potStyle} onChange={(v) => s.set('potStyle', v)} options={[{ id: 'solo', label: 'I pay it all' }, { id: 'split', label: 'Split' }, { id: 'chipin', label: 'Chip in' }]} />
         </Block>
       </Group>
 
@@ -169,10 +164,6 @@ export default function SettingsPage() {
         <ListRow label="Clear game in progress" danger onClick={() => setAsk('game')} />
         <ListRow label="Reset profile" danger onClick={() => setAsk('profile')} />
         <ListRow label="Clear all local data" danger onClick={() => setAsk('all')} />
-        {(s.hiddenUnlocked || s.adultContent) && (
-          <ListRow label="18+ cards" hint="Flirty and bold cards in games, Browse and the Shop. Everyone playing must be 18 or older."
-            right={<Toggle checked={s.adultContent} onChange={(x) => (x ? setAsk('adult') : s.set('adultContent', false))} label="18+ cards" />} />
-        )}
         {s.hiddenUnlocked && <ToggleRow k="testPurchases" label="Test purchases" hint="Developer. Lets you add test coins in the Shop." />}
         <ListRow label="Terms" href="/legal/terms" />
         <ListRow label="Privacy" href="/legal/privacy" />
@@ -181,7 +172,6 @@ export default function SettingsPage() {
         <ListRow label="Version" value={`0.1 (${BUILD})`} onClick={versionTap} />
       </Group>
 
-      <ConfirmSheet open={ask === 'adult'} title="Turn on 18+ cards?" body="These cards are flirty and bold. Only turn them on when everyone playing is 18 or older and comfortable. You can turn them off any time, and the group can still skip the Sexual content topic for one game." confirmLabel="Turn on 18+ cards" onConfirm={() => { s.set('adultContent', true); toast('18+ cards on', { tone: 'ok' }); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'game'} title="Clear the game in progress?" body="The current game on this phone ends and cannot be resumed." confirmLabel="Clear game" danger onConfirm={() => { const left = useGameStore.getState().settlePot(); if (left > 0) useWalletStore.getState().apply('refund', left, 'Unused pot returned'); resetGame(); toast('Game cleared', {}); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'profile'} title="Reset your profile?" body="Your name, coins, saved and trashed cards on this phone are removed." confirmLabel="Reset profile" danger onConfirm={() => { useWalletStore.getState().clear(); signOut(); router.replace('/welcome'); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'all'} title="Clear all local data?" body="Everything tag.ai stored on this phone is erased, including settings." confirmLabel="Clear everything" danger onConfirm={wipe} onClose={() => setAsk(null)} />

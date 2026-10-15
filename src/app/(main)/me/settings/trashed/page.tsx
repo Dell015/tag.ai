@@ -2,12 +2,12 @@
 import { Button, EmptyState, Screen, Spot } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
 import { findCard } from '@/lib/data/card-pool';
-import { useSettingsStore } from '@/stores/settings-store';
+import { useAdultOn } from '@/lib/adult';
 
 export default function TrashedPage() {
   const ids = useProfileStore((s) => s.trashedCardIds);
   const untrash = useProfileStore((s) => s.untrashCard);
-  const adultOn = useSettingsStore((s) => s.adultContent);
+  const adultOn = useAdultOn();
   const cards = ids.map((id) => findCard(id, adultOn)).filter((c) => !!c);
 
   return (
