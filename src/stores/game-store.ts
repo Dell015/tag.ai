@@ -13,7 +13,7 @@ import { steerNextCard } from '@/lib/game/steering';
 import { calculateHeat, QueuedCard } from '@/lib/game/escalation-engine';
 import { advanceTurn, TurnState } from '@/lib/game/turn-rotation';
 import { buildCardQueue, CardQueueConfig } from '@/lib/game/card-queue-builder';
-import { GAME_MODES } from '@/lib/game/game-modes';
+import { GAME_MODES, blendModes } from '@/lib/game/game-modes';
 import { decrementHeatSpike, decrementCrownImmunity, applyShuffleWildCard } from '@/lib/game/wild-cards';
 import { cardCost, round3 } from '@/lib/game/pot';
 import { focusUpcoming, addToTurns, movePlayer as movePlayerInTurns, type FocusKind } from '@/lib/game/mid-game';
@@ -353,7 +353,7 @@ export const useGameStore = create<GameState>()(
        */
       initializeQueue: (config, library) => {
         const result = buildCardQueue(config, library);
-        const modeConfig = GAME_MODES[config.gameMode];
+        const modeConfig = config.extraModes?.length ? blendModes([config.gameMode, ...config.extraModes]) : GAME_MODES[config.gameMode];
         const target = Math.max(1, Math.min(config.cardCountTarget, result.cards.length || config.cardCountTarget));
 
         set({

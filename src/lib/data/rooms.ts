@@ -13,6 +13,8 @@ import { generateRoomCode } from '@/lib/validators';
 export interface RoomConfig {
   cardCountTarget: number;
   gameMode: GameMode | null;
+  /** Extra decks mixed with the main one. */
+  extraModes?: GameMode[];
   comfortFilters: string[];
   drinkRuleTemplate: string | null;
   customDrinkRules: string[];

@@ -102,6 +102,12 @@ export default function SetupPage() {
   const view = isHost ? step : TOTAL;
   const key = STEPS[view - 1];
   const mode = cfg.gameMode;
+  const picked = (mode ? [mode, ...(cfg.extraModes ?? [])] : []) as GameMode[];
+  /** Several decks can be mixed. Family stands alone because it caps heat and intensity. */
+  const toggleMode = (k: GameMode) => {
+    const next = picked.includes(k) ? picked.filter((x) => x !== k) : k === 'family' ? ['family' as GameMode] : [...picked.filter((x) => x !== 'family'), k];
+    set({ gameMode: next[0] ?? null, extraModes: next.slice(1) });
+  };
   const template = DRINK_RULE_TEMPLATES.find((t) => t.id === cfg.drinkRuleTemplate);
   const pending = room.players.filter((p) => !room.agreedPlayers.includes(p.userId)).length;
   const customTopics = cfg.comfortFilters.filter((f) => !(PRESET_TOPICS as readonly string[]).includes(f));
@@ -140,6 +146,7 @@ export default function SetupPage() {
 
       {key === 'deck' && (
         <div className="space-y-7">
+          <p className="-mt-2 text-base text-muted">Pick one deck, or tap several to mix them. Family plays on its own.</p>
           {DECK_GROUPS.map((g) => (
             <section key={g.label}>
               <h3 className="text-3xl">{g.label}</h3>
@@ -147,10 +154,10 @@ export default function SetupPage() {
               <div className="space-y-3">
                 {g.modes.map((k) => {
                   const m = GAME_MODES[k];
-                  const on = mode === k;
+                  const on = picked.includes(k);
                   const w = [1, 2, 3, 4, 5].map((n) => m.poolDistribution[n] ?? 0);
                   return (
-                    <button key={k} data-mode={k} aria-pressed={on} onClick={() => { haptic('tap'); set({ gameMode: k }); }}
+                    <button key={k} data-mode={k} aria-pressed={on} onClick={() => { haptic('tap'); toggleMode(k); }}
                       className={cn('relative block w-full rounded-card bg-accent p-4 text-left text-onaccent transition-transform active:scale-[0.98]', on ? 'ring-4 ring-text ring-offset-4 ring-offset-bg' : '')}>
                       <span className="flex items-start justify-between gap-3">
                         <span className="min-w-0">
@@ -301,7 +308,7 @@ export default function SetupPage() {
       {key === 'house' && (
         <>
           <section data-mode={mode ?? undefined} className="rounded-card bg-accent p-5 text-onaccent">
-            <div className="display text-5xl">{mode ? GAME_MODES[mode].name : 'No deck picked'}</div>
+            <div className="display text-5xl">{picked.length ? picked.map((m) => GAME_MODES[m].name).join(' + ') : 'No deck picked'}</div>
             <div className="mt-1 text-lg font-bold">{cfg.cardCountTarget} cards, {formatDuration(cfg.cardCountTarget)}</div>
           </section>
           <ul className="mt-5 space-y-2 text-lg">

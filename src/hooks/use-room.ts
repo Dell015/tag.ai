@@ -27,6 +27,7 @@ function roomFromStore(base: Room): Room {
     config: {
       cardCountTarget: s.cardCountTarget,
       gameMode: s.gameMode,
+      extraModes: s.extraModes,
       comfortFilters: s.comfortFilters,
       drinkRuleTemplate: s.drinkRuleTemplate,
       customDrinkRules: s.customDrinkRules,

@@ -14,6 +14,7 @@ export interface SessionState {
   // Setup config
   cardCountTarget: number;
   gameMode: GameMode | null;
+  extraModes: GameMode[];
   comfortFilters: string[];
   drinkRuleTemplate: string | null;
   customDrinkRules: string[];
@@ -49,6 +50,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   // Setup config
   cardCountTarget: 20,
   gameMode: null,
+  extraModes: [] as GameMode[],
   comfortFilters: [],
   drinkRuleTemplate: null,
   customDrinkRules: [],

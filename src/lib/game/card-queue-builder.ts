@@ -14,13 +14,15 @@
 
 import { GameMode, WildCardType } from '@/types/game';
 import { QueuedCard } from './escalation-engine';
-import { GAME_MODES } from './game-modes';
+import { GAME_MODES, blendModes } from './game-modes';
 import { expandComfortFilters, isCardFiltered } from './comfort-filters';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface CardQueueConfig {
   gameMode: GameMode;
+  /** More decks mixed with the main one (never Family). */
+  extraModes?: GameMode[];
   cardCountTarget: number;
   comfortFilters: string[];
   trashedCardIds: string[]; // current user's trashed cards
@@ -191,7 +193,7 @@ export function buildCardQueue(
   cardLibrary: QueuedCard[]
 ): CardQueue {
   const { gameMode, cardCountTarget, comfortFilters, trashedCardIds } = config;
-  const modeConfig = GAME_MODES[gameMode];
+  const modeConfig = config.extraModes?.length ? blendModes([gameMode, ...config.extraModes]) : GAME_MODES[gameMode];
 
   // Step 1: Filter the card library
   const expandedFilters = expandComfortFilters(comfortFilters);

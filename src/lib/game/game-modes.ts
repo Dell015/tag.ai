@@ -110,3 +110,24 @@ export const GAME_MODES: Record<GameMode, GameModeConfig> = {
     maxHeat: 2.0,
   },
 };
+
+/**
+ * Several decks played together: pool weights are averaged, the wild card gap and entry heat
+ * average too. Family never mixes (it caps heat and intensity), so a blend ignores it unless alone.
+ */
+export function blendModes(modes: GameMode[]): GameModeConfig {
+  const list = modes.length > 1 ? modes.filter((m) => m !== 'family') : modes;
+  if (list.length <= 1) return GAME_MODES[list[0] ?? 'barkada'];
+  const cfgs = list.map((m) => GAME_MODES[m]);
+  const avg = (f: (c: GameModeConfig) => number) => cfgs.reduce((a, c) => a + f(c), 0) / cfgs.length;
+  const dist: Record<number, number> = {};
+  for (let i = 1; i <= 5; i++) dist[i] = Math.round(avg((c) => c.poolDistribution[i] ?? 0));
+  return {
+    name: cfgs.map((c) => c.name).join(' + '),
+    description: 'A mix of decks',
+    audienceTag: 'Mixed',
+    entryHeat: Math.round(avg((c) => c.entryHeat)),
+    poolDistribution: dist,
+    wildCardFrequency: { base: Math.round(avg((c) => c.wildCardFrequency.base)), variance: Math.max(...cfgs.map((c) => c.wildCardFrequency.variance)) },
+  };
+}

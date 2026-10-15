@@ -39,6 +39,7 @@ export function startGame(room: Room, trashedCardIds: string[]): boolean {
   useGameStore.getState().initializeQueue(
     {
       gameMode: room.config.gameMode,
+      extraModes: room.config.extraModes ?? [],
       cardCountTarget: room.config.cardCountTarget,
       comfortFilters: room.config.comfortFilters,
       trashedCardIds,

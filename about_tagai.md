@@ -1181,3 +1181,10 @@ We do not read every card by hand. The pipeline is:
 ### 23.10 Interface size (Built, 2026-10-16)
 
 - The owner found the interface too large. Base text size is now 15px, buttons are 48px (primary 56px), page titles and list rows are smaller. Card text during play keeps its own size setting.
+
+### 23.11 Mixing decks (Built, 2026-10-16)
+
+- The host can tick **several decks** in setup, for example Barkada + Spicy.
+- The first deck picked is the main one: it sets the colour and the heat rules. Pool weights of all picked decks are **averaged**, and entry heat and wild card gap are averaged too.
+- **Family plays alone** because it caps heat at 2.0 and only uses intensity 1 to 2. Picking Family clears other decks, and picking another deck clears Family.
+- The mid-game "change mood" control still switches to one deck at a time.
