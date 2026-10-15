@@ -25,8 +25,7 @@ import { useSettingsStore } from '@/stores/settings-store';
 import { ConfirmSheet, Sheet } from '@/components/ui';
 import { TopUpSheet } from '@/components/play/TopUpSheet';
 import { ToolsSheet } from '@/components/play/ToolsSheet';
-import { CURATED_CARDS } from '@/lib/data/cards';
-import { PACK_CARDS } from '@/lib/data/shop-catalogue';
+import { autoPool } from '@/lib/data/card-pool';
 import { useShopStore } from '@/stores/shop-store';
 import { withPlayer } from '@/lib/data/rooms';
 import { FOCUS_RULES } from '@/lib/game/mid-game';
@@ -212,7 +211,7 @@ export default function PlayPage() {
         players={g.turnRotation.players} heat={g.heatLevel} pot={g.pot} onTopUp={() => { setPause(false); setTopUp(true); }}
         onTools={() => { setPause(false); setTools(true); }}
         mood={g.gameMode}
-        onMood={(m) => { g.changeMood(m, [...CURATED_CARDS, ...ownedPacks.flatMap((id) => PACK_CARDS[id] ?? [])], { comfortFilters: room.config.comfortFilters, trashedCardIds: useProfileStore.getState().trashedCardIds }); toast(`Switched to ${GAME_MODES[m].name}`, { tone: 'ok' }); }}
+        onMood={(m) => { g.changeMood(m, autoPool(ownedPacks, useSettingsStore.getState().adultContent), { comfortFilters: room.config.comfortFilters, trashedCardIds: useProfileStore.getState().trashedCardIds }); toast(`Switched to ${GAME_MODES[m].name}`, { tone: 'ok' }); }}
         onFocus={(k) => { const n = g.focusNext(k); toast(n > 0 ? `${FOCUS_RULES[k as 'deep' | 'dares'].label}` : 'No matching cards left', {}); }}
         onAddPlayer={(name) => { const id = `guest-${Math.random().toString(36).slice(2, 10)}`; const av = `c${(g.turnRotation.players.length + 2) % 10}`; g.addPlayerToTurns({ id, name, avatarUrl: av }); rooms.update(code, (r) => withPlayer(r, { id, userId: id, displayName: name, avatarUrl: av, isGuest: true })); }}
         onMove={g.movePlayer}

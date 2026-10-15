@@ -6,7 +6,8 @@ import { CardEditorSheet } from '@/components/library/CardEditorSheet';
 import { categoryLabel } from '@/components/library/common';
 import { AUDIENCES, MAX_DECK_CARDS, hasSlot, useDeckStore, type DeckCard } from '@/stores/deck-store';
 import { GAME_MODES } from '@/lib/game/game-modes';
-import { CURATED_CARDS } from '@/lib/data/cards';
+import { findCard } from '@/lib/data/card-pool';
+import { useSettingsStore } from '@/stores/settings-store';
 import { useProfileStore } from '@/stores/profile-store';
 import { Sheet } from '@/components/ui';
 import type { GameMode } from '@/types/game';
@@ -23,10 +24,11 @@ export default function EditDeckPage() {
   const [adding, setAdding] = useState(false);
   const [picker, setPicker] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
+  const adultOn = useSettingsStore((s) => s.adultContent);
 
   if (!deck) return <Screen title="Deck" back="/library"><EmptyState title="That deck is gone." /></Screen>;
 
-  const saved = savedIds.map((i) => CURATED_CARDS.find((c) => c.id === i)).filter((c) => !!c);
+  const saved = savedIds.map((i) => findCard(i, adultOn)).filter((c) => !!c);
   const have = new Set(deck.cards.map((c) => c.text));
   const fromSaved = saved.filter((c) => !have.has(c!.text));
 

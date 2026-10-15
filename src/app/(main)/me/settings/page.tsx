@@ -32,7 +32,7 @@ function Block({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-function ToggleRow({ label, hint, k }: { label: string; hint?: string; k: 'vibration' | 'sounds' | 'keepAwake' | 'swipe' | 'confirmTrash' | 'showPips' | 'showRules' | 'leftHanded' | 'highContrast' | 'nonDrinkingDefault' | 'testPurchases' }) {
+function ToggleRow({ label, hint, k }: { label: string; hint?: string; k: 'vibration' | 'sounds' | 'keepAwake' | 'swipe' | 'confirmTrash' | 'showPips' | 'showRules' | 'leftHanded' | 'highContrast' | 'nonDrinkingDefault' | 'testPurchases' | 'adultContent' }) {
   const v = useSettingsStore((s) => s[k]);
   const set = useSettingsStore((s) => s.set);
   return <ListRow label={label} hint={hint} right={<Toggle checked={v} onChange={(x) => set(k, x)} label={label} />} />;
@@ -46,7 +46,7 @@ export default function SettingsPage() {
   const resetGame = useGameStore((g) => g.resetGame);
   const [word, setWord] = useState('');
   const [rule, setRule] = useState('');
-  const [ask, setAsk] = useState<null | 'profile' | 'game' | 'all'>(null);
+  const [ask, setAsk] = useState<null | 'profile' | 'game' | 'all' | 'adult'>(null);
   const [taps, setTaps] = useState(0);
 
   const customTopics = s.skipTopics.filter((t) => !(PRESET_TOPICS as readonly string[]).includes(t));
@@ -72,7 +72,7 @@ export default function SettingsPage() {
   const versionTap = () => {
     const n = taps + 1;
     setTaps(n);
-    if (n === 5) { s.set('testPurchases', true); toast('Developer options on', { tone: 'ok' }); }
+    if (n === 5 && !s.hiddenUnlocked) { s.set('hiddenUnlocked', true); toast('Hidden options unlocked', { tone: 'ok' }); }
   };
 
   return (
@@ -169,7 +169,11 @@ export default function SettingsPage() {
         <ListRow label="Clear game in progress" danger onClick={() => setAsk('game')} />
         <ListRow label="Reset profile" danger onClick={() => setAsk('profile')} />
         <ListRow label="Clear all local data" danger onClick={() => setAsk('all')} />
-        {s.testPurchases && <ToggleRow k="testPurchases" label="Test purchases" hint="Developer. Lets you add test coins in the Shop." />}
+        {(s.hiddenUnlocked || s.adultContent) && (
+          <ListRow label="18+ cards" hint="Flirty and bold cards in games, Browse and the Shop. Everyone playing must be 18 or older."
+            right={<Toggle checked={s.adultContent} onChange={(x) => (x ? setAsk('adult') : s.set('adultContent', false))} label="18+ cards" />} />
+        )}
+        {s.hiddenUnlocked && <ToggleRow k="testPurchases" label="Test purchases" hint="Developer. Lets you add test coins in the Shop." />}
         <ListRow label="Terms" href="/legal/terms" />
         <ListRow label="Privacy" href="/legal/privacy" />
         <ListRow label="Help" href="/help" />
@@ -177,6 +181,7 @@ export default function SettingsPage() {
         <ListRow label="Version" value={`0.1 (${BUILD})`} onClick={versionTap} />
       </Group>
 
+      <ConfirmSheet open={ask === 'adult'} title="Turn on 18+ cards?" body="These cards are flirty and bold. Only turn them on when everyone playing is 18 or older and comfortable. You can turn them off any time, and the group can still skip the Sexual content topic for one game." confirmLabel="Turn on 18+ cards" onConfirm={() => { s.set('adultContent', true); toast('18+ cards on', { tone: 'ok' }); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'game'} title="Clear the game in progress?" body="The current game on this phone ends and cannot be resumed." confirmLabel="Clear game" danger onConfirm={() => { const left = useGameStore.getState().settlePot(); if (left > 0) useWalletStore.getState().apply('refund', left, 'Unused pot returned'); resetGame(); toast('Game cleared', {}); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'profile'} title="Reset your profile?" body="Your name, coins, saved and trashed cards on this phone are removed." confirmLabel="Reset profile" danger onConfirm={() => { useWalletStore.getState().clear(); signOut(); router.replace('/welcome'); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'all'} title="Clear all local data?" body="Everything tag.ai stored on this phone is erased, including settings." confirmLabel="Clear everything" danger onConfirm={wipe} onClose={() => setAsk(null)} />

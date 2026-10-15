@@ -37,6 +37,10 @@ export interface Settings {
   motion: MotionPref;
   highContrast: boolean;
   language: Language;
+  /** 18+ cards in games, Browse and the Shop. Hidden option, off by default. */
+  adultContent: boolean;
+  /** Set once the hidden options were unlocked from Settings. */
+  hiddenUnlocked: boolean;
   // Developer
   testPurchases: boolean;
 }
@@ -63,6 +67,8 @@ export const DEFAULT_SETTINGS: Settings = {
   motion: 'system',
   highContrast: false,
   language: 'en',
+  adultContent: false,
+  hiddenUnlocked: false,
   testPurchases: false,
 };
 

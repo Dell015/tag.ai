@@ -3,8 +3,11 @@ import { useMemo, useState } from 'react';
 import { Chip, Icon } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
 import { BROWSABLE, CATEGORY_GROUPS, intensityCounts } from '@/lib/data/taxonomy';
+import { ADULT_CARDS } from '@/lib/data/adult-cards';
+import { useSettingsStore } from '@/stores/settings-store';
 import { categoryLabel } from './common';
 import { Fold, IntensityBars } from './parts';
+import { PEOPLE_BANDS, fitsPlayers, peopleLabel } from '@/lib/game/players-needed';
 import { cn } from '@/lib/cn';
 
 const HEATS = [
@@ -21,9 +24,13 @@ export function Browse() {
   const unsave = useProfileStore((s) => s.unsaveCard);
   const [q, setQ] = useState('');
   const [heat, setHeat] = useState('any');
+  const [people, setPeople] = useState('any');
   const test = HEATS.find((h) => h.id === heat)!.test;
+  const sizes = PEOPLE_BANDS.find((b) => b.id === people)!.sizes;
   const term = q.trim().toLowerCase();
-  const cards = useMemo(() => BROWSABLE.filter((c) => test(c.intensity) && (!term || c.text.toLowerCase().includes(term))), [test, term]);
+  const adultOn = useSettingsStore((s) => s.adultContent);
+  const base = useMemo(() => (adultOn ? [...BROWSABLE, ...ADULT_CARDS] : BROWSABLE), [adultOn]);
+  const cards = useMemo(() => base.filter((c) => test(c.intensity) && (sizes.length === 0 || sizes.some((n) => fitsPlayers(c, n))) && (!term || c.text.toLowerCase().includes(term))), [base, test, sizes, term]);
 
   const row = (c: (typeof BROWSABLE)[number]) => {
     const on = saved.includes(c.id);
@@ -31,7 +38,7 @@ export function Browse() {
       <li key={c.id} className="flex items-start gap-3 border-t-2 border-line/50 py-4 first:border-t-0">
         <div className="min-w-0 flex-1">
           <p className="text-xl font-bold leading-snug">{c.text}</p>
-          <p className="mt-1 text-base text-muted">{c.cardType === 'action' ? 'Dare, ' : ''}intensity {c.intensity} of 5</p>
+          <p className="mt-1 text-base text-muted">{c.adult ? '18+, ' : ''}{c.cardType === 'action' ? 'Dare, ' : ''}intensity {c.intensity} of 5{peopleLabel(c) ? `, ${peopleLabel(c)}` : ''}</p>
         </div>
         <button onClick={() => (on ? unsave(c.id) : save(c.id))} aria-pressed={on} aria-label={on ? 'Remove from saved' : 'Save card'}
           className={cn('flex h-tap w-tap shrink-0 items-center justify-center rounded-xl border-2', on ? 'border-accent bg-accent text-onaccent' : 'border-line text-muted')}>
@@ -47,17 +54,20 @@ export function Browse() {
       <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 scrollbar-none">
         {HEATS.map((h) => <Chip key={h.id} selected={heat === h.id} onClick={() => setHeat(h.id)} className="shrink-0">{h.label}</Chip>)}
       </div>
-      <p className="mb-3 mt-3 text-base text-muted">{cards.length} cards{term || heat !== 'any' ? ' match' : ' in the library'}</p>
+      <div className="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 scrollbar-none">
+        {PEOPLE_BANDS.map((b) => <Chip key={b.id} selected={people === b.id} onClick={() => setPeople(b.id)} className="shrink-0">{b.label}</Chip>)}
+      </div>
+      <p className="mb-3 mt-3 text-base text-muted">{cards.length} cards{term || heat !== 'any' || people !== 'any' ? ' match' : ' in the library'}</p>
 
       {term ? (
         <ul>{cards.map(row)}{cards.length === 0 && <li className="py-6 text-lg text-muted">No cards match.</li>}</ul>
       ) : (
         CATEGORY_GROUPS.map((g) => {
-          const inGroup = cards.filter((c) => (g.cats as string[]).includes(c.category));
+          const inGroup = cards.filter((c) => !c.adult && (g.cats as string[]).includes(c.category));
           return (
             <Fold key={g.id} title={g.label} hint={g.hint} tone={g.tone} count={inGroup.length} defaultOpen={g.id === 'talk'}>
               {g.cats.map((cat) => {
-                const list = cards.filter((c) => c.category === cat);
+                const list = cards.filter((c) => !c.adult && c.category === cat);
                 if (list.length === 0) return null;
                 return (
                   <Fold key={cat} level={1} title={categoryLabel(cat)} count={list.length} right={<IntensityBars values={intensityCounts(list)} className="text-muted" />}>
@@ -67,7 +77,21 @@ export function Browse() {
               })}
             </Fold>
           );
-        })
+        }).concat(
+          adultOn && cards.some((c) => c.adult) ? [
+            <Fold key="adult" title="After dark" hint="18+. Flirty and bold. Turn this off in Settings any time." tone="red" count={cards.filter((c) => c.adult).length}>
+              {CATEGORY_GROUPS.flatMap((g) => g.cats).map((cat) => {
+                const list = cards.filter((c) => c.adult && c.category === cat);
+                if (list.length === 0) return null;
+                return (
+                  <Fold key={cat} level={1} title={categoryLabel(cat)} count={list.length} right={<IntensityBars values={intensityCounts(list)} className="text-muted" />}>
+                    <ul>{list.map(row)}</ul>
+                  </Fold>
+                );
+              })}
+            </Fold>,
+          ] : [],
+        )
       )}
     </>
   );

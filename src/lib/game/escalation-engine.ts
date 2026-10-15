@@ -30,6 +30,10 @@ export interface QueuedCard {
   category: CardCategory;
   wildCardType?: WildCardType;
   topics: string[];
+  /** 18+ card. Only drawn when the 18+ cards setting is on. */
+  adult?: boolean;
+  /** Set to override the group size worked out from the wording. */
+  people?: { min: number; max: number | null };
 }
 
 // ─── Heat Adjustment Constants ───────────────────────────────────────────────

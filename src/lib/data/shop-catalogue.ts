@@ -9,7 +9,7 @@ import type { CardCategory } from '@/types/game';
 export type ShopKind = 'coins' | 'tool' | 'pack' | 'frame' | 'back' | 'theme';
 
 export interface CoinPackage { id: string; name: string; price: number; coins: number; bonus?: number; badge?: string }
-export interface ShopItem { id: string; kind: Exclude<ShopKind, 'coins'>; name: string; price: number; description: string; value?: string }
+export interface ShopItem { id: string; kind: Exclude<ShopKind, 'coins'>; name: string; price: number; description: string; value?: string; /** Hidden in the Shop unless 18+ cards are on. */ adult?: boolean }
 
 export const COIN_PACKAGES: CoinPackage[] = [
   { id: 'starter', name: 'Starter', price: 20, coins: 20 },
@@ -29,6 +29,8 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'pack-pasko', kind: 'pack', name: 'Pasko and reunion', price: 30, description: 'Family-friendly, tita-proof.' },
   { id: 'pack-deep', kind: 'pack', name: 'Late night deep', price: 30, description: 'Slow, honest, vulnerable cards.' },
   { id: 'pack-pulutan', kind: 'pack', name: 'Pulutan dares', price: 20, description: 'Dares only, short and physical.' },
+  { id: 'pack-afterdark', kind: 'pack', name: 'After dark', price: 35, description: '18+. Flirty questions for close friends and couples.', adult: true },
+  { id: 'pack-nodares', kind: 'pack', name: 'No shame dares', price: 30, description: '18+. Bold dares for groups past the point of caring.', adult: true },
 
   { id: 'frame-stripe', kind: 'frame', name: 'Stripe frame', price: 10, description: 'A striped ring around your avatar.', value: 'stripe' },
   { id: 'frame-dots', kind: 'frame', name: 'Dots frame', price: 10, description: 'A dotted ring around your avatar.', value: 'dots' },
@@ -47,8 +49,8 @@ export const SHOP_ITEMS: ShopItem[] = [
 export const itemById = (id: string) => SHOP_ITEMS.find((i) => i.id === id);
 
 type P = [string, 'question' | 'action', number, CardCategory];
-function pack(id: string, rows: P[]): QueuedCard[] {
-  return rows.map(([text, cardType, intensity, category], i) => ({ id: `${id}-${i + 1}`, text, cardType, intensity, category, topics: [] }));
+function pack(id: string, rows: P[], adult = false): QueuedCard[] {
+  return rows.map(([text, cardType, intensity, category], i) => ({ id: `${id}-${i + 1}`, text, cardType, intensity, category, topics: adult ? ['sexual_content', 'adult'] : [], ...(adult ? { adult: true } : {}) }));
 }
 
 export const PACK_CARDS: Record<string, QueuedCard[]> = {
@@ -100,6 +102,22 @@ export const PACK_CARDS: Record<string, QueuedCard[]> = {
     ['Swap seats with someone. They pick who.', 'action', 2, 'dares'],
     ['Whisper your next sentence. Everyone else must copy you.', 'action', 2, 'dares'],
   ]),
+  'pack-afterdark': pack('afterdark', [
+    ['What is the most attractive thing someone can do at a party?', 'question', 3, 'hot_takes'],
+    ['Describe the best first kiss you have had, no names.', 'question', 4, 'memories'],
+    ['What would you do if your crush walked in right now?', 'question', 3, 'hypotheticals'],
+    ['Which text have you sent that you regretted the next morning?', 'question', 4, 'confessions'],
+    ['What is something small that instantly makes you attracted to someone?', 'question', 3, 'relationships'],
+    ['Who here has the most dangerous charm, and what do they do with it?', 'question', 4, 'roasts'],
+  ], true),
+  'pack-nodares': pack('nodares', [
+    ['Give the group your best bedroom eyes for five seconds.', 'action', 3, 'dares'],
+    ['Say a flirty line to the next person who walks past. If no one walks past, say it to the group.', 'action', 4, 'dares'],
+    ['Let the group pick a person for you to slow dance with for ten seconds.', 'action', 4, 'dares'],
+    ['Reveal the last person you searched on social media, no scrolling.', 'action', 4, 'dares'],
+    ['Do your most dramatic love confession to the nearest pillow or bottle.', 'action', 3, 'dares'],
+    ['Swap seats with someone of your choice and stay there for the next three cards.', 'action', 3, 'dares'],
+  ], true),
 };
 
 export const packCardCount = (id: string) => PACK_CARDS[id]?.length ?? 0;

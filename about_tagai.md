@@ -1188,3 +1188,21 @@ We do not read every card by hand. The pipeline is:
 - The first deck picked is the main one: it sets the colour and the heat rules. Pool weights of all picked decks are **averaged**, and entry heat and wild card gap are averaged too.
 - **Family plays alone** because it caps heat at 2.0 and only uses intensity 1 to 2. Picking Family clears other decks, and picking another deck clears Family.
 - The mid-game "change mood" control still switches to one deck at a time.
+
+### 23.12 18+ cards (Built, 2026-10-16)
+
+- 18+ cards are the most asked-for content at drinking sessions, so they exist, but **off by default and hidden**.
+- **Where the switch is:** Settings, tap **Version** five times to unlock hidden options, then the **18+ cards** toggle appears. Turning it on shows a confirmation ("everyone playing must be 18 or older and comfortable"). Turning it off needs no confirmation.
+- **When on:** 25 flirty and bold cards join the Auto pool and the Browse tab (a separate "After dark" group), saved 18+ cards show up again, and two 18+ packs appear in the Shop ("After dark", "No shame dares").
+- **When off:** all of that is filtered out. 18+ cards cannot be drawn, browsed, searched or shown, and 18+ packs vanish from the Shop. A pack bought earlier stays owned but is not drawn while the setting is off.
+- **Tagging:** every 18+ card carries the "sexual_content" topic, so the group can still switch them off for one game with the existing topic filter. Cards show "18+" on the card face.
+- **Content rule:** flirty and suggestive only, never graphic, and never about a person who has not agreed to play.
+- **Not built:** a per-room override (host turns 18+ on for one game only), and asking each player to confirm they are 18 or older.
+
+### 23.13 How many people a card is for (Built, 2026-10-16)
+
+- Every card has a **group size**: the minimum number of people it needs, and for a few cards a maximum (for example "Just 2 people").
+- It is worked out from the wording ("in this room" needs 3 or more, "which two people here" needs 4 or more, "the person on your left" needs 2). A card can also set its size by hand.
+- **In games:** the Auto pool drops cards that do not fit the number of players. Your own decks are never filtered this way.
+- **In Browse:** a People filter (Any group size, 2 people, 3 to 4, 5 or more), and cards that need a bigger group are labelled, for example "3+ people".
+- The wording rules are a first pass. The seed cards should get explicit sizes over time.

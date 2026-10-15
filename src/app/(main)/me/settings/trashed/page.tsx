@@ -1,12 +1,14 @@
 'use client';
 import { Button, EmptyState, Screen, Spot } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
-import { CURATED_CARDS } from '@/lib/data/cards';
+import { findCard } from '@/lib/data/card-pool';
+import { useSettingsStore } from '@/stores/settings-store';
 
 export default function TrashedPage() {
   const ids = useProfileStore((s) => s.trashedCardIds);
   const untrash = useProfileStore((s) => s.untrashCard);
-  const cards = ids.map((id) => CURATED_CARDS.find((c) => c.id === id)).filter((c) => !!c);
+  const adultOn = useSettingsStore((s) => s.adultContent);
+  const cards = ids.map((id) => findCard(id, adultOn)).filter((c) => !!c);
 
   return (
     <Screen title="Trashed" back="/me/settings"

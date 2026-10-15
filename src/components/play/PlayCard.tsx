@@ -76,7 +76,7 @@ export function PlayCard({ card, revealed, onReveal, onDone, onSkip, others, non
 
       <div className="flex flex-1 flex-col p-6">
         <div className="flex items-center justify-between text-base font-bold">
-          <span>{wild ? 'Wild card' : isAction ? 'Dare' : card.category.replace(/_/g, ' ')}</span>
+          <span>{wild ? 'Wild card' : isAction ? 'Dare' : card.category.replace(/_/g, ' ')}{card.adult ? ', 18+' : ''}</span>
           {!wild && showPips && (
             <span className="flex gap-1" role="img" aria-label={`Intensity ${card.intensity} of 5`}>
               {[1, 2, 3, 4, 5].map((i) => <span key={i} className={cn('h-3 w-3 rounded-sm border-2 border-current', i <= card.intensity ? 'bg-current' : 'opacity-40')} />)}

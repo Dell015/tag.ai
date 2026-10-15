@@ -13,8 +13,8 @@ import { PRESET_TOPICS } from '@/lib/game/comfort-filters';
 import { PRESET_COUNTS, formatDuration, DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 import { useProfileStore } from '@/stores/profile-store';
 import { hasSlot, useDeckStore } from '@/stores/deck-store';
-import { CURATED_CARDS } from '@/lib/data/cards';
-import { PACK_CARDS } from '@/lib/data/shop-catalogue';
+import { autoPool } from '@/lib/data/card-pool';
+import { useSettingsStore } from '@/stores/settings-store';
 import { useShopStore } from '@/stores/shop-store';
 import { TextField } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -70,6 +70,7 @@ export default function SetupPage() {
   const [rule, setRule] = useState('');
   const myDecks = useDeckStore((d) => d.decks);
   const ownedPacks = useShopStore((x) => x.owned);
+  const adultOn = useSettingsStore((x) => x.adultContent);
   const starting = useRef(false);
 
   useEffect(() => {
@@ -187,7 +188,7 @@ export default function SetupPage() {
         <>
           <div className="space-y-3">
             <Row selected={!usingDecks} onClick={() => { setSourceMode('auto'); set({ deckIds: [], slotFills: [] }); }}>
-              <span className="flex-1"><span className="display block text-3xl">Auto</span><span className="text-base text-muted">The tag.ai library{ownedPacks.length ? ' and your packs' : ''}, picked by heat. {CURATED_CARDS.length + ownedPacks.reduce((n, id) => n + (PACK_CARDS[id]?.length ?? 0), 0)} cards.</span></span>
+              <span className="flex-1"><span className="display block text-3xl">Auto</span><span className="text-base text-muted">The tag.ai library{ownedPacks.length ? ' and your packs' : ''}, picked by heat. {autoPool(ownedPacks, adultOn).length} cards.</span></span>
             </Row>
             <Row selected={usingDecks} onClick={() => { if (myDecks.length) setSourceMode('decks'); }}>
               <span className="flex-1"><span className="display block text-3xl">My decks</span><span className="text-base text-muted">{myDecks.length ? 'Play only the decks you built.' : 'No decks yet. Build one in Library.'}</span></span>

@@ -1,6 +1,6 @@
 import { rooms, type Room } from '@/lib/data/rooms';
-import { CURATED_CARDS } from '@/lib/data/cards';
-import { PACK_CARDS } from '@/lib/data/shop-catalogue';
+import { autoPool } from '@/lib/data/card-pool';
+import { useSettingsStore } from '@/stores/settings-store';
 import { useShopStore } from '@/stores/shop-store';
 import { applySlots, toQueuedCards, useDeckStore } from '@/stores/deck-store';
 import { useGameStore } from '@/stores/game-store';
@@ -12,7 +12,7 @@ export const LAST_ROOM_KEY = 'tagai-last-room';
 
 /** The cards a game draws from: the Auto pool, or only the chosen decks (a small deck makes a shorter game). */
 export function buildLibrary(room: Room) {
-  const auto = [...CURATED_CARDS, ...useShopStore.getState().owned.flatMap((id) => PACK_CARDS[id] ?? [])];
+  const auto = autoPool(useShopStore.getState().owned, useSettingsStore.getState().adultContent);
   const ids = room.config.deckIds ?? [];
   if (ids.length === 0) return auto;
   const decks = useDeckStore.getState().decks.filter((d) => ids.includes(d.id));
@@ -44,6 +44,7 @@ export function startGame(room: Room, trashedCardIds: string[]): boolean {
       comfortFilters: room.config.comfortFilters,
       trashedCardIds,
       playerCount: players.length,
+      fitPlayers: (room.config.deckIds ?? []).length === 0,
     },
     buildLibrary(room),
   );

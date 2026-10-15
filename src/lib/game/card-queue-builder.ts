@@ -14,6 +14,7 @@
 
 import { GameMode, WildCardType } from '@/types/game';
 import { QueuedCard } from './escalation-engine';
+import { fitsPlayers } from './players-needed';
 import { GAME_MODES, blendModes } from './game-modes';
 import { expandComfortFilters, isCardFiltered } from './comfort-filters';
 
@@ -27,6 +28,8 @@ export interface CardQueueConfig {
   comfortFilters: string[];
   trashedCardIds: string[]; // current user's trashed cards
   playerCount: number;
+  /** Drop cards that need more (or fewer) people than are playing. On by default; off for your own decks. */
+  fitPlayers?: boolean;
 }
 
 export interface CardQueue {
@@ -206,6 +209,10 @@ export function buildCardQueue(
     }
     // Remove trashed cards
     if (trashedIdSet.has(card.id)) {
+      return false;
+    }
+    // Remove cards that do not fit the number of people at the table
+    if (config.fitPlayers !== false && config.playerCount > 0 && !fitsPlayers(card, config.playerCount)) {
       return false;
     }
     return true;

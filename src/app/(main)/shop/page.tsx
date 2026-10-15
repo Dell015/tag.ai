@@ -36,7 +36,8 @@ function ShopInner() {
   const shop = useShopStore();
   const test = useSettingsStore((s) => s.testPurchases);
 
-  const items = SHOP_ITEMS.filter((i) => (seg === 'tools' ? i.kind === 'tool' : seg === 'packs' ? i.kind === 'pack' : seg === 'style' ? ['frame', 'back', 'theme'].includes(i.kind) : false));
+  const adultOn = useSettingsStore((s) => s.adultContent);
+  const items = SHOP_ITEMS.filter((i) => (!i.adult || adultOn) && (seg === 'tools' ? i.kind === 'tool' : seg === 'packs' ? i.kind === 'pack' : seg === 'style' ? ['frame', 'back', 'theme'].includes(i.kind) : false));
   const owned = (i: ShopItem) => shop.owned.includes(i.id);
   const equippedNow = (i: ShopItem) => shop.equipped[i.kind as 'frame' | 'back' | 'theme'] === i.id;
   const confirm = () => {
