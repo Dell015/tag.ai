@@ -31,6 +31,9 @@ export function steerNextCard(
   );
   const at = candidates.find((c) => c.card.id === picked.id)!.at;
   if (at === index) return queue;
+  // Never swap in a card that starts a run of the same category.
+  const before = queue[index - 1];
+  if (before && picked.category === before.category && current.category !== before.category) return queue;
 
   const next = [...queue];
   [next[index], next[at]] = [next[at], next[index]];

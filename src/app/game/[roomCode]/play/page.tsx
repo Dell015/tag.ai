@@ -34,6 +34,7 @@ import { FOCUS_RULES } from '@/lib/game/mid-game';
 import { HEAT_UP_COST, formatPot, isLow } from '@/lib/game/pot';
 import { useWalletStore } from '@/stores/wallet-store';
 import { cn } from '@/lib/cn';
+import { fillDrink } from '@/lib/game/card-kinds';
 
 export default function PlayPage() {
   const params = useParams<{ roomCode: string }>();
@@ -130,14 +131,13 @@ export default function PlayPage() {
   const current = getCurrentPlayer(g.turnRotation);
   const next = getNextPlayer(g.turnRotation);
   const revealed = g.currentCardState === 'revealed';
-  const sortedPlayers = [...g.turnRotation.players].sort((a, b) => a.turnOrder - b.turnOrder);
-  const orderFromCurrent = [...sortedPlayers.slice(g.turnRotation.currentIndex), ...sortedPlayers.slice(0, g.turnRotation.currentIndex)];
   const isHearted = !!card && hearted.includes(card.id);
 
   const reveal = () => {
     playSound(card?.cardType === 'wild' ? 'wild' : 'reveal');
     g.flipCard();
     if (card?.cardType === 'wild' && card.wildCardType) g.applyWildCardEffect(card.wildCardType);
+    else if (card?.rule) g.setRule(card.rule);
   };
 
   const resolve = (kind: 'dismiss' | 'skip' | 'trash' | 'again') => {
@@ -186,16 +186,21 @@ export default function PlayPage() {
         </div>
         <HeatBar level={g.heatLevel} spiking={g.heatSpikeRemaining > 0} />
         <div className="flex flex-wrap justify-between gap-x-3 text-sm font-bold text-muted [&>*]:whitespace-nowrap">
-          <span>Card {Math.min(g.cardsPlayed + 1, g.cardCountTarget)} of {g.cardCountTarget}{g.crownImmunityRemaining > 0 && ', crown on'}</span>
+          <span>Card {Math.min(g.cardsPlayed + 1, g.cardCountTarget)} of {g.cardCountTarget}</span>
           {st.showRules && <span>{ruleLine(room.config.drinkRuleTemplate, room.config.nonDrinkingMode)}</span>}
           {g.potStart > 0 && <button onClick={() => setTopUp(true)} aria-label="Pot, tap to top up" className={cn('font-extrabold underline decoration-2 underline-offset-4', isLow(g.pot, g.potStart) ? 'text-danger' : 'text-text')}>Pot <RollNumber value={g.pot} format={formatPot} /></button>}
         </div>
+        {g.activeRule && (
+          <p role="status" className="flex items-center gap-2 rounded-lg bg-[rgb(190_222_58)] px-3 py-2 text-base font-extrabold text-[rgb(24_19_16)]">
+            <span className="sign shrink-0 text-sm">Rule on</span>
+            <span className="min-w-0">{fillDrink(g.activeRule, room.config.nonDrinkingMode)}</span>
+          </p>
+        )}
       </header>
 
       <main className="min-h-0 flex-1 [perspective:1200px]">
         {card && <PlayCard card={card} revealed={revealed} onReveal={reveal} onDone={() => resolve('dismiss')}
-          others={g.turnRotation.players.filter((p) => p.id !== current.id)} nonDrinking={room.config.nonDrinkingMode}
-          order={orderFromCurrent.map((p) => p.name)} nextName={next.name} crown={g.crownImmunityRemaining} spike={g.heatSpikeRemaining} />}
+          others={g.turnRotation.players.filter((p) => p.id !== current.id)} nonDrinking={room.config.nonDrinkingMode} />}
       </main>
 
       <div className="flex h-16 items-center py-2">

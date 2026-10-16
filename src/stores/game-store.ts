@@ -15,7 +15,7 @@ import { advanceTurn, TurnState } from '@/lib/game/turn-rotation';
 import { buildCardQueue, buildBasketQueue, CardQueueConfig, BasketQueue } from '@/lib/game/card-queue-builder';
 import { deckOf, type DeckId } from '@/lib/game/decks';
 import { GAME_MODES, blendModes } from '@/lib/game/game-modes';
-import { decrementHeatSpike, decrementCrownImmunity, applyShuffleWildCard } from '@/lib/game/wild-cards';
+import { decrementHeatSpike, decrementCrownImmunity } from '@/lib/game/wild-cards';
 import { cardCost, round3 } from '@/lib/game/pot';
 import { focusUpcoming, addToTurns, movePlayer as movePlayerInTurns, type FocusKind } from '@/lib/game/mid-game';
 import { GameMode, WildCardType } from '@/types/game';
@@ -63,6 +63,9 @@ export interface GameState {
   turnRotation: TurnState;
   crownImmunityRemaining: number;
 
+  /** Short line of the rule card in force. Cleared by the next wild card. */
+  activeRule: string | null;
+
   // UI state
   currentCardState: 'face_down' | 'revealed' | 'dismissing';
   showPassPrompt: boolean;
@@ -78,6 +81,8 @@ export interface GameState {
 
   // Actions
   flipCard: () => void;
+  /** Turns a rule on (a rule card was revealed) or off (null, a wild card came up). */
+  setRule: (rule: string | null) => void;
   dismissCard: () => void;
   /** Done, then another card for the same player. */
   againCard: () => void;
@@ -94,7 +99,7 @@ export interface GameState {
   initializeQueue: (config: CardQueueConfig, library: QueuedCard[]) => void;
   /** Starts a game from a queue built out of a basket (cards bought per deck). */
   initializeBasket: (queue: BasketQueue, gameMode: GameMode) => void;
-  applyWildCardEffect: (wildCardType: WildCardType) => void;
+  applyWildCardEffect: (wildCardType?: WildCardType) => void;
   /** Pulls deep questions or dares forward in the queue. Returns how many cards matched. */
   focusNext: (kind: FocusKind) => number;
   /** Switches to another deck for the rest of the game. */
@@ -120,8 +125,9 @@ const INITIAL: Pick<
   | 'gameMode' | 'skippedCount' | 'heartedCount' | 'peakHeat' | 'heatLevel'
   | 'consecutiveSkips' | 'heatSpikeRemaining' | 'preSpikeHeat' | 'turnRotation'
   | 'crownImmunityRemaining' | 'currentCardState' | 'showPassPrompt' | 'sessionPhase'
-  | 'undoSnapshot' | 'pot' | 'potStart' | 'potRefunded'
+  | 'undoSnapshot' | 'pot' | 'potStart' | 'potRefunded' | 'activeRule'
 > = {
+  activeRule: null,
   cardQueue: [],
   bufferCards: [],
   currentCardIndex: 0,
@@ -232,6 +238,7 @@ export const useGameStore = create<GameState>()(
       ...INITIAL,
 
       flipCard: () => set({ currentCardState: 'revealed' }),
+      setRule: (rule) => set({ activeRule: rule }),
 
       focusNext: (kind) => {
         if (kind === 'mix') return 0;
@@ -396,51 +403,30 @@ export const useGameStore = create<GameState>()(
         });
       },
 
-      /**
-       * Wild card effects. Every wild card is +0.5 heat; additionally:
-       * - shuffle: reshuffles the next 5 cards
-       * - heat_spike: +1 level for the next 3 cards, then back to the pre-spike level
-       * - crown: 2-card immunity
-       */
-      applyWildCardEffect: (wildCardType) => {
+      /** Every wild card is +0.5 heat. The challenge itself is played at the table, nothing lingers. */
+      applyWildCardEffect: () => {
         const state = get();
-        const cap = state.gameMode === 'family' ? 2 : 5;
         const { newHeat } = calculateHeat({
           currentHeat: state.heatLevel,
           event: 'wild_card',
           consecutiveSkips: state.consecutiveSkips,
           gameMode: state.gameMode,
         });
-
-        switch (wildCardType) {
-          case 'shuffle':
-            set({
-              heatLevel: newHeat,
-              cardQueue: applyShuffleWildCard(state.cardQueue, state.currentCardIndex),
-            });
-            break;
-          case 'heat_spike': {
-            const spiked = Math.min(newHeat + 1.0, cap);
-            set({
-              preSpikeHeat: newHeat,
-              heatLevel: spiked,
-              heatSpikeRemaining: 3,
-              peakHeat: Math.max(state.peakHeat, spiked),
-            });
-            break;
-          }
-          case 'crown':
-            set({ heatLevel: newHeat, crownImmunityRemaining: 2 });
-            break;
-          default:
-            set({ heatLevel: newHeat });
-        }
-        set({ peakHeat: Math.max(get().peakHeat, get().heatLevel) });
+        set({ heatLevel: newHeat, peakHeat: Math.max(state.peakHeat, newHeat), activeRule: null });
       },
     }),
     {
       name: 'tagai-game',
-      version: 1,
+      version: 3,
+      // Version 3 changed the wild cards: take any old ones out of a saved game's queue.
+      migrate: (persisted) => {
+        const s = persisted as { cardQueue?: QueuedCard[]; bufferCards?: QueuedCard[] };
+        const known = ['call_out', 'voice_note', 'group_pose', 'dance_off'];
+        const gone = (c: QueuedCard) => c.cardType === 'wild' && !known.includes(c.wildCardType as string);
+        if (Array.isArray(s?.cardQueue)) s.cardQueue = s.cardQueue.filter((c) => !gone(c));
+        if (Array.isArray(s?.bufferCards)) s.bufferCards = s.bufferCards.filter((c) => !gone(c));
+        return s as never;
+      },
       storage: safeStorage(),
       skipHydration: true,
       partialize: (state) => ({
@@ -466,6 +452,7 @@ export const useGameStore = create<GameState>()(
         pot: state.pot,
         potStart: state.potStart,
         potRefunded: state.potRefunded,
+        activeRule: state.activeRule,
       }),
     }
   )

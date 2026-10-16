@@ -17,6 +17,7 @@ import { QueuedCard } from './escalation-engine';
 import { fitsPlayers } from './players-needed';
 import { GAME_MODES, blendModes } from './game-modes';
 import { expandComfortFilters, isCardFiltered } from './comfort-filters';
+import { kindOf } from './card-kinds';
 import { DECKS, deckOf, deckPool, basketCards, type Basket } from './decks';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -42,17 +43,7 @@ export interface CardQueue {
 
 // ─── Wild Card Types Pool ────────────────────────────────────────────────────
 
-const WILD_CARD_TYPES: WildCardType[] = [
-  'role_reversal',
-  'pick_your_target',
-  'everyone_answers',
-  'shuffle',
-  'heat_spike',
-  'act_it_out',
-  'whisper_round',
-  'free_drink',
-  'crown',
-];
+const WILD_CARD_TYPES: WildCardType[] = ['call_out', 'voice_note', 'group_pose', 'dance_off'];
 
 // ─── Helper Functions ────────────────────────────────────────────────────────
 
@@ -354,6 +345,34 @@ function insertWildCards(
 }
 
 
+/**
+ * Mixes cards so the table does not get a run of the same deck, type or category. Each pick is
+ * the card least like the last two, chosen from a random window of what is left.
+ */
+export function spreadOut(cards: QueuedCard[], random: () => number = Math.random): QueuedCard[] {
+  const left = shuffle(cards, random);
+  const out: QueuedCard[] = [];
+  const count: Record<string, number> = {};
+  for (const c of left) count[c.category] = (count[c.category] ?? 0) + 1;
+  const like = (a: QueuedCard | undefined, b: QueuedCard) => (a ? (a.deckId === b.deckId ? 2 : 0) + (kindOf(a) === kindOf(b) ? 1 : 0) + (a.category === b.category ? 2 : 0) : 0);
+  while (left.length) {
+    const p1 = out[out.length - 1];
+    const p2 = out[out.length - 2];
+    let best = 0;
+    let bestScore = Infinity;
+    for (let i = 0; i < left.length; i++) {
+      const c = left[i];
+      // Least like the last two cards; the biggest remaining group goes first so it is never stranded at the end.
+      const score = like(p1, c) * 10 + like(p2, c) * 3 - count[c.category] * 0.6 + random() * 2;
+      if (score < bestScore) { best = i; bestScore = score; }
+    }
+    const [pick] = left.splice(best, 1);
+    count[pick.category] -= 1;
+    out.push(pick);
+  }
+  return out;
+}
+
 // ─── Basket builder: cards bought per deck ───────────────────────────────────
 
 export interface BasketQueueConfig {
@@ -400,7 +419,7 @@ export function buildBasketQueue(config: BasketQueueConfig, library: QueuedCard[
   }
 
   const mix = blendModes(modes.length ? modes : ['barkada']);
-  const base = shuffle(cards);
+  const base = spreadOut(cards);
   const wildCount = base.length === 0 ? 0 : Math.max(1, Math.floor(base.length / mix.wildCardFrequency.base));
   const wilds = Array.from({ length: wildCount }, () => generateWildCard());
   const queue = insertWildCards(base, wilds, mix.wildCardFrequency.base, mix.wildCardFrequency.variance);

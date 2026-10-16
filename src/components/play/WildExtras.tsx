@@ -1,5 +1,4 @@
 'use client';
-import { useState } from 'react';
 import { useCountdown } from './ToolsSheet';
 import type { WildCardType } from '@/types/game';
 import { Icon } from '@/components/ui';
@@ -26,18 +25,6 @@ export function TimerChip({ seconds, label = 'Start timer' }: { seconds: number;
   );
 }
 
-function EveryoneAnswers({ order }: { order: string[] }) {
-  const [i, setI] = useState(0);
-  const done = i >= order.length;
-  return (
-    <div className="mt-4" onPointerDownCapture={(e) => e.stopPropagation()}>
-      <p className="text-2xl font-extrabold">{done ? 'Everyone has answered.' : `Now answering: ${order[i]}`}</p>
-      {!done && <p className="text-base font-semibold opacity-70">{i + 1} of {order.length}</p>}
-      {!done && <button onClick={() => setI(i + 1)} className="mt-3 min-h-tap rounded-full border-2 border-current px-5 text-lg font-extrabold">{i === order.length - 1 ? 'Last one done' : `Next speaker, ${order[i + 1]}`}</button>}
-    </div>
-  );
-}
-
 /** Loud, unmistakable call to drink. Used wherever a card makes people drink. */
 export function DrinkBanner({ nonDrinking, who = 'Everyone' }: { nonDrinking: boolean; who?: string }) {
   return (
@@ -51,18 +38,10 @@ export function DrinkBanner({ nonDrinking, who = 'Everyone' }: { nonDrinking: bo
   );
 }
 
-export function WildExtras({ type, order, nextName, crown, spike, nonDrinking }: {
-  type: WildCardType; order: string[]; nextName: string; crown: number; spike: number; nonDrinking: boolean;
-}) {
-  const line = 'mt-4 text-2xl font-extrabold';
+export function WildExtras({ type }: { type: WildCardType }) {
   switch (type) {
-    case 'everyone_answers': return <EveryoneAnswers order={order} />;
-    case 'act_it_out': return <TimerChip seconds={30} label="Start charades" />;
-    case 'whisper_round': return <p className={line}>Whisper to {nextName}.</p>;
-    case 'free_drink': return <DrinkBanner nonDrinking={nonDrinking} />;
-    case 'crown': return <p className={line}>Crown immunity: {crown} {crown === 1 ? 'card' : 'cards'} left</p>;
-    case 'heat_spike': return <p className={line}>Heat spike: {spike} {spike === 1 ? 'card' : 'cards'} left</p>;
-    case 'shuffle': return <p className={line}>The next 5 cards are reshuffled.</p>;
+    case 'group_pose': return <TimerChip seconds={5} label="Hold the pose" />;
+    case 'dance_off': return <TimerChip seconds={15} label="Start dancing" />;
     default: return null;
   }
 }

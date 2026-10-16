@@ -8,6 +8,7 @@
 
 import { WildCardType } from '@/types/game';
 import { QueuedCard } from './escalation-engine';
+import { fillDrink } from './card-kinds';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,8 @@ export interface WildCardEffect {
   applyToQueue?: (queue: QueuedCard[], currentIndex: number) => QueuedCard[];
   heatModifier?: number;
   immunityCards?: number;
+  /** Shots for failing the challenge (2 or 3). */
+  penalty?: number;
 }
 
 // ─── Shuffle Helper ──────────────────────────────────────────────────────────
@@ -104,67 +107,38 @@ export function hasCrownImmunity(crownImmunityRemaining: number): boolean {
 // ─── Wild Card Definitions ───────────────────────────────────────────────────
 
 /**
- * All 9 wild card type definitions with their display info and effects.
+ * The wild cards. Each is a one-off challenge that gets everyone out of their seat, with a
+ * penalty in shots for failing it. Nothing lingers after the card, so nothing is hard to follow.
+ * {shot}, {shots} and {drink} adapt to non-drinking tables (see card-kinds).
  */
 export const WILD_CARD_DEFINITIONS: Record<WildCardType, WildCardEffect> = {
-  role_reversal: {
-    type: 'role_reversal',
-    title: 'Role Reversal',
-    description: 'Ask the question yourself. Pick a player to answer it.',
+  call_out: {
+    type: 'call_out',
+    title: 'Call Out',
+    description: 'Call someone who is not in this group. When they answer, shout anything, then hang up.',
+    penalty: 3,
   },
-  pick_your_target: {
-    type: 'pick_your_target',
-    title: 'Pick Your Target',
-    description: 'Choose one player. This round is aimed at them.',
+  voice_note: {
+    type: 'voice_note',
+    title: 'Voice Note',
+    description: 'Send a 10 second voice note to a friend who is not here. Sing it, shout it or whisper it.',
+    penalty: 2,
   },
-  everyone_answers: {
-    type: 'everyone_answers',
-    title: 'Everyone Answers',
-    description: 'Everyone takes a turn answering, starting with you.',
+  group_pose: {
+    type: 'group_pose',
+    title: 'Freeze',
+    description: 'Everyone strikes a pose on the count of three and holds it for 5 seconds. The first to move takes the penalty.',
+    penalty: 2,
   },
-  shuffle: {
-    type: 'shuffle',
-    title: 'Shuffle',
-    description: 'The next 5 cards are shuffled.',
-    applyToQueue: applyShuffleWildCard,
-  },
-  heat_spike: {
-    type: 'heat_spike',
-    title: 'Heat Spike',
-    description: 'The next 3 cards turn up the heat.',
-    heatModifier: 1.0,
-  },
-  act_it_out: {
-    type: 'act_it_out',
-    title: 'Act It Out',
-    description: 'Answer the next card in charades. No talking.',
-  },
-  whisper_round: {
-    type: 'whisper_round',
-    title: 'Whisper Round',
-    description: 'Whisper your answer to the player on your left. Nobody else hears it.',
-  },
-  free_drink: {
-    type: 'free_drink',
-    title: 'Free Drink',
-    description: 'Everyone drinks. No question this time.',
-  },
-  crown: {
-    type: 'crown',
-    title: 'Crown',
-    description: 'You are immune to drink assignments for the next 2 cards.',
-    immunityCards: 2,
+  dance_off: {
+    type: 'dance_off',
+    title: 'Dance Off',
+    description: 'Everyone dances for 15 seconds. The group votes for the worst dancer, who takes the penalty.',
+    penalty: 2,
   },
 };
 
 /** Player-facing text for a wild card, adapted when the table is not drinking. */
 export function wildDescription(type: WildCardType, nonDrinking: boolean): string {
-  const text = WILD_CARD_DEFINITIONS[type].description;
-  if (!nonDrinking) return text;
-  return text
-    .replace('Everyone drinks.', 'Everyone does a forfeit.')
-    .replace('drink assignments', 'forfeit assignments');
+  return fillDrink(WILD_CARD_DEFINITIONS[type].description, nonDrinking);
 }
-
-/** Wild cards that name a player. */
-export const TARGET_WILD_CARDS: WildCardType[] = ['role_reversal', 'pick_your_target'];

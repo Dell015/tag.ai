@@ -1360,3 +1360,17 @@ The owner felt the app still looked AI-made, so the look now follows the Philipp
 Every card now has a kind: Truth, Dare, Dice, Coin, Bottle, Wheel, Timer or Vote. The card back shows the deck colour, and when you tap it the card turns into the colour of its kind. Dice, coin, bottle, wheel, timer and vote cards carry their own tool on the card, so nobody has to open the tools menu: roll the die and the card tells you what your number means, flip the coin and it shows heads or tails with the action, spin the bottle for a player, spin the wheel, start a timer, or run a 3-2-1 point-at-someone vote. Drink wording switches to forfeits at non-drinking tables. About one card in five is now a dare or a tool card.
 
 Play row: the buttons are Trash, Skip, Save and Next. Skip gives the same player a new card. Swipe the card either way for Next. Undo sits in its own row above the buttons for a few seconds after each move, and the same row shows the swipe hint the rest of the time.
+
+
+### 23.24 Play order by tapping
+
+On the house rules screen each player taps their name to agree, and the order of the taps is the order of play. A number appears on each tapped name, the first tap plays first, and tapping again takes it back. This is the seat sequence: sit in a circle, tap in the order you sit.
+
+
+### 23.25 Wild cards, rules and consequences
+
+The old wild cards that were hard to follow (Crown, Heat Spike, Shuffle, Whisper Round and the rest) are gone. The wild cards are now one-off challenges for the whole table: call someone outside the group and shout anything when they answer (3 shots if you fail), send a voice note to a friend who is not there (2), freeze in a pose together (2), and a dance off where the group votes the worst dancer (2).
+
+A new kind of card, the Rule card, changes how everyone plays until the next wild card: shots doubled, one language only, no names, no pointing, phones down. The rule stays on screen in a bar at the top while it is on, and the next wild card clears it.
+
+Every card now shows its consequence at the bottom: "Fail or refuse: take a shot". Truths and most dares are 1 shot, harder dares 2, wild cards 2 or 3. Non-drinking tables see forfeits instead. After you buy, the cards are mixed so there is no run of the same category, and the face-down card already wears the colour of its kind. The full rules for writing each kind of card are in `docs/CARD_GUIDE.md`.

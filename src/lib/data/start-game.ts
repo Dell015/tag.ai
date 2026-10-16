@@ -18,6 +18,12 @@ export function allAgreed(room: Room): boolean {
   return room.players.length >= 2 && room.players.every((p) => room.agreedPlayers.includes(p.userId));
 }
 
+/** Players in the order they tapped to agree (everyone has agreed by the time a game starts). */
+export function playOrder(room: Room) {
+  const at = (id: string) => { const i = room.agreedPlayers.indexOf(id); return i < 0 ? room.players.length : i; };
+  return [...room.players].sort((a, b) => at(a.userId) - at(b.userId) || a.turnOrder - b.turnOrder).map((p, i) => ({ ...p, turnOrder: i }));
+}
+
 /** What the table bought: cards per deck, and what they cost in coins. */
 export function roomBasket(room: Room) {
   const basket = gameBasket(room.config.potStyle ?? 'solo', room.config.basket, room.config.playerBaskets);
@@ -34,7 +40,8 @@ export function startGame(room: Room, trashedCardIds: string[]): boolean {
   const wallet = useProfileStore.getState().profile?.coins ?? 0;
   if (!isPotValid(total) || wallet + 1e-9 < total) return false;
 
-  const players = [...room.players].sort((a, b) => a.turnOrder - b.turnOrder);
+  // The order players tapped to agree is the order they play.
+  const players = playOrder(room);
   const queue = buildBasketQueue({ basket, comfortFilters: room.config.comfortFilters, trashedCardIds, playerCount: players.length, fitPlayers: true }, buildLibrary());
   if (queue.cards.length === 0) return false;
 

@@ -43,6 +43,10 @@ export interface QueuedCard {
   tool?: CardTool;
   /** What each result means. Dice: six lines for 1 to 6. Coin: heads, then tails. {drink} adapts to non-drinking tables. */
   outcomes?: string[];
+  /** Shots for failing or refusing this card. Missing means the default for its kind (penaltyFor). */
+  penalty?: number;
+  /** Rule cards: the short line shown while the rule is on, until the next wild card. */
+  rule?: string;
 }
 
 // ─── Heat Adjustment Constants ───────────────────────────────────────────────

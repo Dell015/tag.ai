@@ -17,7 +17,7 @@ Core mechanics:
 - **Gestures:** tap = flip (cards start face-down, deliberately), swipe left/right = dismiss, hold-drag to trash = permanently remove for that user, heart = save to the user's library.
 - **Heat meter (1.0–5.0):** escalation engine. Dismiss +0.3, heart +0.5, wild +0.5, skip −0.2, 3 skips in a row −1.0. Heat biases which cards appear; it never hard-locks them.
 - **6 game modes:** Icebreaker, Barkada, Lovers, Spicy, Chaos, Family. Each sets entry heat, intensity distribution, wild-card frequency. Family caps heat at 2.0 and only uses intensity ≤ 2.
-- **9 wild cards:** Role Reversal, Pick Your Target, Everyone Answers, Shuffle, Heat Spike, Act It Out, Whisper Round, Free Drink, Crown.
+- **4 wild cards (changed 2026-10-16, see D27):** Call Out, Voice Note, Freeze, Dance Off. One-off challenges, 2 or 3 shots if failed. Rule cards hold until the next wild card.
 - **Drink rules:** 4 templates (Classic, Chaos, Soft Mode, Points-Based) + up to 5 custom rules + a non-drinking mode. All players tap "I Agree".
 - **Comfort filters:** 10 presets + custom text topics the group wants off the table.
 - **Coins (planned, not implemented):** 1 peso = 1 coin; cards cost coins from a shared pot; new users get 10 welcome coins; PayMongo for purchases. In Phase 1 the pot is a "Free Mode" stub.
@@ -130,6 +130,10 @@ Numbered so they can be referenced in commits.
 | D24 | **Topic deck is a separate game on the Play menu (built 2026-10-16).** Debates and things to talk about, no turns, shots or pot. 0.1 coin per topic, bought by quantity (10 to 100, steps of 5), group chips and skip-topic filters before starting, tap Next, Back at any time, unused topics refunded when you end. Routes `/talk` and `/talk/play`, store `talk-store`, content `lib/data/talk-topics.ts` (48 topics, 8 groups). Names are "Drinking game" and "Topic deck". Social media deck stays Coming soon. | Owner 2026-10-16. See `about_tagai.md` 23.18 to 23.21. |
 
 | D25 | **Card kinds with built-in tools (2026-10-16).** Every card has a kind: truth, dare, dice, coin, bottle, wheel, timer, vote (`lib/game/card-kinds.ts`). Kind sets the card colour on reveal (`data-kind` in globals.css), the card back keeps the deck colour. Tool kinds show their tool on the card (`components/play/CardTools.tsx`) and the result tells the table what to do (`outcomes`, `{drink}` adapts to non-drinking tables). Content in `lib/data/tool-cards.ts` (48 cards plus 6 adult). Tool cards are actions, so about 1 in 5 cards is a dare or tool card. Skip now means a new card for the same player (no pass), swipe either way means Next, and the old Another card button is gone. Undo lives in a reserved row above the buttons, not a toast. | Owner 2026-10-16. |
+
+| D26 | **Turn order is the order players tap to agree** on the house rules step (owner idea 2026-10-16). Each tapped name shows its number, tapping again undoes it, the first tap plays first (`playOrder` in `start-game.ts`). | Owner 2026-10-16. |
+
+| D27 | **Wild cards, rule cards and consequences (2026-10-16).** Removed Whisper Round, Crown, Heat Spike, Shuffle and the other lingering wild cards because they were hard to follow. Wild cards are now four one-off challenges (Call Out 3 shots, Voice Note 2, Freeze 2, Dance Off 2). New card kind **Rule** (14 cards): holds until the next wild card, shown in a lime bar at the top while it is on (`activeRule` in game-store). Every card shows a consequence line at the bottom, "Fail or refuse: take N shots" (`penaltyFor`, 1 to 3). Drink words use tokens `{drink}`, `{shot}`, `{shots}` so non-drinking tables see forfeits. The card back now wears the colour of its kind. After buying, cards are spread so there are no runs of one category (`spreadOut`). Full rules for making cards: `docs/CARD_GUIDE.md`. | Owner 2026-10-16. |
 
 Open / unknown (owner can't remember — decide when it comes up, then record it above):
 - Whether phone-OTP login is still wanted (docs said email/Google/phone; code has email + Google only).
@@ -292,6 +296,8 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-16 (wild cards, rules, penalties, shuffle)** — Removed hard-to-follow wild cards (Whisper Round, Crown, Heat Spike, Shuffle and the rest), new challenge wild cards with 2 or 3 shot penalties, Rule cards with an on-screen bar, a consequence line on every card, spread shuffle, card back in kind colour, `docs/CARD_GUIDE.md`. 205 tests pass, lint clean, build OK.
 
 - **2026-10-16 (card kinds and play row)** — Owner: Undo covered the buttons, wanted a swipe hint, card colours were all one, and wanted truth, dare, dice, coin, bottle, wheel, timer cards that bring their own tool. Added card kinds and per-kind colours, `CardTools`, 54 tool cards, Skip = new card same turn, swipe either way, undo row. 197 tests pass, lint clean, build OK.
 

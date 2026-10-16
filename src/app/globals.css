@@ -38,6 +38,7 @@
 [data-kind="wheel"]  { --accent: 255 130 178; --on-accent: 24 19 16; }
 [data-kind="timer"]  { --accent: 36 190 205;  --on-accent: 24 19 16; }
 [data-kind="vote"]   { --accent: 244 236 220; --on-accent: 24 19 16; }
+[data-kind="rule"]   { --accent: 190 222 58;  --on-accent: 24 19 16; }
 
 html {
   font-size: 93.75%; /* 15px base: the interface runs a little smaller than the browser default */

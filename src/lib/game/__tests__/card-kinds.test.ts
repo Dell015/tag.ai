@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { TOOL_CARDS, ADULT_TOOL_CARDS } from '@/lib/data/tool-cards';
-import { kindOf, KIND_META, fillDrink } from '@/lib/game/card-kinds';
+import { kindOf, KIND_META, fillDrink, penaltyFor } from '@/lib/game/card-kinds';
 import { libraryCards } from '@/lib/data/card-pool';
 import { DECK_BY_ID, deckPool } from '@/lib/game/decks';
 import { useGameStore } from '@/stores/game-store';
@@ -66,5 +66,54 @@ describe('skip gives the same player a new card', () => {
     expect(s.turnRotation.currentIndex).toBe(0);
     expect(s.showPassPrompt).toBe(false);
     expect(s.cardsPlayed).toBe(1);
+  });
+});
+
+import { spreadOut, buildBasketQueue } from '@/lib/game/card-queue-builder';
+
+describe('shuffle after buying', () => {
+  it('does not leave long runs of one deck, kind or category', () => {
+    const lib = libraryCards(true);
+    const q = buildBasketQueue({ basket: { barkada: 30, spicy: 25, icebreaker: 20 }, comfortFilters: [], trashedCardIds: [], playerCount: 4 }, lib).cards.filter((c) => c.cardType !== 'wild');
+    let worstDeck = 1, run = 1, worstCat = 1, cRun = 1;
+    for (let i = 1; i < q.length; i++) {
+      run = q[i].deckId === q[i - 1].deckId ? run + 1 : 1; worstDeck = Math.max(worstDeck, run);
+      cRun = q[i].category === q[i - 1].category ? cRun + 1 : 1; worstCat = Math.max(worstCat, cRun);
+    }
+    expect(worstDeck).toBeLessThanOrEqual(7);
+    expect(worstCat).toBeLessThanOrEqual(2);
+    expect(new Set(q.map((c) => c.deckId)).size).toBe(3);
+  });
+
+  it('keeps every card', () => {
+    const cards = libraryCards(true).slice(0, 40);
+    expect(spreadOut(cards).map((c) => c.id).sort()).toEqual(cards.map((c) => c.id).sort());
+  });
+
+  it('only builds the four challenge wild cards', () => {
+    const q = buildBasketQueue({ basket: { chaos: 60 }, comfortFilters: [], trashedCardIds: [], playerCount: 4 }, libraryCards(true)).cards;
+    const known = ['call_out', 'voice_note', 'group_pose', 'dance_off'];
+    expect(q.filter((c) => c.cardType === 'wild').every((c) => known.includes(c.wildCardType as string))).toBe(true);
+  });
+});
+
+
+describe('rule cards and penalties', () => {
+  it('rule cards say what is on screen while they hold', () => {
+    const rules = TOOL_CARDS.filter((c) => c.kind === 'rule');
+    expect(rules.length).toBeGreaterThanOrEqual(10);
+    rules.forEach((c) => { expect(c.rule, c.id).toBeTruthy(); expect(c.text, c.id).toMatch(/until the next wild card|next wild card/); });
+  });
+  it('a rule stays on until a wild card clears it', () => {
+    useGameStore.getState().resetGame();
+    useGameStore.getState().setRule('Phones down');
+    expect(useGameStore.getState().activeRule).toBe('Phones down');
+    useGameStore.getState().applyWildCardEffect();
+    expect(useGameStore.getState().activeRule).toBeNull();
+  });
+  it('every card has a consequence of 1 to 3 shots', () => {
+    libraryCards(true).forEach((c) => { const n = penaltyFor(c); expect(n, c.id).toBeGreaterThanOrEqual(1); expect(n, c.id).toBeLessThanOrEqual(3); });
+    expect(penaltyFor({ cardType: 'action', intensity: 5 })).toBe(2);
+    expect(penaltyFor({ cardType: 'question', intensity: 5 })).toBe(1);
   });
 });

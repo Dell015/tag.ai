@@ -3,13 +3,16 @@ import type { CardKind, CardTool } from '@/lib/game/card-kinds';
 import type { CardCategory } from '@/types/game';
 
 /**
- * Cards that bring their own tool: dice, coin, bottle, wheel, timer and vote. The card shows
+ * Cards that bring their own tool (dice, coin, bottle, wheel, timer, vote) and rule cards. The card shows
  * the tool and the result, so the table just follows it. {drink} becomes "do a forfeit" at
  * non-drinking tables. These are all dares, so Dares focus and the Dare timer rules fit them.
  */
 interface Row {
   kind: CardKind; text: string; intensity: number; tool?: CardTool; outcomes?: string[];
   category?: CardCategory; adult?: boolean; people?: { min: number; max: number | null };
+  /** Rule cards: the short line shown while the rule is on. */
+  rule?: string;
+  penalty?: number;
 }
 
 const ROWS: Row[] = [
@@ -77,6 +80,22 @@ const ROWS: Row[] = [
   { kind: 'vote', intensity: 4, text: 'Who here would last longest in a zombie apocalypse? The winner gives a dare.', tool: { seconds: 3 } },
   { kind: 'vote', intensity: 4, text: 'Who here is most likely to start a business and fail? Most votes: {drink}.', tool: { seconds: 3 } },
 
+  // Rules: they hold until the next wild card, and the app keeps the rule on screen meanwhile.
+  { kind: 'rule', intensity: 4, text: 'All {shots} are doubled until the next wild card.', rule: '{shots} are doubled' },
+  { kind: 'rule', intensity: 2, text: 'Speak only one language that everybody agrees on until the next wild card. Whoever slips takes {shot}.', rule: 'One language only. Slip and take {shot}' },
+  { kind: 'rule', intensity: 2, text: 'Nobody says anyone\'s name until the next wild card. Whoever does takes {shot}.', rule: 'No names. Say one and take {shot}' },
+  { kind: 'rule', intensity: 3, text: 'Everyone talks in questions only until the next wild card. Whoever answers with a statement takes {shot}.', rule: 'Questions only. Slip and take {shot}' },
+  { kind: 'rule', intensity: 1, text: 'Nobody points with a finger until the next wild card. Whoever points takes {shot}.', rule: 'No pointing. Point and take {shot}' },
+  { kind: 'rule', intensity: 1, text: 'Everyone drinks with their left hand until the next wild card. Wrong hand and you take {shot}.', rule: 'Left hand only. Slip and take {shot}' },
+  { kind: 'rule', intensity: 2, text: 'End every sentence with "po" until the next wild card. Forget and take {shot}.', rule: 'Say "po" after every sentence' },
+  { kind: 'rule', intensity: 2, text: 'No swearing until the next wild card. Whoever swears takes {shot}.', rule: 'No swearing. Swear and take {shot}' },
+  { kind: 'rule', intensity: 2, text: 'Nobody says "yes" or "no" until the next wild card. Whoever does takes {shot}.', rule: 'No yes or no. Slip and take {shot}' },
+  { kind: 'rule', intensity: 1, text: 'Everyone whispers until the next wild card. Whoever speaks loudly takes {shot}.', rule: 'Whisper only. Get loud and take {shot}' },
+  { kind: 'rule', intensity: 1, text: 'Say cheers before every drink until the next wild card. Forget and you {drink}.', rule: 'Cheers before every drink' },
+  { kind: 'rule', intensity: 3, text: 'Compliment the player on your right before you answer anything until the next wild card. Forget and take {shot}.', rule: 'Compliment first. Forget and take {shot}' },
+  { kind: 'rule', intensity: 4, text: 'Nobody touches their phone until the next wild card. Whoever does takes 2 {shots}.', rule: 'Phones down. Touch one and take 2 {shots}', penalty: 2 },
+  { kind: 'rule', intensity: 5, text: 'The player who reads each card chooses who takes the penalty on it, until the next wild card.', rule: 'The reader picks who pays' },
+
   // 18+ (drawn only from the Adult deck and Chaos). Flirty, never graphic.
   { kind: 'coin', intensity: 4, adult: true, text: 'Flip the coin. Flirt or pay.', outcomes: ['Heads: flirt with the player on your right for 10 seconds.', 'Tails: you {drink}.'] },
   { kind: 'dice', intensity: 4, adult: true, text: 'Roll the dice. Your number decides.', tool: { dice: 1 },
@@ -90,7 +109,7 @@ const ROWS: Row[] = [
 const make = (r: Row, i: number): QueuedCard => ({
   id: `${r.adult ? 'play-adult' : 'play'}-${String(i + 1).padStart(3, '0')}`,
   text: r.text, cardType: 'action', intensity: r.intensity, category: r.category ?? 'dares',
-  topics: r.adult ? ['adult'] : ['games'], kind: r.kind, tool: r.tool, outcomes: r.outcomes, adult: r.adult, people: r.people,
+  topics: r.adult ? ['adult'] : ['games'], kind: r.kind, tool: r.tool, outcomes: r.outcomes, adult: r.adult, people: r.people, rule: r.rule, penalty: r.penalty,
 });
 
 export const TOOL_CARDS: QueuedCard[] = ROWS.filter((r) => !r.adult).map(make);

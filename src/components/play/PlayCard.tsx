@@ -2,8 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import type { QueuedCard } from '@/lib/game/escalation-engine';
-import { WILD_CARD_DEFINITIONS, TARGET_WILD_CARDS, wildDescription } from '@/lib/game/wild-cards';
-import { TargetPicker } from './TargetPicker';
+import { WILD_CARD_DEFINITIONS, wildDescription } from '@/lib/game/wild-cards';
 import { WildExtras, TimerChip, dareSeconds } from './WildExtras';
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
@@ -12,7 +11,8 @@ import { useShopStore } from '@/stores/shop-store';
 import { itemById } from '@/lib/data/shop-catalogue';
 import { cardBack } from '@/lib/card-back';
 import { CardToolView } from './CardTools';
-import { KIND_META, fillDrink, kindOf } from '@/lib/game/card-kinds';
+import { KIND_META, fillDrink, kindOf, penaltyFor, penaltyText } from '@/lib/game/card-kinds';
+import { Icon } from '@/components/ui';
 import { deckOf } from '@/lib/game/decks';
 
 const SWIPE = 110;
@@ -39,9 +39,9 @@ function CardBody({ children, watch }: { children: React.ReactNode; watch: strin
  * colour (truth, dare, dice and so on). Swipe either way for the next card. The buttons underneath
  * do the same, always.
  */
-export function PlayCard({ card, revealed, onReveal, onDone, others, nonDrinking, order, nextName, crown, spike }: {
+export function PlayCard({ card, revealed, onReveal, onDone, others, nonDrinking }: {
   card: QueuedCard; revealed: boolean; onReveal: () => void; onDone: () => void;
-  others: { id: string; name: string }[]; nonDrinking: boolean; order: string[]; nextName: string; crown: number; spike: number;
+  others: { id: string; name: string }[]; nonDrinking: boolean;
 }) {
   const swipe = useSettingsStore((st) => st.swipe);
   const showPips = useSettingsStore((st) => st.showPips);
@@ -55,18 +55,21 @@ export function PlayCard({ card, revealed, onReveal, onDone, others, nonDrinking
   const kind = kindOf(card);
   const meta = KIND_META[kind];
   const text = fillDrink(card.text, nonDrinking);
-  const deckMode = card.deckId ? deckOf(card.deckId)?.mode : undefined;
+  const deckName = card.deckId ? deckOf(card.deckId)?.name : undefined;
 
   if (!revealed) {
     return (
-      <motion.button key={`back-${card.id}`} data-mode={deckMode} onClick={() => { haptic('tap'); onReveal(); }} aria-label="Reveal card"
+      <motion.button key={`back-${card.id}`} data-kind={kind} onClick={() => { haptic('tap'); onReveal(); }} aria-label="Reveal card"
         initial={{ opacity: 0, x: 150, y: -50, rotate: 9 }} animate={{ opacity: 1, x: 0, y: 0, rotate: 0 }} whileTap={{ scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 210, damping: 22 }}
         style={{ ...back.style, '--trim-a': 'var(--on-accent)', '--trim-b': 'var(--accent)' } as React.CSSProperties}
         className={cn('relative flex h-full w-full flex-col justify-between overflow-hidden rounded-card p-6 text-left no-select', back.ink ? 'border-2 border-accent text-accent' : 'bg-accent text-onaccent')}>
         <span aria-hidden className="trim absolute inset-x-0 top-0 h-4" />
         <span aria-hidden className="trim absolute inset-x-0 bottom-0 h-4" />
-        <span className={cn('sign mt-5 self-start text-[1.9rem]', back.plate && 'rounded-lg bg-bg px-3 py-1 text-text')}>tag.ai</span>
+        <span className="mt-5 flex flex-col items-start gap-2">
+          <span className={cn('sign text-[1.9rem]', back.plate && 'rounded-lg bg-bg px-3 py-1 text-text')}>tag.ai</span>
+          <span className="text-lg font-extrabold">{meta.label}{deckName ? `, ${deckName}` : ''}</span>
+        </span>
         <span className={cn('display mb-5 self-start text-[5.5rem] leading-[0.85]', back.plate && 'rounded-xl bg-bg px-4 py-2 text-text')}>Tap to<br />reveal</span>
       </motion.button>
     );
@@ -89,7 +92,7 @@ export function PlayCard({ card, revealed, onReveal, onDone, others, nonDrinking
 
       <div className="flex flex-1 flex-col p-6">
         <div className="flex items-center justify-between text-base font-bold">
-          {wild ? <span className="sign text-xl">Wild card</span> : <span className="flex min-w-0 flex-col"><span className="sign text-xl">{meta.label}</span><span className="mt-1 text-sm font-bold opacity-75">{card.category.replace(/_/g, ' ')}{card.adult ? ', 18+' : ''}</span></span>}
+          {wild ? <span className="sign text-xl">Wild card</span> : <span className="flex min-w-0 flex-col"><span className="sign text-xl">{meta.label}</span><span className="mt-1 text-sm font-bold opacity-75">{deckName ?? card.category.replace(/_/g, ' ')}{card.adult ? ', 18+' : ''}</span></span>}
           {!wild && showPips && (
             <span className="flex gap-1" role="img" aria-label={`Intensity ${card.intensity} of 5`}>
               {[1, 2, 3, 4, 5].map((i) => <span key={i} className={cn('h-3 w-3 rounded-sm border-2 border-current', i <= card.intensity ? 'bg-current' : 'opacity-40')} />)}
@@ -100,17 +103,20 @@ export function PlayCard({ card, revealed, onReveal, onDone, others, nonDrinking
           <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto scrollbar-none">
             <h2 className="display text-[4.2rem] leading-[0.9]">{wild.title}</h2>
             <p className="mt-4 text-balance text-2xl font-bold leading-snug">{wildDescription(card.wildCardType!, nonDrinking)}</p>
-            {TARGET_WILD_CARDS.includes(card.wildCardType!) && <TargetPicker key={card.id} players={others} />}
-            <WildExtras key={card.id} type={card.wildCardType!} order={order} nextName={nextName} crown={crown} spike={spike} nonDrinking={nonDrinking} />
+            <WildExtras key={card.id} type={card.wildCardType!} />
           </div>
         ) : (
           <CardBody watch={card.id}>
             <p className="display text-balance" style={{ lineHeight: 1.02, fontSize: `calc(${meta.tool ? Math.min(sizeFor(text.length), 2.6) : sizeFor(text.length)}rem * var(--card-scale, 1))` }}>{text}</p>
             {meta.tool && <CardToolView key={card.id} kind={kind} tool={card.tool} outcomes={card.outcomes} players={others.map((p) => p.name)} nonDrinking={nonDrinking} />}
+            {kind === 'rule' && <p className="mt-4 text-lg font-extrabold">Stays on until the next wild card.</p>}
             {kind === 'dare' && dareSeconds(text) && <TimerChip key={card.id} seconds={dareSeconds(text)!} />}
           </CardBody>
         )}
-        {!wild && <span className="sign mt-3 text-[0.7rem] opacity-60">tag.ai</span>}
+        <p className={cn('mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-base font-extrabold', wild ? 'bg-bg text-text' : 'bg-onaccent text-accent')}>
+          <Icon name="shot" size={22} className="shrink-0" />
+          <span>Fail or refuse: {penaltyText(wild ? WILD_CARD_DEFINITIONS[card.wildCardType!].penalty ?? 2 : penaltyFor(card), nonDrinking)}</span>
+        </p>
       </div>
     </motion.div>
   );

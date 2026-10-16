@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { allAgreed } from '../start-game';
+import { allAgreed, playOrder } from '../start-game';
 import { DEFAULT_CONFIG, type Room } from '../rooms';
 
 const p = (id: string, order: number) => ({ id, userId: id, displayName: id, avatarUrl: 'c0', turnOrder: order, agreedToRules: false });
@@ -11,4 +11,12 @@ describe('allAgreed', () => {
   it('needs at least two players', () => expect(allAgreed(room(['a'], ['a']))).toBe(false));
   it('needs everyone to agree', () => expect(allAgreed(room(['a', 'b'], ['a']))).toBe(false));
   it('is true when all agreed', () => expect(allAgreed(room(['a', 'b'], ['a', 'b']))).toBe(true));
+});
+
+describe('playOrder', () => {
+  it('follows the order players tapped to agree', () => {
+    const order = playOrder(room(['a', 'b', 'c'], ['c', 'a', 'b']));
+    expect(order.map((x) => x.userId)).toEqual(['c', 'a', 'b']);
+    expect(order.map((x) => x.turnOrder)).toEqual([0, 1, 2]);
+  });
 });

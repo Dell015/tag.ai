@@ -32,12 +32,8 @@ describe('game store fixes', () => {
   });
 
   it('heat spike raises heat by 1 and reverts after 3 cards (bug #8)', () => {
-    useGameStore.setState({ heatLevel: 2.0 });
-    useGameStore.getState().applyWildCardEffect('heat_spike');
-    const s = useGameStore.getState();
-    expect(s.preSpikeHeat).toBeCloseTo(2.5); // +0.5 wild
-    expect(s.heatLevel).toBeCloseTo(3.5); // +1 spike
-    expect(s.heatSpikeRemaining).toBe(3);
+    // The Heat Spike wild card is gone, but the engine still counts a spike down and reverts it.
+    useGameStore.setState({ heatLevel: 3.5, preSpikeHeat: 2.5, heatSpikeRemaining: 3 });
     for (let i = 0; i < 3; i++) useGameStore.getState().dismissCard();
     expect(useGameStore.getState().heatLevel).toBeCloseTo(2.5);
   });

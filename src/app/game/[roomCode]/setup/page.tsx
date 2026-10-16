@@ -259,7 +259,8 @@ export default function SetupPage() {
             {cfg.comfortFilters.length > 0 && <li><b>Skipping:</b> <span className="text-muted">{cfg.comfortFilters.join(', ')}</span></li>}
             <li className="text-muted">Anyone can skip a card. Nobody has to answer. Nobody drives.</li>
           </ul>
-          <h3 className="mb-3 mt-8 text-4xl">Tap your name to agree</h3>
+          <h3 className="mt-8 text-4xl">Tap your name to agree</h3>
+          <p className="mb-3 mt-1 text-base text-muted">The order you tap is the order you play. First tap goes first. Tap again to undo.</p>
           <div className="grid grid-cols-3 gap-3">
             {[...room.players].sort((a, b) => a.turnOrder - b.turnOrder).map((p) => {
               const ok = room.agreedPlayers.includes(p.userId);
@@ -268,7 +269,7 @@ export default function SetupPage() {
                 <button key={p.userId} disabled={!canTap} onClick={() => { haptic('success'); agree(p.userId); }} aria-pressed={ok}
                   className={cn('relative flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-colors active:scale-95', ok ? 'border-ok bg-ok/15' : 'border-line', !canTap && 'opacity-50')}>
                   <Avatar value={p.avatarUrl} name={p.displayName} size={56} />
-                  {ok && <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ok text-bg"><Icon name="check" size={14} /></span>}
+                  {ok && <span className="sign absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-ok text-sm text-bg" aria-label={`Plays number ${room.agreedPlayers.indexOf(p.userId) + 1}`}>{room.agreedPlayers.indexOf(p.userId) + 1}</span>}
                   <span className="w-full truncate text-center text-base font-bold">{p.displayName}</span>
                 </button>
               );
