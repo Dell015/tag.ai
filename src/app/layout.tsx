@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/archivo/wdth.css";
+import "@fontsource/bungee/400.css";
 import "./globals.css";
 import { StoreHydrator } from "@/components/ui/StoreHydrator";
 import { SettingsApplier } from "@/components/ui/SettingsApplier";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ToastHost } from "@/components/ui/Toast";
+import { MotionProvider } from "@/components/ui/MotionProvider";
 
 export const metadata: Metadata = {
   title: "tag.ai, the barkada drinking game",
@@ -30,7 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="antialiased">
         <StoreHydrator />
         <SettingsApplier />
-        <div className="mx-auto min-h-dvh w-full max-w-md">{children}</div>
+        <MotionProvider><div className="mx-auto min-h-dvh w-full max-w-md">{children}</div></MotionProvider>
         <OfflineBanner />
         <ToastHost />
       </body>

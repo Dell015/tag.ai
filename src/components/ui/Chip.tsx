@@ -9,7 +9,7 @@ export function Chip({ selected, className, onClick, ...rest }: ButtonHTMLAttrib
       aria-pressed={selected}
       onClick={(e) => { haptic('tap'); onClick?.(e); }}
       className={cn(
-        'min-h-tap rounded-full border-2 px-5 text-base font-bold transition-colors active:scale-95',
+        'min-h-tap rounded-lg border-2 px-4 text-base font-bold transition-[background-color,transform] active:scale-95',
         selected ? 'border-accent bg-accent text-onaccent' : 'border-line bg-transparent text-text',
         className,
       )}

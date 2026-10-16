@@ -22,7 +22,7 @@ import { play as playSound } from '@/lib/sound';
 import { DECK_BY_ID, basketNames, type DeckId } from '@/lib/game/decks';
 import { useToastStore } from '@/stores/toast-store';
 import { useSettingsStore } from '@/stores/settings-store';
-import { ConfirmSheet, Sheet } from '@/components/ui';
+import { ConfirmSheet, RollNumber, Sheet } from '@/components/ui';
 import { TopUpSheet } from '@/components/play/TopUpSheet';
 import { ToolsSheet } from '@/components/play/ToolsSheet';
 import { autoPool } from '@/lib/data/card-pool';
@@ -187,7 +187,7 @@ export default function PlayPage() {
         <div className="flex flex-wrap justify-between gap-x-3 text-sm font-bold text-muted [&>*]:whitespace-nowrap">
           <span>Card {Math.min(g.cardsPlayed + 1, g.cardCountTarget)} of {g.cardCountTarget}{g.crownImmunityRemaining > 0 && ', crown on'}</span>
           {st.showRules && <span>{ruleLine(room.config.drinkRuleTemplate, room.config.nonDrinkingMode)}</span>}
-          {g.potStart > 0 && <button onClick={() => setTopUp(true)} aria-label="Pot, tap to top up" className={cn('font-extrabold underline decoration-2 underline-offset-4', isLow(g.pot, g.potStart) ? 'text-danger' : 'text-text')}>Pot {formatPot(g.pot)}</button>}
+          {g.potStart > 0 && <button onClick={() => setTopUp(true)} aria-label="Pot, tap to top up" className={cn('font-extrabold underline decoration-2 underline-offset-4', isLow(g.pot, g.potStart) ? 'text-danger' : 'text-text')}>Pot <RollNumber value={g.pot} format={formatPot} /></button>}
         </div>
       </header>
 

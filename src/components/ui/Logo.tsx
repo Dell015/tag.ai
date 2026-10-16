@@ -1,5 +1,5 @@
 import { cn } from '@/lib/cn';
 
 export function Logo({ className }: { className?: string }) {
-  return <span className={cn('display text-4xl', className)}>tag.ai</span>;
+  return <span className={cn('sign text-[1.7rem]', className)}>tag.ai</span>;
 }

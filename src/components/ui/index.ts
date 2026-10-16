@@ -22,3 +22,5 @@ export { NumberStepper } from './NumberStepper';
 export { CoinAmount } from './CoinAmount';
 export { Badge } from './Badge';
 export { TableScene, CoinStack, Spot, IconTile, PAINT, type Paint } from './Art';
+export { RollNumber } from './RollNumber';
+export { Dealt } from './Dealt';

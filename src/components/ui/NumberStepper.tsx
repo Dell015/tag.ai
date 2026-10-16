@@ -1,4 +1,5 @@
 'use client';
+import { motion } from 'framer-motion';
 import { haptic } from '@/lib/haptics';
 import { Icon } from './Icon';
 
@@ -10,7 +11,7 @@ export function NumberStepper({ value, onChange, min = 0, max = 99, step = 1, la
   return (
     <div className="flex items-center gap-3" role="group" aria-label={label}>
       <button className={btn} aria-label={`Decrease ${label}`} disabled={value <= min} onClick={() => set(value - step)}><Icon name="minus" /></button>
-      <output aria-live="polite" className="display min-w-[4.5rem] text-center text-5xl tabular-nums">{format ? format(value) : value}</output>
+      <output aria-live="polite" className="display min-w-[4.5rem] overflow-hidden text-center text-5xl tabular-nums"><motion.span key={value} initial={{ y: -14, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 30 }} className="inline-block">{format ? format(value) : value}</motion.span></output>
       <button className={btn} aria-label={`Increase ${label}`} disabled={value >= max} onClick={() => set(value + step)}><Icon name="plus" /></button>
     </div>
   );

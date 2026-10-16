@@ -21,8 +21,10 @@ const config: Config = {
       fontFamily: {
         sans: ["'Archivo Variable'", "system-ui", "sans-serif"],
         display: ["'Archivo Variable'", "system-ui", "sans-serif"],
+        sign: ["Bungee", "'Archivo Variable'", "system-ui", "sans-serif"],
       },
-      borderRadius: { card: "22px", sheet: "28px" },
+      // Shape by role instead of one big radius everywhere: controls are plates, cards are cards, only avatars are round.
+      borderRadius: { md: "4px", lg: "6px", xl: "8px", "2xl": "10px", "3xl": "14px", card: "12px", sheet: "16px" },
       minHeight: { tap: "3rem" },
       minWidth: { tap: "3rem" },
       height: { tap: "3rem", cta: "3.5rem" },

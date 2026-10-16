@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Button, ConfirmSheet, Icon, Splash, toast } from '@/components/ui';
 import { useRequireProfile } from '@/lib/use-profile';
@@ -14,6 +15,7 @@ export default function TalkPlayPage() {
   const t = useTalkStore();
   const [ending, setEnding] = useState(false);
   const leaving = useRef(false);
+  const dir = useRef(1);
 
   useEffect(() => { if (ready && !t.active && !leaving.current) router.replace('/talk'); }, [ready, t.active, router]);
   if (!ready || !t.active) return <Splash />;
@@ -43,10 +45,20 @@ export default function TalkPlayPage() {
           <p className="mt-4 text-xl text-muted">Go back if there is one you want to talk about more.</p>
         </main>
       ) : (
-        <main className="my-4 flex flex-1 flex-col justify-between rounded-card bg-accent p-6 text-onaccent">
-          <p className="text-lg font-bold">{group}</p>
-          <p key={topic.id} className="display text-[2.5rem] leading-[1.02]" style={{ fontSize: topic.text.length > 90 ? '2.1rem' : undefined }}>{topic.text}</p>
-          <span />
+        <main className="relative my-4 flex-1 overflow-hidden">
+          <AnimatePresence mode="popLayout" initial={false} custom={dir.current}>
+            <motion.div key={topic.id} custom={dir.current}
+              variants={{ enter: (d: number) => ({ x: `${d * 105}%`, rotate: d * 5, opacity: 0 }), center: { x: 0, rotate: 0, opacity: 1 }, exit: (d: number) => ({ x: `${d * -105}%`, rotate: d * -5, opacity: 0 }) }}
+              initial="enter" animate="center" exit="exit" transition={{ type: 'spring', stiffness: 230, damping: 28 }}
+              style={{ '--trim-a': 'var(--on-accent)', '--trim-b': 'var(--accent)' } as React.CSSProperties}
+              className="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-card bg-accent p-6 text-onaccent">
+              <span aria-hidden className="pointer-events-none absolute inset-2.5 rounded-lg border-2 border-current opacity-20" />
+              <span aria-hidden className="trim absolute inset-x-0 top-0 h-3" />
+              <p className="mt-3 text-lg font-bold">{group}</p>
+              <p className="display text-[2.5rem] leading-[1.02]" style={{ fontSize: topic.text.length > 90 ? '2.1rem' : undefined }}>{topic.text}</p>
+              <span className="sign text-[0.7rem] opacity-60">tag.ai</span>
+            </motion.div>
+          </AnimatePresence>
         </main>
       )}
 
@@ -61,8 +73,8 @@ export default function TalkPlayPage() {
           </>
         ) : (
           <div className="grid grid-cols-[1fr_2fr] gap-3">
-            <Button size="lg" variant="secondary" disabled={t.index === 0} onClick={t.back}>Back</Button>
-            <Button size="lg" onClick={t.next}>{t.index === total - 1 ? 'Finish' : 'Next topic'}</Button>
+            <Button size="lg" variant="secondary" disabled={t.index === 0} onClick={() => { dir.current = -1; t.back(); }}>Back</Button>
+            <Button size="lg" onClick={() => { dir.current = 1; t.next(); }}>{t.index === total - 1 ? 'Finish' : 'Next topic'}</Button>
           </div>
         )}
       </footer>

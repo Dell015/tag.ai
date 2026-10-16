@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Chip, Icon, NumberStepper, Screen, Splash } from '@/components/ui';
+import { Button, Chip, Icon, NumberStepper, RollNumber, Screen, Splash } from '@/components/ui';
 import { useRequireProfile } from '@/lib/use-profile';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useWalletStore } from '@/stores/wallet-store';
@@ -75,7 +75,7 @@ export default function TalkSetupPage() {
         <Button type="submit" variant="secondary" disabled={!word.trim()}>Add</Button>
       </form>
 
-      <p className="mt-6 border-t-2 border-line pt-4 text-2xl font-extrabold">{n} topics for {formatPot(total)} coins.</p>
+      <p className="mt-6 border-t-2 border-line pt-4 text-2xl font-extrabold">{n} topics for <RollNumber value={total} format={formatPot} /> coins.</p>
       <p className="mt-2 text-lg">You have <b>{formatPot(profile.coins)} coins</b>. Topics you do not get to come back to you.</p>
       {!enough && <p className="mt-2 text-lg font-bold text-danger">You are {formatPot(total - profile.coins)} coins short. <Link href="/shop" className="underline">Add coins</Link></p>}
     </Screen>

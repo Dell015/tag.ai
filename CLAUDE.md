@@ -247,7 +247,8 @@ Owner brief (2026-10-15): **modern, aesthetic, super easy to navigate for drunk 
 - **Type:** Archivo variable only. Headlines `font-stretch: 72%`, weight 800, tight leading; body 500. Card text is 32px or larger and scales down by length, never below 28px.
 - **Memorable moments (spend boldness here, keep the rest quiet):** the fanned deck on the welcome screen, the full-screen player-colour "Pass the phone" screen, the printed-card look of the play card.
 - **Controls:** 56px minimum (68px for primary), chunky key buttons, a button for every gesture, 5s Undo toast, current player always visible.
-- **Motion:** only in response to input (card flip, sheet). No decorative entrance animations. `prefers-reduced-motion` respected.
+- **Signboard direction (v3, owner-requested 2026-10-16, replaces the quiet v2 look):** the owner said v2 still looked AI-made and asked for researched, proper design plus animation. Reference is the jeepney signboard: black plates, blocky Bungee lettering (`.sign` class) in yellow, red and white, chevron stripe bands (`.trim`), flat colours, thick outlines. Radius is by role (cards larger than buttons, avatars round), no shadows or gradients. Home is a destination board (Drinking game, Topic deck) with a dealt card fan.
+- **Motion (v3):** motion is now allowed and wanted where it carries meaning: a dealt card fan on home, springs when cards are dealt and flipped (`PlayCard`), direction-aware slides between topics (`AnimatePresence`), rolling coin numbers (`RollNumber`), staggered board rows. One orchestrated entrance per screen, no scattered fades. All motion goes through `MotionProvider`, which honours the Settings motion option and the OS `prefers-reduced-motion`.
 
 ### Research notes (2026-10-15)
 Sources used when deciding the above: thefountaininstitute.com "7 signs a UI has been vibe coded" (emoji icons, purple gradients, glow on dark, nested cards are the tells); superdesign.dev "make AI UI less generic"; daisyui 2026 trends (type-first, bold borders, sticker/flat colour suit party apps).
@@ -289,6 +290,8 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-16 (signboard redesign and motion)** — Owner: still looks AI, research proper design, add animation. Rebuilt the look as a jeepney signboard (Bungee `.sign` face, `.trim` stripes, radius by role, Archivo body 450) and added motion (`MotionProvider`, `RollNumber`, `Dealt`, spring deal and flip on `PlayCard`, directional topic transitions). Home rebuilt as a game board. 190 tests pass, lint clean, build OK.
 
 - **2026-10-16 (Topic deck, Chaos)** — Chaos now includes Adult cards and needs the 18+ confirmation. Built the Topic deck as a separate game on the home menu (`/talk`, `/talk/play`, `talk-store`, `lib/game/talk.ts`, 48 starter topics in 8 groups, tests). Home buttons are now Drinking game and Topic deck. 190 tests pass, lint clean, build OK.
 

@@ -19,7 +19,7 @@ export function Screen({ title, back, onBack, footer, children, className, mode 
               <Icon name="back" />
             </Link>
           )}
-          {title && <h1 className="text-4xl">{title}</h1>}
+          {title && <h1 className="sign text-[1.55rem] leading-tight">{title}</h1>}
         </header>
       )}
       <main className={cn('flex-1 px-4 pb-6', !(back || onBack || title) && 'safe-top', className)}>{children}</main>

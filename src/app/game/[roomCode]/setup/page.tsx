@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Avatar, Button, Chip, Icon, NumberStepper, Screen, SegmentedControl, Splash, Stepper } from '@/components/ui';
+import { Avatar, Button, Chip, Icon, NumberStepper, RollNumber, Screen, SegmentedControl, Splash, Stepper } from '@/components/ui';
 import { MIN_POT, formatPot, formatPrice, isPotValid, gameBasket, owedForBasket, type PotStyle } from '@/lib/game/pot';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
@@ -20,7 +20,7 @@ import { haptic } from '@/lib/haptics';
 
 /** Tile colour per deck. Adult is plain ink with an 18+ mark so it never reads as just another colour. */
 const TILE: Record<DeckId, Paint | 'ink'> = { icebreaker: 'blue', family: 'green', life: 'orange', deep: 'blue', barkada: 'yellow', lovers: 'pink', spicy: 'red', adult: 'ink', social: 'green', chaos: 'orange' };
-const tileStyle = (id: DeckId) => TILE[id] === 'ink' ? { backgroundColor: '#2A231E', borderColor: '#564B40' } : { backgroundColor: PAINT[TILE[id] as Paint] };
+const tileStyle = (id: DeckId) => TILE[id] === 'ink' ? { backgroundColor: '#2A231E', borderColor: '#564B40', color: '#F4F1EC' } : { backgroundColor: PAINT[TILE[id] as Paint], borderColor: '#0c0a08', color: ['blue', 'red'].includes(TILE[id]) ? '#fff' : '#181310' };
 
 type StepKey = 'basket' | 'topics' | 'drinks' | 'house';
 const STEPS: StepKey[] = ['basket', 'topics', 'drinks', 'house'];
@@ -153,9 +153,9 @@ export default function SetupPage() {
                     return (
                       <li key={id} className="border-b-2 border-line/60 py-4">
                         <div className="flex items-start gap-3">
-                          <span aria-hidden style={tileStyle(id)} className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-2 border-transparent text-base font-extrabold text-text">{id === 'adult' ? '18+' : ''}</span>
+                          <span aria-hidden style={{ ...tileStyle(id), transform: `rotate(${(id.length % 3 - 1) * 4}deg)` }} className="sign mt-0.5 flex h-[3.4rem] w-11 shrink-0 items-end justify-end rounded-md border-[3px] p-1 text-xl leading-none">{id === 'adult' ? '18+' : '?'}</span>
                           <div className="min-w-0 flex-1">
-                            <p className="text-2xl font-extrabold leading-tight">{d.name}</p>
+                            <p className="sign text-[1.15rem] leading-tight">{d.name}</p>
                             <p className="text-base text-muted">{d.blurb}</p>
                           </div>
                         </div>
@@ -182,7 +182,7 @@ export default function SetupPage() {
             ))}
           </div>
 
-          <p className="mt-6 border-t-2 border-line pt-4 text-2xl font-extrabold">{cards} cards for {formatPot(total)} coins{cards > 0 ? `, ${formatDuration(cards)}` : ''}.</p>
+          <p className="mt-6 border-t-2 border-line pt-4 text-2xl font-extrabold">{cards} cards for <RollNumber value={total} format={formatPot} /> coins{cards > 0 ? `, ${formatDuration(cards)}` : ''}.</p>
 
           {owed.length > 0 && (
             <div className="mt-5 rounded-card border-2 border-line p-4">

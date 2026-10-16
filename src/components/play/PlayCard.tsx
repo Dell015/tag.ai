@@ -52,24 +52,30 @@ export function PlayCard({ card, revealed, onReveal, onDone, onSkip, others, non
 
   if (!revealed) {
     return (
-      <motion.button key="back" onClick={() => { haptic('tap'); onReveal(); }} whileTap={{ scale: 0.98 }} aria-label="Reveal card" style={back.style}
+      <motion.button key={`back-${card.id}`} onClick={() => { haptic('tap'); onReveal(); }} aria-label="Reveal card"
+        initial={{ opacity: 0, x: 150, y: -50, rotate: 9 }} animate={{ opacity: 1, x: 0, y: 0, rotate: 0 }} whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 210, damping: 22 }}
+        style={{ ...back.style, '--trim-a': 'var(--on-accent)', '--trim-b': 'var(--accent)' } as React.CSSProperties}
         className={cn('relative flex h-full w-full flex-col justify-between overflow-hidden rounded-card p-6 text-left no-select', back.ink ? 'border-2 border-accent text-accent' : 'bg-accent text-onaccent')}>
-        <span className={cn('display self-start text-4xl', back.plate && 'rounded-lg bg-bg px-3 py-1 text-text')}>tag.ai</span>
-        <span className={cn('display self-start text-[5.5rem] leading-[0.85]', back.plate && 'rounded-xl bg-bg px-4 py-2 text-text')}>Tap to<br />reveal</span>
+        <span aria-hidden className="trim absolute inset-x-0 top-0 h-4" />
+        <span aria-hidden className="trim absolute inset-x-0 bottom-0 h-4" />
+        <span className={cn('sign mt-5 self-start text-[1.9rem]', back.plate && 'rounded-lg bg-bg px-3 py-1 text-text')}>tag.ai</span>
+        <span className={cn('display mb-5 self-start text-[5.5rem] leading-[0.85]', back.plate && 'rounded-xl bg-bg px-4 py-2 text-text')}>Tap to<br />reveal</span>
       </motion.button>
     );
   }
 
   return (
     <motion.div
-      key={card.id} initial={{ rotateY: 90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.25 }}
-      style={{ x, rotate, touchAction: 'pan-y' }} drag={swipe ? 'x' : false} dragSnapToOrigin dragElastic={0.6}
+      key={card.id} initial={{ rotateY: -88, opacity: 0.4 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+      style={{ x, rotate, touchAction: 'pan-y', transformPerspective: 1100 }} drag={swipe ? 'x' : false} dragSnapToOrigin dragElastic={0.6}
       onDragEnd={(_, info) => {
         if (info.offset.x > SWIPE) { haptic('success'); onDone(); }
         else if (info.offset.x < -SWIPE) { haptic('warn'); onSkip(); }
       }}
       className={cn('relative flex h-full w-full flex-col overflow-hidden rounded-card no-select', wild ? 'wild-glow bg-text text-bg' : 'bg-accent text-onaccent')}
     >
+ <span aria-hidden className="pointer-events-none absolute inset-2.5 rounded-lg border-2 border-current opacity-20" />
       {wild && <div aria-hidden className="h-5 w-full shrink-0" style={{ background: 'repeating-linear-gradient(135deg, rgb(var(--accent)) 0 14px, rgb(var(--bg)) 14px 28px)' }} />}
       <motion.span style={{ opacity: doneOpacity }} className="pointer-events-none absolute right-5 top-8 rounded-lg border-4 border-current px-3 py-1 text-2xl font-extrabold">Done</motion.span>
       <motion.span style={{ opacity: skipOpacity }} className="pointer-events-none absolute left-5 top-8 rounded-lg border-4 border-current px-3 py-1 text-2xl font-extrabold">Skip</motion.span>
@@ -96,6 +102,7 @@ export function PlayCard({ card, revealed, onReveal, onDone, onSkip, others, non
             {isAction && dareSeconds(card.text) && <TimerChip key={card.id} seconds={dareSeconds(card.text)!} />}
           </CardBody>
         )}
+        {!wild && <span className="sign mt-3 text-[0.7rem] opacity-60">tag.ai</span>}
       </div>
     </motion.div>
   );

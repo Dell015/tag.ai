@@ -6,7 +6,10 @@ import { useShopStore } from '@/stores/shop-store';
 import { itemById } from '@/lib/data/shop-catalogue';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Avatar, Button, Logo, TableScene } from '@/components/ui';
+import { Avatar, Dealt, Icon, Logo, RollNumber } from '@/components/ui';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/cn';
+import { haptic } from '@/lib/haptics';
 import { useProfileStore } from '@/stores/profile-store';
 import { rooms } from '@/lib/data/rooms';
 import { LAST_ROOM_KEY } from '@/lib/data/start-game';
@@ -61,30 +64,63 @@ export default function HomePage() {
     router.push(`/game/${room.code}`);
   };
 
+  const cardNo = useGameStore((s) => s.currentCardIndex + 1);
+  const cardTotal = useGameStore((s) => s.cardCountTarget);
+  const topicNo = useTalkStore((s) => s.index + 1);
+  const topicTotal = useTalkStore((s) => s.queue.length);
+
+  const rows: { key: string; title: string; sub: string; hot?: boolean; href?: string; onClick?: () => void }[] = [
+    ...(resume ? [{ key: 'resume', title: 'Resume game', sub: `Card ${cardNo} of ${cardTotal}`, hot: true, href: `/game/${resume}/play` }] : []),
+    ...(talking ? [{ key: 'resume-talk', title: 'Resume topics', sub: `Topic ${Math.min(topicNo, topicTotal)} of ${topicTotal}`, hot: !resume, href: '/talk/play' }] : []),
+    { key: 'game', title: 'Drinking game', sub: 'Cards, dares and shots. Add friends by name.', onClick: host },
+    { key: 'talk', title: 'Topic deck', sub: 'Just talk. Debates, dilemmas and stories.', href: '/talk' },
+  ];
+
   return (
-    <div className="flex min-h-[calc(100dvh-4.25rem)] flex-col px-4 safe-top">
+    <div className="flex min-h-[calc(100dvh-4.25rem)] flex-col px-4 pb-24 safe-top">
       <header className="flex items-center justify-between">
-        <Logo className="text-3xl" />
-        <Link href="/me" aria-label="Your profile" className="flex h-tap items-center gap-3 rounded-full border-2 border-line pl-4 pr-1.5">
-          <span className="font-extrabold tabular-nums">{formatPot(profile.coins)} coins</span>
-          <Avatar value={profile.avatar} name={profile.username} size={42} frame={frameValue} />
+        <Logo />
+        <Link href="/me" aria-label="Your profile" className="flex h-tap items-center gap-3 rounded-lg border-2 border-line pl-4 pr-1.5">
+          <span className="font-extrabold tabular-nums"><RollNumber value={profile.coins} format={formatPot} /> coins</span>
+          <Avatar value={profile.avatar} name={profile.username} size={38} frame={frameValue} />
         </Link>
       </header>
 
-      <section className="mt-8">
-        <p className="text-xl font-bold text-muted">Kumusta, {profile.username}.</p>
-        <h1 className="mt-2 text-[3rem] leading-[0.92]">Who&apos;s drinking tonight?</h1>
+      <section className="mt-6">
+        <p className="text-lg text-muted">Kumusta, {profile.username}.</p>
+        <h1 className="mt-3 text-[3.4rem] leading-[0.9]">Who&apos;s drinking<br />tonight?</h1>
       </section>
 
-      <TableScene letters={[profile.username.charAt(0).toUpperCase(), 'M', 'A', 'J', 'K', 'S']} className="mx-auto mt-1 aspect-[320/280] h-[30dvh] w-auto" />
+      <div className="flex flex-1 items-center justify-center py-4">
+        <Dealt className="scale-100" />
+      </div>
 
-      <section className="mt-auto space-y-3 pb-4 pt-3">
-        {resume && <Link href={`/game/${resume}/play`} className="block"><Button size="lg" full>Resume your game</Button></Link>}
-        {talking && <Link href="/talk/play" className="block"><Button size="lg" full>Resume topic deck</Button></Link>}
-        <Button size="lg" full variant={resume || talking ? 'secondary' : 'primary'} onClick={host}>Drinking game</Button>
-        <Link href="/talk" className="block"><Button size="lg" variant="secondary" full>Topic deck</Button></Link>
-        {coach ? <p className="pt-2 text-center text-lg font-bold">Start here. Pick the Drinking game and add your friends by name, or open the Topic deck to just talk.</p>
-          : tip && <Link href="/help" className="block pt-2 text-center text-muted">{tip}</Link>}
+      <section aria-label="Choose a game" className="pb-3">
+        <div className="overflow-hidden rounded-card border-2 border-line bg-black/60">
+          <div aria-hidden className="trim h-2.5" />
+          <ul>
+            {rows.map((r, i) => {
+              const inner = (
+                <>
+                  <span className="min-w-0 flex-1">
+                    <span className={cn('sign block text-[1.25rem]', r.hot ? 'text-onaccent' : 'text-accent')}>{r.title}</span>
+                    <span className={cn('mt-1.5 block text-sm', r.hot ? 'text-onaccent/80' : 'text-muted')}>{r.sub}</span>
+                  </span>
+                  <Icon name="chevron" size={26} className={r.hot ? 'text-onaccent' : 'text-accent'} />
+                </>
+              );
+              const cls = cn('flex min-h-[5rem] w-full items-center gap-3 px-4 py-3 text-left transition-colors', r.hot ? 'bg-accent' : 'active:bg-raised', i > 0 && 'border-t-2 border-line');
+              return (
+                <motion.li key={r.key} initial={{ opacity: 0, x: -28 }} animate={{ opacity: 1, x: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: 0.55 + i * 0.1 }}>
+                  {r.href ? <Link href={r.href} className={cls}>{inner}</Link> : <button onClick={() => { haptic('tap'); r.onClick?.(); }} className={cls}>{inner}</button>}
+                </motion.li>
+              );
+            })}
+          </ul>
+          <div aria-hidden className="trim h-2.5" />
+        </div>
+        {coach ? <p className="pt-3 text-center text-base font-bold">Start here. Pick a game above.</p>
+          : tip && <Link href="/help" className="block pt-3 text-center text-sm text-muted">{tip}</Link>}
       </section>
     </div>
   );

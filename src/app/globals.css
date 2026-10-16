@@ -41,9 +41,16 @@ body {
   background: rgb(var(--bg));
   color: rgb(var(--text));
   font-family: 'Archivo Variable', system-ui, sans-serif;
-  font-weight: 500;
+  font-weight: 450;
+  line-height: 1.45;
   overscroll-behavior-y: none;
 }
+
+/* Signage: the jeepney destination board voice. Page titles, deck names, the logo. */
+.sign { font-family: Bungee, 'Archivo Variable', system-ui, sans-serif; font-weight: 400; letter-spacing: 0.01em; line-height: 1; }
+
+/* Trim stripes, like the chevron bands on a jeepney body. Hard stops only, no gradients. */
+.trim { background-image: repeating-linear-gradient(135deg, rgb(var(--trim-a, 255 199 44)) 0 10px, rgb(var(--trim-b, 232 60 46)) 10px 20px); }
 
 /* Headlines: heavy, condensed, tight. This is the voice of the app. */
 h1, h2, h3, .display {
@@ -53,7 +60,7 @@ h1, h2, h3, .display {
   line-height: 1;
 }
 
-:focus-visible { outline: 3px solid rgb(var(--accent)); outline-offset: 3px; border-radius: 10px; }
+:focus-visible { outline: 3px solid rgb(var(--accent)); outline-offset: 3px; border-radius: 6px; }
 
 .safe-top    { padding-top: max(env(safe-area-inset-top), 14px); }
 .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 16px); }

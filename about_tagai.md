@@ -1348,3 +1348,8 @@ Philosophical debates, discussion prompts and "things to talk about" do not belo
 - Content today: 48 topics across 8 groups, written original. A few carry filter tags (politics, religion, death, money, career). More topics come later, and Social media debates will move here or into the Drinking game depending on their context.
 
 **Open for later:** a loose timer or turn order for talks (owner chose none for now), more groups, and whether Topic deck packs belong in the Shop.
+
+
+### 23.22 Look and motion (signboard direction)
+
+The owner felt the app still looked AI-made, so the look now follows the Philippine jeepney signboard: black plates, chunky Bungee lettering in yellow, red and white, striped chevron bands, flat deck colours, thick outlines. Motion was added on purpose: the home card fan is dealt in, cards fly in and flip with a spring, topics slide in the direction you move, coin numbers roll, and menu rows stagger in. Everything respects the Motion setting and the phone's reduce-motion option.
