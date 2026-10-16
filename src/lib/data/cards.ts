@@ -523,17 +523,6 @@ export const CURATED_CARDS: QueuedCard[] = [
     ]
   },
   {
-    "id": "card-048",
-    "text": "Do a TikTok dance. The group picks which one.",
-    "cardType": "question",
-    "intensity": 2,
-    "category": "dares",
-    "topics": [
-      "dancing",
-      "social_media"
-    ]
-  },
-  {
     "id": "card-049",
     "text": "Let the group post one story on your Instagram account.",
     "cardType": "question",
@@ -875,7 +864,7 @@ export const CURATED_CARDS: QueuedCard[] = [
   },
   {
     "id": "card-079",
-    "text": "Roast someone's fashion sense in this group — but make it funny.",
+    "text": "Roast someone's fashion sense in this group. Keep it friendly.",
     "cardType": "question",
     "intensity": 2,
     "category": "roasts",

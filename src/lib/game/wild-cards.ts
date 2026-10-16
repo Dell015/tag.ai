@@ -21,8 +21,8 @@ export interface WildCardEffect {
   immunityCards?: number;
   /** Shots for failing the challenge (2 or 3). */
   penalty?: number;
-  /** The tool the card shows when it is drawn: a bottle or a die, so the card invents itself on the spot. */
-  via?: 'bottle' | 'dice';
+  /** The tool the card shows when it is drawn: a bottle, a die or a coin, so the card invents itself on the spot. */
+  via?: 'bottle' | 'dice' | 'coin';
 }
 
 // ─── Shuffle Helper ──────────────────────────────────────────────────────────
@@ -128,24 +128,19 @@ export const WILD_CARD_DEFINITIONS: Record<WildCardType, WildCardEffect> = {
     penalty: 2,
     via: 'bottle',
   },
-  group_pose: {
-    type: 'group_pose',
-    title: 'Freeze',
-    description: 'Everyone strikes a pose on the count of three and holds it for 5 seconds. The first to move takes the penalty.',
-    penalty: 2,
-  },
-  dance_off: {
-    type: 'dance_off',
-    title: 'Dance Off',
-    description: 'Everyone dances for 15 seconds. The group votes for the worst dancer, who takes the penalty.',
-    penalty: 2,
-  },
   lucky_roll: {
     type: 'lucky_roll',
     title: 'Lucky Roll',
     description: 'Roll the die. That many players must {drink}. You choose who.',
     penalty: 2,
     via: 'dice',
+  },
+  double_or_nothing: {
+    type: 'double_or_nothing',
+    title: 'Double or Nothing',
+    description: 'Flip the coin. Heads: you choose a player to take 3 {shots}. Tails: you take 3 {shots}.',
+    penalty: 3,
+    via: 'coin',
   },
 };
 

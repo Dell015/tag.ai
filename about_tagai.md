@@ -1381,3 +1381,12 @@ Every card now shows its consequence at the bottom: "Fail or refuse: take a shot
 The heat meter now decides what comes next. At the start the cards are the easiest ones (Icebreaker and Family first), and as the meter fills the cards get harder, ending with the Adult cards. When the meter is completely full the draw is totally random and the bar says "Anything goes". In long games the meter fills more slowly, so the climb takes most of the game instead of the first dozen cards.
 
 More cards now use the tools to make themselves up on the spot. Roll the die and your number is your penalty. Flip the coin to give or take. Spin the wheel for your penalty. Spin the bottle to pick who pays. Rule cards can roll, flip or spin to make their own rule, which then stays on screen until the next wild card. The Call Out and Voice Note wild cards spin the bottle to pick who does it, and a new wild card, Lucky Roll, rolls a die to say how many players drink.
+
+
+### 23.27 Tools get their own screen
+
+When a card needs the die, coin, bottle or wheel, tapping its button opens a full screen that plays the animation: a die that tumbles and lands, a coin that flips, a bottle that spins and stops anywhere, a wheel with the options written on it. The result then shows on the card. The bottle no longer picks a name, the players decide who it points at. Dance cards, Freeze and Dance Off are gone, and Double or Nothing (a coin flip for 3 shots) is a new wild card.
+
+### 23.28 Suggest a card
+
+Under Me there is a Suggest a card page. A player picks a card type and a deck, writes the card and sends it. Friends like the cards they enjoy. Each week the top contributor (1 point a card, 2 points for each like from someone else) can claim 10 coins, and a week where nobody got a like has no winner. For now the cards and rankings are sample data on this device. Moderation, real rankings and the payout come with accounts.

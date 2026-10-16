@@ -110,15 +110,14 @@ Set `penalty` on a card only when it is not the default. Allowed range is 1 to 3
 
 ### Wild cards
 
-Wild cards are free, one-off challenges for the whole table. There are five, defined in `WILD_CARD_DEFINITIONS`:
+Wild cards are free, one-off challenges for the whole table. There are four, defined in `WILD_CARD_DEFINITIONS`:
 
 | Wild card | What happens | Shots if failed |
 |---|---|---|
 | Call Out | Spin the bottle. The player it lands on calls someone who is not in this group, shouts anything when they answer, then hangs up. | 3 |
 | Voice Note | Spin the bottle. The player it lands on sends a 10 second voice note to a friend who is not here. | 2 |
-| Freeze | Everyone strikes a pose on three and holds it for 5 seconds. First to move pays. | 2 |
-| Dance Off | Everyone dances for 15 seconds. The group votes the worst dancer, who pays. | 2 |
 | Lucky Roll | Roll the die. That many players must drink. You choose who. | 2 |
+| Double or Nothing | Flip the coin. Heads: you choose a player to take 3 shots. Tails: you take 3 shots. | 3 |
 
 A wild card must be:
 
@@ -162,6 +161,17 @@ A tool can decide the penalty, the person or the rule, so nobody has to make som
 **Rule cards that make their rule with a tool.** Give the rule card `tool: { via: 'dice' | 'coin' | 'wheel', ... }` and write the rule lines as the `outcomes` (six for a die, two for a coin) or `tool.labels` (wheel). Do not set `rule`: the result becomes the rule bar. Every outcome must be a complete rule with its own penalty ("No names. Say one and take {shot}.") because that exact line is what stays on screen. A coin outcome may start with "Heads: " or "Tails: "; the prefix is dropped on the bar.
 
 Keep penalties from tools to 1 to 3 shots. A die can map 4, 5 and 6 to safe results or to a repeat of 3 shots; never to 4, 5 or 6 shots.
+
+### Banned card ideas
+
+Do not write dance cards, freeze or pose cards, or any wild card that needs the whole table to move at once and be judged. They are hard to follow and hard to referee. A test fails if a dance or freeze card appears in the pool.
+
+### Tools play on their own screen
+
+When a card has a tool, the card shows one button. Tapping it opens a full screen (`ToolStage`) that plays the animation by itself: a tumbling die with real pips, a flipping coin, a spinning bottle that stops anywhere, a wheel with the options written on it, a ring timer, or a 3-2-1 point countdown. The result goes back to the card and stays on it.
+
+- **Bottle cards never name a player.** The bottle does not know who is at the table. It stops pointing somewhere and the players decide who it landed on. So write "the player it lands on", never a name, and never add a tone instruction like "make it funny" to a bottle card.
+- Write dice, coin and wheel cards so the result stands alone as one complete line. The result shows big on its own screen and again on the card.
 
 ## 8. Writing rules for the text
 

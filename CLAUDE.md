@@ -17,7 +17,7 @@ Core mechanics:
 - **Gestures:** tap = flip (cards start face-down, deliberately), swipe left/right = dismiss, hold-drag to trash = permanently remove for that user, heart = save to the user's library.
 - **Heat meter (1.0–5.0):** escalation engine. Dismiss +0.3, heart +0.5, wild +0.5, skip −0.2, 3 skips in a row −1.0. Heat biases which cards appear; it never hard-locks them.
 - **6 game modes:** Icebreaker, Barkada, Lovers, Spicy, Chaos, Family. Each sets entry heat, intensity distribution, wild-card frequency. Family caps heat at 2.0 and only uses intensity ≤ 2.
-- **5 wild cards (changed 2026-10-16, see D27 and D28):** Call Out, Voice Note, Freeze, Dance Off, Lucky Roll. One-off challenges, 2 or 3 shots if failed. Rule cards hold until the next wild card.
+- **4 wild cards (changed 2026-10-16, see D27, D28, D29):** Call Out, Voice Note, Lucky Roll, Double or Nothing. One-off challenges, 2 or 3 shots if failed. Rule cards hold until the next wild card.
 - **Drink rules:** 4 templates (Classic, Chaos, Soft Mode, Points-Based) + up to 5 custom rules + a non-drinking mode. All players tap "I Agree".
 - **Comfort filters:** 10 presets + custom text topics the group wants off the table.
 - **Coins (planned, not implemented):** 1 peso = 1 coin; cards cost coins from a shared pot; new users get 10 welcome coins; PayMongo for purchases. In Phase 1 the pot is a "Free Mode" stub.
@@ -136,6 +136,8 @@ Numbered so they can be referenced in commits.
 | D27 | **Wild cards, rule cards and consequences (2026-10-16).** Removed Whisper Round, Crown, Heat Spike, Shuffle and the other lingering wild cards because they were hard to follow. Wild cards are now four one-off challenges (Call Out 3 shots, Voice Note 2, Freeze 2, Dance Off 2). New card kind **Rule** (14 cards): holds until the next wild card, shown in a lime bar at the top while it is on (`activeRule` in game-store). Every card shows a consequence line at the bottom, "Fail or refuse: take N shots" (`penaltyFor`, 1 to 3). Drink words use tokens `{drink}`, `{shot}`, `{shots}` so non-drinking tables see forfeits. The card back now wears the colour of its kind. After buying, cards are spread so there are no runs of one category (`spreadOut`). Full rules for making cards: `docs/CARD_GUIDE.md`. | Owner 2026-10-16. |
 
 | D28 | **Heat drives the card order (2026-10-16).** Easy cards first (Icebreaker and Family at low heat), harder as the meter fills, a full meter is a completely random draw (`drawForHeat` in `steering.ts`, replaces the old window steering). Heat steps are paced by game length so the meter fills about two thirds through (`heatPace`). Cards can invent themselves with tools: dice, coin, wheel, bottle, vote and timer decide penalties, who pays, or the rule itself (rule cards with `tool.via`), wild cards Call Out, Voice Note use the bottle and Lucky Roll uses a die (now 5 wild cards). | Owner 2026-10-16. |
+| D29 | **Tools play on their own full screen, no dance or freeze (2026-10-16).** Tapping a tool button on a card opens `ToolStage` (die, coin, bottle, wheel, timer, vote) that animates by itself and hands the result back to the card. The bottle stops at a random angle and does not name anyone, the players decide who it points at. Removed Freeze, Dance Off and every dance card; added Double or Nothing (coin) as a wild card. | Owner 2026-10-16. |
+| D30 | **Card suggestions and weekly top contributor (2026-10-16).** `/me/suggest`: players write cards (type, deck, text), friends like them, a weekly board ranks contributors (1 point a card, 2 per like from others), and the top contributor of the finished week claims `WEEKLY_REWARD` coins (placeholder 10, owner decides). Mock only: sample cards, no moderation, no server payout until accounts. A week with no likes has no winner. | Owner 2026-10-16. |
 
 Open / unknown (owner can't remember — decide when it comes up, then record it above):
 - Whether phone-OTP login is still wanted (docs said email/Google/phone; code has email + Google only).
@@ -298,6 +300,8 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-16 (full-screen tools, suggestions)** — Tools animate on their own screen, bottle is random and players decide who, Freeze and Dance Off and dance cards removed, Double or Nothing added, suggest-a-card page with likes and weekly top contributor reward. Tests pass, lint clean.
 
 - **2026-10-16 (heat order, tool-made cards)** — Cards now come easy to hard as the heat meter fills and fully random at max heat, heat is paced by game length, 17 penalty/rule cards where the dice, coin, wheel or bottle decide, rule cards that make their rule on the spot, Lucky Roll wild card, bottle on Call Out and Voice Note. 210 tests pass, lint clean, build OK.
 

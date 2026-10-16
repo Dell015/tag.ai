@@ -39,13 +39,12 @@ export function DrinkBanner({ nonDrinking, who = 'Everyone' }: { nonDrinking: bo
   );
 }
 
-export function WildExtras({ type, players, nonDrinking }: { type: WildCardType; players: string[]; nonDrinking: boolean }) {
+export function WildExtras({ type, prompt, nonDrinking }: { type: WildCardType; prompt: string; nonDrinking: boolean }) {
   switch (type) {
-    case 'group_pose': return <TimerChip seconds={5} label="Hold the pose" />;
-    case 'dance_off': return <TimerChip seconds={15} label="Start dancing" />;
     case 'call_out':
-    case 'voice_note': return <CardToolView kind="bottle" players={players} nonDrinking={nonDrinking} />;
-    case 'lucky_roll': return <CardToolView kind="dice" tool={{ dice: 1 }} players={players} nonDrinking={nonDrinking} />;
+    case 'voice_note': return <CardToolView kind="bottle" prompt={prompt} nonDrinking={nonDrinking} />;
+    case 'lucky_roll': return <CardToolView kind="dice" tool={{ dice: 1 }} outcomes={['1 player must {drink}.', '2 players must {drink}.', '3 players must {drink}.', '4 players must {drink}.', '5 players must {drink}.', 'Everyone must {drink}.']} prompt={prompt} nonDrinking={nonDrinking} />;
+    case 'double_or_nothing': return <CardToolView kind="coin" outcomes={['Heads: you choose a player to take 3 {shots}.', 'Tails: you take 3 {shots}.']} prompt={prompt} nonDrinking={nonDrinking} />;
     default: return null;
   }
 }

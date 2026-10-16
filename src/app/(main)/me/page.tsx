@@ -43,6 +43,7 @@ export default function MePage() {
       <nav className="mt-6" aria-label="Me">
         <ListRow icon="coin" tone="yellow" label="Wallet" hint="Balance and history" href="/me/wallet" />
         <ListRow icon="heart" tone="pink" label="Saved cards" value={saved} href="/me/saved" />
+        <ListRow icon="plus" tone="green" label="Suggest a card" hint="Top contributor each week wins coins" href="/me/suggest" />
         <ListRow icon="up" tone="orange" label="Leaderboard" hint="Sample data until accounts launch" href="/me/leaderboard" />
         <ListRow icon="users" tone="blue" label="Invite friends" hint="You and a friend each get 5 coins" href="/me/referral" />
         <ListRow icon="sliders" tone="green" label="Settings" hint="Game defaults, playing, display" href="/me/settings" />

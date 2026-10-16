@@ -43,7 +43,7 @@ export interface CardQueue {
 
 // ─── Wild Card Types Pool ────────────────────────────────────────────────────
 
-const WILD_CARD_TYPES: WildCardType[] = ['call_out', 'voice_note', 'group_pose', 'dance_off', 'lucky_roll'];
+const WILD_CARD_TYPES: WildCardType[] = ['call_out', 'voice_note', 'lucky_roll', 'double_or_nothing'];
 
 // ─── Helper Functions ────────────────────────────────────────────────────────
 

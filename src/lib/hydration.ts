@@ -7,6 +7,7 @@ import { useDeckStore } from '@/stores/deck-store';
 import { useShopStore } from '@/stores/shop-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useTalkStore } from '@/stores/talk-store';
+import { useSuggestionStore } from '@/stores/suggestion-store';
 
 /**
  * Persisted stores use `skipHydration` so the server render and the first client
@@ -26,6 +27,7 @@ function hydrateAll(): Promise<void> {
       useShopStore.persist.rehydrate(),
       useDeckStore.persist.rehydrate(),
       useTalkStore.persist.rehydrate(),
+      useSuggestionStore.persist.rehydrate(),
     ]).then(() => {
       useProfileStore.setState({ hydrated: true });
       done = true;

@@ -169,7 +169,7 @@ export function ToolsSheet({ open, onClose, players }: { open: boolean; onClose:
           {tool === 'coin' && <CoinTool />}
           {tool === 'dice' && <DiceTool />}
           {tool === 'bottle' && <SpinTool labels={players} title="Spin the bottle" />}
-          {tool === 'wheel' && <SpinTool labels={['Sing', 'Shot', 'Dance', 'Truth', 'Swap seats']} title="Spin the wheel" editable />}
+          {tool === 'wheel' && <SpinTool labels={['Sing', 'Shot', 'Impression', 'Truth', 'Swap seats']} title="Spin the wheel" editable />}
         </>
       )}
     </Sheet>

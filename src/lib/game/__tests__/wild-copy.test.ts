@@ -12,7 +12,7 @@ describe('wild card copy', () => {
   });
   it('every wild card is a one-off challenge with a penalty of 2 or 3 shots', () => {
     const defs = Object.values(WILD_CARD_DEFINITIONS);
-    expect(defs).toHaveLength(5);
+    expect(defs).toHaveLength(4);
     defs.forEach((d) => { expect([2, 3]).toContain(d.penalty); expect(wildDescription(d.type, false)).not.toMatch(/\{(?!drink)|next \d+ cards|immun/i); });
   });
   it('has no em dashes or exclamation marks in any description', () => {
@@ -26,4 +26,13 @@ describe('ruleLine', () => {
   it('names the template', () => expect(ruleLine('Chaos', false)).toBe('Chaos rules'));
   it('falls back to classic', () => expect(ruleLine(null, false)).toBe('Classic rules'));
   it('says forfeits when not drinking', () => expect(ruleLine('Chaos', true)).toBe('Forfeits instead of drinks'));
+});
+
+describe('banned card ideas', () => {
+  it('has no dance or freeze cards anywhere', async () => {
+    const { libraryCards } = await import('@/lib/data/card-pool');
+    const bad = libraryCards(true).filter((c) => /\bdanc|\bfreeze\b|strike a pose/i.test(c.text) || (c.tool?.labels ?? []).some((l) => /danc/i.test(l)));
+    expect(bad.map((c) => c.text)).toEqual([]);
+    Object.values(WILD_CARD_DEFINITIONS).forEach((d) => expect(d.description).not.toMatch(/danc|freeze|pose/i));
+  });
 });

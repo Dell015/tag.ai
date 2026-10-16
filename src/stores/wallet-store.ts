@@ -8,7 +8,7 @@ import { persist } from 'zustand/middleware';
 import { safeStorage } from '@/lib/storage';
 import { useProfileStore } from '@/stores/profile-store';
 
-export type TxKind = 'welcome' | 'purchase' | 'pot' | 'refund' | 'topup' | 'referral' | 'shop';
+export type TxKind = 'welcome' | 'purchase' | 'pot' | 'refund' | 'topup' | 'referral' | 'shop' | 'reward';
 
 export interface Transaction {
   id: string;

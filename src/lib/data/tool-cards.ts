@@ -26,7 +26,7 @@ const ROWS: Row[] = [
   // Dice, the number is the rule
   { kind: 'dice', intensity: 3, text: 'Roll the dice and count that many players clockwise from you. That player must {drink}.', tool: { dice: 1 }, people: { min: 3, max: null } },
   { kind: 'dice', intensity: 3, text: 'Roll two dice. Name that many Filipino teleserye. Miss one and {drink}.', tool: { dice: 2 } },
-  { kind: 'dice', intensity: 1, text: 'Roll the dice. Do that many silly dance moves.', tool: { dice: 1 } },
+  { kind: 'dice', intensity: 1, text: 'Roll the dice. Make that many funny faces in a row.', tool: { dice: 1 } },
   { kind: 'dice', intensity: 1, text: 'Roll the dice. Say that many things you are grateful for tonight.', tool: { dice: 1 }, category: 'memories' },
   { kind: 'dice', intensity: 3, text: 'Roll the dice. Ask that many players one question each. Honest answers only.', tool: { dice: 1 }, people: { min: 3, max: null } },
 
@@ -35,7 +35,7 @@ const ROWS: Row[] = [
   { kind: 'coin', intensity: 2, text: 'Flip the coin. Heads is kind, tails is not.', outcomes: ['Heads: give every player a compliment.', 'Tails: you {drink}.'] },
   { kind: 'coin', intensity: 3, text: 'Flip the coin. Luck decides who pays.', outcomes: ['Heads: pick someone to {drink}.', 'Tails: you {drink}.'] },
   { kind: 'coin', intensity: 3, text: 'Flip the coin. Heads is a secret, tails is a sip.', outcomes: ['Heads: tell a secret nobody here knows.', 'Tails: {drink} and keep it.'] },
-  { kind: 'coin', intensity: 1, text: 'Flip the coin. Keep it light.', outcomes: ['Heads: dance for 10 seconds.', 'Tails: tell a joke.'] },
+  { kind: 'coin', intensity: 1, text: 'Flip the coin. Keep it light.', outcomes: ['Heads: do your best animal sound.', 'Tails: tell a joke.'] },
   { kind: 'coin', intensity: 4, text: 'Flip the coin. Someone pays for it.', outcomes: ['Heads: the person on your left must {drink}.', 'Tails: the person on your right must {drink}.'] },
   { kind: 'coin', intensity: 4, text: 'Flip the coin. Truth or dare, but you do not choose.', outcomes: ['Heads: truth. Answer anything the group asks.', 'Tails: dare. The group picks it.'] },
   { kind: 'coin', intensity: 5, text: 'Flip the coin. Win or share the loss.', outcomes: ['Heads: you are safe this round.', 'Tails: you and the person across from you {drink}.'] },
@@ -51,10 +51,10 @@ const ROWS: Row[] = [
   { kind: 'bottle', intensity: 5, text: 'Spin the bottle. You and the player it lands on both tell your most embarrassing moment this year.', people: { min: 3, max: null } },
 
   // Wheel
-  { kind: 'wheel', intensity: 1, text: 'Spin the wheel and do what it says.', tool: { labels: ['Funny face', 'Tell a joke', 'Animal sound', 'Spin again', 'High five', 'Dance'] } },
-  { kind: 'wheel', intensity: 2, text: 'Spin the wheel. It decides.', tool: { labels: ['Sing', 'Dance', 'Joke', 'Impression', 'Pass', 'Cheers'] } },
+  { kind: 'wheel', intensity: 1, text: 'Spin the wheel and do what it says.', tool: { labels: ['Funny face', 'Tell a joke', 'Animal sound', 'Spin again', 'High five', 'Free pass'] } },
+  { kind: 'wheel', intensity: 2, text: 'Spin the wheel. It decides.', tool: { labels: ['Sing', 'Speak in rhymes', 'Joke', 'Impression', 'Pass', 'Cheers'] } },
   { kind: 'wheel', intensity: 3, text: 'Spin the wheel and own the result.', tool: { labels: ['Truth', 'Dare', '{drink}', 'Swap seats', 'Free pass', 'Compliment a player'] } },
-  { kind: 'wheel', intensity: 3, text: 'Spin the wheel. No skipping.', tool: { labels: ['Tell a secret', 'Imitate a player', 'Sing a line', 'Tongue twister', 'Dance', 'Free pass'] } },
+  { kind: 'wheel', intensity: 3, text: 'Spin the wheel. No skipping.', tool: { labels: ['Tell a secret', 'Imitate a player', 'Sing a line', 'Tongue twister', 'Sing an ad jingle', 'Free pass'] } },
   { kind: 'wheel', intensity: 4, text: 'Spin the wheel. Brace yourself.', tool: { labels: ['{drink} twice', 'Truth', 'Dare', 'Pick someone to {drink}', 'Free pass', 'Everyone {drink}'] } },
   { kind: 'wheel', intensity: 5, text: 'Spin the wheel. Last chance to look brave.', tool: { labels: ['Truth: biggest regret', 'Dare: the group picks', '{drink} twice', 'Pick two players to {drink}', 'Free pass', 'Everyone {drink}'] } },
 
@@ -90,7 +90,7 @@ const ROWS: Row[] = [
   { kind: 'coin', intensity: 4, text: 'Flip the coin. Double or nothing.', outcomes: ['Heads: nothing happens.', 'Tails: take 3 {shots}.'] },
   { kind: 'coin', intensity: 2, text: 'Flip the coin. Heads picks who goes next.', outcomes: ['Heads: you pick who takes the next card.', 'Tails: the player on your left picks who takes the next card.'] },
   { kind: 'wheel', intensity: 3, text: 'Spin the wheel for your penalty.', tool: { labels: ['Take {shot}', 'Take 2 {shots}', 'Take 3 {shots}', 'Give 2 {shots}', 'Safe', 'Everyone takes {shot}'] } },
-  { kind: 'wheel', intensity: 4, text: 'Spin the wheel. The group decides what you do for the result.', tool: { labels: ['Truth', 'Dare', 'Sing', 'Dance', 'Joke', 'Free pass'] } },
+  { kind: 'wheel', intensity: 4, text: 'Spin the wheel. The group decides what you do for the result.', tool: { labels: ['Truth', 'Dare', 'Sing', 'Impression', 'Joke', 'Free pass'] } },
   { kind: 'bottle', intensity: 3, text: 'Spin the bottle. The player it lands on takes 2 {shots}.', people: { min: 3, max: null } },
   { kind: 'bottle', intensity: 4, text: 'Spin the bottle. The player it lands on takes {shot} and picks who takes the next one.', people: { min: 3, max: null } },
   { kind: 'bottle', intensity: 2, text: 'Spin the bottle. The player it lands on gives you a compliment, and you give one back.', people: { min: 3, max: null } },
