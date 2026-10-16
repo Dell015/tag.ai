@@ -5,6 +5,7 @@
  * which cards are drawn next via weighted random selection.
  */
 
+import type { CardKind, CardTool } from '@/lib/game/card-kinds';
 import { CardCategory, GameMode, WildCardType } from '@/types/game';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -36,6 +37,12 @@ export interface QueuedCard {
   people?: { min: number; max: number | null };
   /** The deck this card was bought from. Sets what it costs from the pot. */
   deckId?: string;
+  /** How it is played. Missing on older cards: questions are truths, actions are dares. */
+  kind?: CardKind;
+  /** Settings for the card's built-in tool (dice count, wheel labels, timer seconds). */
+  tool?: CardTool;
+  /** What each result means. Dice: six lines for 1 to 6. Coin: heads, then tails. {drink} adapts to non-drinking tables. */
+  outcomes?: string[];
 }
 
 // ─── Heat Adjustment Constants ───────────────────────────────────────────────

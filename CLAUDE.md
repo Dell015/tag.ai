@@ -129,6 +129,8 @@ Numbered so they can be referenced in commits.
 | D23 | **18+ is the Adult deck, not a filter.** The "18+ Cards" topic is retired (stripped from saved settings). The Adult deck needs a table confirmation that everyone is 18 or older before it can be bought. Chaos includes Adult cards (owner 2026-10-16), so buying Chaos also needs the 18+ confirmation, and Chaos is not offered for mid-game deck switching. | Owner 2026-10-16. |
 | D24 | **Topic deck is a separate game on the Play menu (built 2026-10-16).** Debates and things to talk about, no turns, shots or pot. 0.1 coin per topic, bought by quantity (10 to 100, steps of 5), group chips and skip-topic filters before starting, tap Next, Back at any time, unused topics refunded when you end. Routes `/talk` and `/talk/play`, store `talk-store`, content `lib/data/talk-topics.ts` (48 topics, 8 groups). Names are "Drinking game" and "Topic deck". Social media deck stays Coming soon. | Owner 2026-10-16. See `about_tagai.md` 23.18 to 23.21. |
 
+| D25 | **Card kinds with built-in tools (2026-10-16).** Every card has a kind: truth, dare, dice, coin, bottle, wheel, timer, vote (`lib/game/card-kinds.ts`). Kind sets the card colour on reveal (`data-kind` in globals.css), the card back keeps the deck colour. Tool kinds show their tool on the card (`components/play/CardTools.tsx`) and the result tells the table what to do (`outcomes`, `{drink}` adapts to non-drinking tables). Content in `lib/data/tool-cards.ts` (48 cards plus 6 adult). Tool cards are actions, so about 1 in 5 cards is a dare or tool card. Skip now means a new card for the same player (no pass), swipe either way means Next, and the old Another card button is gone. Undo lives in a reserved row above the buttons, not a toast. | Owner 2026-10-16. |
+
 Open / unknown (owner can't remember — decide when it comes up, then record it above):
 - Whether phone-OTP login is still wanted (docs said email/Google/phone; code has email + Google only).
 - Skip button and its coin cost; pot mechanics details; creator-reward economics.
@@ -290,6 +292,8 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-16 (card kinds and play row)** — Owner: Undo covered the buttons, wanted a swipe hint, card colours were all one, and wanted truth, dare, dice, coin, bottle, wheel, timer cards that bring their own tool. Added card kinds and per-kind colours, `CardTools`, 54 tool cards, Skip = new card same turn, swipe either way, undo row. 197 tests pass, lint clean, build OK.
 
 - **2026-10-16 (signboard redesign and motion)** — Owner: still looks AI, research proper design, add animation. Rebuilt the look as a jeepney signboard (Bungee `.sign` face, `.trim` stripes, radius by role, Archivo body 450) and added motion (`MotionProvider`, `RollNumber`, `Dealt`, spring deal and flip on `PlayCard`, directional topic transitions). Home rebuilt as a game board. 190 tests pass, lint clean, build OK.
 

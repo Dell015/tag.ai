@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Avatar, Button, Icon, Splash, toast } from '@/components/ui';
 import { HeatBar } from '@/components/play/HeatBar';
 import { PlayCard } from '@/components/play/PlayCard';
@@ -51,6 +51,8 @@ export default function PlayPage() {
   const [pause, setPause] = useState(false);
   const [hearted, setHearted] = useState<string[]>([]);
   const last = useRef<{ id: string; kind: 'dismiss' | 'skip' | 'trash' | 'again' } | null>(null);
+  /** One reserved row above the buttons: the swipe hint, or Undo for a few seconds after a move. */
+  const [undoBar, setUndoBar] = useState<{ label: string; run: () => void } | null>(null);
 
   const card = g.cardQueue[g.currentCardIndex];
   const ended = g.sessionPhase === 'end';
@@ -66,8 +68,13 @@ export default function PlayPage() {
   const settled = useRef(false);
   useWakeLock(st.keepAwake && !ended && g.cardQueue.length > 0);
 
-  // The undo toast makes no sense once the recap is up.
-  useEffect(() => { if (ended) { useToastStore.setState({ toasts: [] }); playSound('end'); } }, [ended]);
+  // The undo bar makes no sense once the recap is up.
+  useEffect(() => { if (ended) { useToastStore.setState({ toasts: [] }); setUndoBar(null); playSound('end'); } }, [ended]);
+  useEffect(() => {
+    if (!undoBar) return;
+    const t = setTimeout(() => setUndoBar(null), st.undoSeconds * 1000);
+    return () => clearTimeout(t);
+  }, [undoBar, st.undoSeconds]);
 
   // Pot: low warning, empty pause, refund at the end.
   useEffect(() => {
@@ -145,10 +152,7 @@ export default function PlayPage() {
       trashForever(card.id);
       g.trashCard();
     }
-    toast(kind === 'trash' ? 'Card trashed' : kind === 'skip' ? 'Skipped' : kind === 'again' ? 'Another card for you' : 'Done', {
-      duration: st.undoSeconds * 1000,
-      action: { label: 'Undo', onClick: undo },
-    });
+    setUndoBar({ label: kind === 'trash' ? 'Card trashed' : kind === 'skip' ? 'New card, same turn' : kind === 'again' ? 'Another card for you' : 'On to the next', run: undo });
   };
 
   function undo() {
@@ -164,10 +168,7 @@ export default function PlayPage() {
     saveCard(card.id);
     setHearted((h) => [...h, card.id]);
     haptic('success');
-    toast('Saved', {
-      tone: 'ok',
-      action: { label: 'Undo', onClick: () => { unsaveCard(card.id); setHearted((h) => h.filter((i) => i !== card.id)); } },
-    });
+    setUndoBar({ label: 'Saved', run: () => { unsaveCard(card.id); setHearted((h) => h.filter((i) => i !== card.id)); } });
   };
 
   return (
@@ -192,22 +193,36 @@ export default function PlayPage() {
       </header>
 
       <main className="min-h-0 flex-1 [perspective:1200px]">
-        {card && <PlayCard card={card} revealed={revealed} onReveal={reveal} onDone={() => resolve('dismiss')} onSkip={() => resolve('skip')}
+        {card && <PlayCard card={card} revealed={revealed} onReveal={reveal} onDone={() => resolve('dismiss')}
           others={g.turnRotation.players.filter((p) => p.id !== current.id)} nonDrinking={room.config.nonDrinkingMode}
           order={orderFromCurrent.map((p) => p.name)} nextName={next.name} crown={g.crownImmunityRemaining} spike={g.heatSpikeRemaining} />}
       </main>
 
-      {revealed && !hasSeenHints && <p className="pt-2 text-center text-sm font-bold text-muted">Swipe the card right for Done, left for Skip. Or use the buttons.</p>}
+      <div className="flex h-16 items-center py-2">
+        {undoBar ? (
+          <div role="status" className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border-2 border-line bg-panel pl-4 pr-1">
+            <span className="min-w-0 truncate text-lg font-bold">{undoBar.label}</span>
+            <button onClick={() => { undoBar.run(); setUndoBar(null); }} className="h-10 shrink-0 rounded-lg bg-accent px-5 text-lg font-extrabold text-onaccent active:translate-y-px">Undo</button>
+          </div>
+        ) : (
+          <p className="flex w-full items-center justify-center gap-3 text-base font-extrabold text-muted">
+            {revealed && st.swipe ? (
+              <>
+                <motion.span aria-hidden animate={{ x: [0, -7, 0] }} transition={{ duration: 1.2, repeat: Infinity }}><Icon name="chevron" size={22} className="rotate-180" /></motion.span>
+                Swipe the card for next
+                <motion.span aria-hidden animate={{ x: [0, 7, 0] }} transition={{ duration: 1.2, repeat: Infinity }}><Icon name="chevron" size={22} /></motion.span>
+              </>
+            ) : revealed ? 'Use the buttons for the next card' : 'Tap the card to reveal it'}
+          </p>
+        )}
+      </div>
 
-      <footer className={cn('grid grid-cols-4 gap-2 pt-3 transition-opacity', st.leftHanded && '[direction:rtl] [&>*]:[direction:ltr]', !revealed && 'pointer-events-none opacity-30')}>
+      <footer className={cn('grid grid-cols-4 gap-2 transition-opacity', st.leftHanded && '[direction:rtl] [&>*]:[direction:ltr]', !revealed && 'pointer-events-none opacity-30')}>
         <Button variant="secondary" className="!h-[4.75rem] flex-col !gap-1 !px-0 text-sm" onClick={() => (st.confirmTrash ? setTrashAsk(true) : resolve('trash'))} aria-label="Trash this card"><Icon name="trash" />Trash</Button>
-        <Button variant="secondary" className="!h-[4.75rem] flex-col !gap-1 !px-0 text-sm" onClick={() => resolve('skip')} aria-label="Skip"><Icon name="skip" />Skip</Button>
+        <Button variant="secondary" className="!h-[4.75rem] flex-col !gap-1 !px-0 text-sm" onClick={() => resolve('skip')} aria-label="Skip, new card for the same player"><Icon name="skip" />Skip</Button>
         <Button variant="secondary" className={cn('!h-[4.75rem] flex-col !gap-1 !px-0 text-sm', isHearted && '!text-accent')} onClick={heart} aria-label="Save card"><Icon name="heart" filled={isHearted} />{isHearted ? 'Saved' : 'Save'}</Button>
-        <Button className="!h-[4.75rem] flex-col !gap-1 !px-0 text-sm" onClick={() => resolve('dismiss')} aria-label="Done"><Icon name="check" />Done</Button>
+        <Button className="!h-[4.75rem] flex-col !gap-1 !px-0 text-sm" onClick={() => resolve('dismiss')} aria-label="Next card"><Icon name="check" />Next</Button>
       </footer>
-      <button onClick={() => resolve('again')} disabled={!revealed} className={cn('mt-2 flex h-tap w-full items-center justify-center gap-2 rounded-xl border-2 border-line text-base font-extrabold transition-opacity', !revealed && 'pointer-events-none opacity-30')}>
-        <Icon name="refresh" size={20} />Another card, same turn
-      </button>
 
       <AnimatePresence>
         {g.showPassPrompt && !ended && <PassOverlay name={current.name} avatar={current.avatarUrl} onReady={() => { playSound('pass'); g.dismissPassPrompt(); }} />}

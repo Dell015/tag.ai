@@ -1353,3 +1353,10 @@ Philosophical debates, discussion prompts and "things to talk about" do not belo
 ### 23.22 Look and motion (signboard direction)
 
 The owner felt the app still looked AI-made, so the look now follows the Philippine jeepney signboard: black plates, chunky Bungee lettering in yellow, red and white, striped chevron bands, flat deck colours, thick outlines. Motion was added on purpose: the home card fan is dealt in, cards fly in and flip with a spring, topics slide in the direction you move, coin numbers roll, and menu rows stagger in. Everything respects the Motion setting and the phone's reduce-motion option.
+
+
+### 23.23 Card kinds and tools
+
+Every card now has a kind: Truth, Dare, Dice, Coin, Bottle, Wheel, Timer or Vote. The card back shows the deck colour, and when you tap it the card turns into the colour of its kind. Dice, coin, bottle, wheel, timer and vote cards carry their own tool on the card, so nobody has to open the tools menu: roll the die and the card tells you what your number means, flip the coin and it shows heads or tails with the action, spin the bottle for a player, spin the wheel, start a timer, or run a 3-2-1 point-at-someone vote. Drink wording switches to forfeits at non-drinking tables. About one card in five is now a dare or a tool card.
+
+Play row: the buttons are Trash, Skip, Save and Next. Skip gives the same player a new card. Swipe the card either way for Next. Undo sits in its own row above the buttons for a few seconds after each move, and the same row shows the swipe hint the rest of the time.

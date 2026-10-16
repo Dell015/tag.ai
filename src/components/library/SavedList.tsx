@@ -1,4 +1,5 @@
 'use client';
+import { fillDrink } from '@/lib/game/card-kinds';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Button, Chip, EmptyState, Spot } from '@/components/ui';
@@ -34,7 +35,7 @@ export function SavedList() {
             <li key={c!.id} className="border-b-2 border-line/60 py-5">
               <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="display text-3xl" style={{ lineHeight: 1.05 }}>{c!.text}</p>
+                  <p className="display text-3xl" style={{ lineHeight: 1.05 }}>{fillDrink(c!.text, false)}</p>
                   <p className="mt-2 text-base text-muted">{categoryLabel(c!.category)}, intensity {c!.intensity} of 5</p>
                   <button onClick={() => unsave(c!.id)} className="mt-1 h-tap text-base font-extrabold text-muted">Remove</button>
                 </div>

@@ -1,4 +1,5 @@
 'use client';
+import { fillDrink } from '@/lib/game/card-kinds';
 import { useMemo, useState } from 'react';
 import { Chip, Icon } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
@@ -37,7 +38,7 @@ export function Browse() {
     return (
       <li key={c.id} className="flex items-start gap-3 border-t-2 border-line/50 py-4 first:border-t-0">
         <div className="min-w-0 flex-1">
-          <p className="text-xl font-bold leading-snug">{c.text}</p>
+          <p className="text-xl font-bold leading-snug">{fillDrink(c.text, false)}</p>
           <p className="mt-1 text-base text-muted">{c.adult ? '18+, ' : ''}{c.cardType === 'action' ? 'Dare, ' : ''}intensity {c.intensity} of 5{peopleLabel(c) ? `, ${peopleLabel(c)}` : ''}</p>
         </div>
         <button onClick={() => (on ? unsave(c.id) : save(c.id))} aria-pressed={on} aria-label={on ? 'Remove from saved' : 'Save card'}

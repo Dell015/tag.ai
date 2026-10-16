@@ -29,6 +29,16 @@
 [data-mode="chaos"]      { --accent: 255 112 34;  --on-accent: 24 19 16; }
 [data-mode="family"]     { --accent: 48 190 112;  --on-accent: 24 19 16; }
 
+/* Each card kind has its own colour, so the table can tell a truth from a dare at a glance. */
+[data-kind="truth"]  { --accent: 66 116 255;  --on-accent: 255 255 255; }
+[data-kind="dare"]   { --accent: 232 60 46;   --on-accent: 255 255 255; }
+[data-kind="dice"]   { --accent: 255 199 44;  --on-accent: 24 19 16; }
+[data-kind="coin"]   { --accent: 255 112 34;  --on-accent: 24 19 16; }
+[data-kind="bottle"] { --accent: 48 190 112;  --on-accent: 24 19 16; }
+[data-kind="wheel"]  { --accent: 255 130 178; --on-accent: 24 19 16; }
+[data-kind="timer"]  { --accent: 36 190 205;  --on-accent: 24 19 16; }
+[data-kind="vote"]   { --accent: 244 236 220; --on-accent: 24 19 16; }
+
 html {
   font-size: 93.75%; /* 15px base: the interface runs a little smaller than the browser default */
   background: rgb(var(--bg));

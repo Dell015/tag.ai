@@ -1,4 +1,5 @@
 'use client';
+import { fillDrink } from '@/lib/game/card-kinds';
 import { useEffect } from 'react';
 import { Button, toast } from '@/components/ui';
 import { InstallSheet } from './InstallSheet';
@@ -53,14 +54,14 @@ export function Recap({ mode, deckName, played, skipped, hearted, peak, potStart
       {best && (
         <section className="mt-6 border-t-2 border-line pt-4">
           <h2 className="text-2xl text-muted">Card of the night</h2>
-          <p className="display mt-2 text-4xl" style={{ lineHeight: 1.05 }}>{best.text}</p>
+          <p className="display mt-2 text-4xl" style={{ lineHeight: 1.05 }}>{fillDrink(best.text, false)}</p>
           <p className="mt-1 text-base text-muted">{categoryLabel(best.category)}, intensity {best.intensity} of 5</p>
         </section>
       )}
       {saved.length > 0 && (
         <section className="mt-6 border-t-2 border-line pt-4">
           <h2 className="text-2xl">Saved tonight <span className="text-muted">{saved.length}</span></h2>
-          <ul className="mt-2">{saved.map((c) => <li key={c.id} className="border-b-2 border-line/60 py-2 text-lg">{c.text}</li>)}</ul>
+          <ul className="mt-2">{saved.map((c) => <li key={c.id} className="border-b-2 border-line/60 py-2 text-lg">{fillDrink(c.text, false)}</li>)}</ul>
         </section>
       )}
 

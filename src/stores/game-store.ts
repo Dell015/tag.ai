@@ -171,6 +171,8 @@ function snapshot(state: GameState, kind: CardAction): UndoSnapshot {
  */
 function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
   const event = action === 'skip' ? 'skip' : 'dismiss';
+  /** Skip and Another card both give the same player a new card. */
+  const keepTurn = action === 'again' || action === 'skip';
   const consecutiveSkips = action === 'skip' ? state.consecutiveSkips + 1 : 0;
 
   const { newHeat } = calculateHeat({
@@ -207,7 +209,7 @@ function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
     bufferCards,
     heatLevel: effectiveHeat,
     peakHeat: Math.max(state.peakHeat, effectiveHeat),
-    turnRotation: action === 'again' ? state.turnRotation : advanceTurn(state.turnRotation),
+    turnRotation: keepTurn ? state.turnRotation : advanceTurn(state.turnRotation),
     cardsPlayed: newCardsPlayed,
     currentCardIndex: newCardIndex,
     currentCardState: 'face_down',
@@ -216,7 +218,7 @@ function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
     heatSpikeRemaining: newHeatSpikeRemaining,
     crownImmunityRemaining: decrementCrownImmunity(state.crownImmunityRemaining),
     sessionPhase: shouldEnd ? 'end' : state.sessionPhase,
-    showPassPrompt: !shouldEnd && action !== 'again',
+    showPassPrompt: !shouldEnd && !keepTurn,
     pot: round3(Math.max(0, state.pot - (state.cardQueue[state.currentCardIndex] ? cardCost(state.cardQueue[state.currentCardIndex]) : 0))),
     undoSnapshot: snapshot(state, action),
   };
@@ -276,7 +278,7 @@ export const useGameStore = create<GameState>()(
       /** Swipe / "Next": heat +0.3, advances the turn. */
       dismissCard: () => set((state) => resolveCard(state, 'dismiss')),
 
-      /** "Skip": heat −0.2 (−1.0 on the 3rd skip in a row), advances the turn. */
+      /** "Skip": heat −0.2 (−1.0 on the 3rd skip in a row). The same player gets a new card. */
       againCard: () => set((state) => resolveCard(state, 'again')),
 
       skipCard: () => set((state) => resolveCard(state, 'skip')),

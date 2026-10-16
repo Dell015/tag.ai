@@ -1,5 +1,6 @@
 import { CURATED_CARDS } from '@/lib/data/cards';
 import { ADULT_CARDS } from '@/lib/data/adult-cards';
+import { TOOL_CARDS, ADULT_TOOL_CARDS } from '@/lib/data/tool-cards';
 import { PACK_CARDS, SHOP_ITEMS } from '@/lib/data/shop-catalogue';
 import type { QueuedCard } from '@/lib/game/escalation-engine';
 
@@ -7,7 +8,7 @@ import type { QueuedCard } from '@/lib/game/escalation-engine';
 export const adultPackIds = new Set(SHOP_ITEMS.filter((i) => i.adult).map((i) => i.id));
 
 export function libraryCards(adult: boolean): QueuedCard[] {
-  return adult ? [...CURATED_CARDS, ...ADULT_CARDS] : CURATED_CARDS;
+  return adult ? [...CURATED_CARDS, ...TOOL_CARDS, ...ADULT_CARDS, ...ADULT_TOOL_CARDS] : [...CURATED_CARDS, ...TOOL_CARDS];
 }
 
 export function ownedPackCards(owned: string[], adult: boolean): QueuedCard[] {

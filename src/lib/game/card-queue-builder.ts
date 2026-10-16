@@ -6,7 +6,7 @@
  * - Trashed card exclusion
  * - Game mode intensity distribution
  * - Wild card insertion at configured frequency
- * - Action card insertion at ~1 in every 8 cards
+ * - Action card insertion at ~1 in every 5 cards
  * - Main queue (cardCountTarget) + buffer (20% extra)
  *
  * This function is pure — no side effects, no network calls.
@@ -244,10 +244,10 @@ export function buildCardQueue(
   // Estimate wild card count: one every (base) cards on average
   const wildCardCount = config.noWild ? 0 : Math.max(1, Math.floor(totalNeeded / wildBase));
 
-  // Action cards: approximately 1 in every 8
+  // Action cards: approximately 1 in every 5 (dares and tool cards)
   const actionCardCount = Math.min(
     actionCards.length,
-    Math.max(1, Math.round(totalNeeded / 8))
+    Math.max(1, Math.round(totalNeeded / 5))
   );
 
   // Question cards fill the remainder

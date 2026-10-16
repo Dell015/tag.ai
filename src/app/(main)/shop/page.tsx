@@ -1,4 +1,5 @@
 'use client';
+import { fillDrink } from '@/lib/game/card-kinds';
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Avatar, Badge, Button, CoinAmount, CoinStack, IconTile, PAINT, Screen, SegmentedControl, Sheet, toast } from '@/components/ui';
@@ -106,7 +107,7 @@ function ShopInner() {
             {item.kind === 'pack' && (
               <div className="mt-4 space-y-2">
                 <p className="text-base font-bold text-muted">A taste of what is inside</p>
-                {packPreview(item.id).map((c) => <p key={c.id} className="rounded-xl border-2 border-line p-3 text-lg">{c.text}</p>)}
+                {packPreview(item.id).map((c) => <p key={c.id} className="rounded-xl border-2 border-line p-3 text-lg">{fillDrink(c.text, false)}</p>)}
                 <p className="text-sm text-muted">Sample set: {PACK_CARDS[item.id]?.length} cards so far. More are added over time.</p>
               </div>
             )}

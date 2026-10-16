@@ -1,4 +1,5 @@
 'use client';
+import { fillDrink } from '@/lib/game/card-kinds';
 import { Button, EmptyState, Screen, Spot } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
 import { findCard } from '@/lib/data/card-pool';
@@ -19,7 +20,7 @@ export default function TrashedPage() {
         <ul>
           {cards.map((c) => (
             <li key={c!.id} className="border-b-2 border-line/60 py-5">
-              <p className="display text-3xl" style={{ lineHeight: 1.05 }}>{c!.text}</p>
+              <p className="display text-3xl" style={{ lineHeight: 1.05 }}>{fillDrink(c!.text, false)}</p>
               <div className="mt-2 flex items-center justify-between">
                 <span className="text-base text-muted">{c!.category.replace(/_/g, ' ')}</span>
                 <button onClick={() => untrash(c!.id)} className="h-tap px-2 text-base font-extrabold text-accent">Restore</button>
