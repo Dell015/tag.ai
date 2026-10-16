@@ -139,6 +139,9 @@ const ROWS: Row[] = [
   { kind: 'wheel', intensity: 5, adult: true, text: 'Spin the wheel. It decides how personal you get.', tool: { labels: ['Your wildest hookup', 'Your biggest turn-on', 'Your type in bed', '{drink} twice', 'Who here you would kiss', 'Free pass'] } },
   { kind: 'vote', intensity: 5, adult: true, text: 'Who here is the wildest in bed? Count down and point. Most fingers answers one question from the group.', tool: { seconds: 3 }, people: { min: 3, max: null } },
   { kind: 'vote', intensity: 4, adult: true, text: 'Who here has the most experience? Count down and point. They pick someone to {drink}.', tool: { seconds: 3 }, people: { min: 3, max: null } },
+  { kind: 'wheel', intensity: 4, adult: true, text: 'Spin the wheel. It picks a part of your history.', tool: { labels: ['Your best ex', 'Your worst ex', 'Your longest relationship', 'Your last kiss', '{drink} twice', 'Free pass'] } },
+  { kind: 'wheel', intensity: 4, adult: true, text: 'Spin the wheel. It picks a preference to confess.', tool: { labels: ['Your type', 'Lights on or off', 'Lead or be led', 'A turn-off', 'A turn-on', 'Free pass'] } },
+  { kind: 'coin', intensity: 4, adult: true, text: 'Flip the coin. Past or present.', outcomes: ['Heads: tell the group about an ex, no names.', 'Tails: tell the group what you want in bed now.'] },
   { kind: 'timer', intensity: 5, adult: true, text: 'You have 30 seconds. Tell your best hookup story with no names. Stop early and {drink} twice.', tool: { seconds: 30 } },
 ];
 

@@ -127,9 +127,9 @@ describe('heat decides what is drawn', () => {
   const queue = [card('hard1', 5, 'adult'), card('easy1', 1, 'icebreaker'), card('mid1', 3, 'barkada'), card('hard2', 5, 'spicy'), card('easy2', 1, 'family')];
 
   it('draws the easiest cards first at low heat, the hardest at high heat', () => {
-    const low = drawForHeat(queue, 0, 1);
+    const low = drawForHeat(queue, 0, 1, () => 0);
     expect(['easy1', 'easy2']).toContain(low[0].id);
-    const high = drawForHeat([queue[1], queue[0], queue[2], queue[3], queue[4]], 0, 4.5);
+    const high = drawForHeat([queue[1], queue[0], queue[2], queue[3], queue[4]], 0, 4.5, () => 0);
     expect(['hard1', 'hard2']).toContain(high[0].id);
   });
 
