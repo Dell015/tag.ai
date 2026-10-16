@@ -168,7 +168,7 @@ export default function SetupPage() {
                         {(d.adult || d.includesAdult) && n > 0 && (
                           <button role="switch" aria-checked={adultOk} onClick={() => setAdultOk(!adultOk)}
                             className="mt-3 flex min-h-[3.5rem] w-full items-center justify-between gap-3 rounded-xl border-2 border-line px-4 text-left">
-                            <span className="text-base font-bold">Everyone at the table is 18 or older</span>
+                            <span className="text-base font-bold">Everyone at the table is 18 or older and agrees to play. Any card can be skipped.</span>
                             <span className={cn('h-8 w-14 shrink-0 rounded-full p-1 transition-colors', adultOk ? 'bg-accent' : 'bg-raised')}>
                               <span className={cn('block h-6 w-6 rounded-full bg-text transition-transform', adultOk && 'translate-x-6 bg-onaccent')} />
                             </span>

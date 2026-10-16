@@ -16,7 +16,7 @@ const GLOSSARY = [
   ['Heat', 'How intense the cards are right now, from 1 to 5. It rises when cards are played and falls when they are skipped.'],
   ['Wild card', 'A challenge for the whole table, such as calling someone outside the group and shouting. Fail it and you take 2 or 3 shots. It never costs coins.'],
   ['Rule card', 'A rule that holds until the next wild card, such as all shots doubled. It stays on screen while it is on.'],
-  ['Card types', 'Truth, dare, dice, coin, bottle, wheel, timer, vote and rule. Each has its own colour, and the dice, coin, bottle, wheel and timer cards bring their own tool.'],
+  ['Card types', 'Truth, dare, dice, coin, bottle, wheel, timer, vote and rule. Each deck has its own card colour, and the dice, coin, bottle, wheel and timer cards bring their own tool.'],
   ['Pot', 'The coins that pay for the cards in one game. Whatever is left comes back to you.'],
   ['Dare', 'A card that asks you to do something instead of answer.'],
   ['Forfeit', 'What you do instead of drinking in non-drinking mode.'],

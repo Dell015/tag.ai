@@ -29,6 +29,19 @@
 [data-mode="chaos"]      { --accent: 255 112 34;  --on-accent: 24 19 16; }
 [data-mode="family"]     { --accent: 48 190 112;  --on-accent: 24 19 16; }
 
+/* Each deck has its own colour, so the table can tell an Adult card from a Barkada card at a glance.
+   The card type (truth, dare and so on) is written on the card and its tool opens on a screen of the type colour. */
+[data-deck="icebreaker"] { --accent: 66 116 255;  --on-accent: 255 255 255; }
+[data-deck="family"]     { --accent: 48 190 112;  --on-accent: 24 19 16; }
+[data-deck="life"]       { --accent: 36 190 205;  --on-accent: 24 19 16; }
+[data-deck="deep"]       { --accent: 140 104 235; --on-accent: 255 255 255; }
+[data-deck="barkada"]    { --accent: 255 199 44;  --on-accent: 24 19 16; }
+[data-deck="lovers"]     { --accent: 255 130 178; --on-accent: 24 19 16; }
+[data-deck="spicy"]      { --accent: 232 60 46;   --on-accent: 255 255 255; }
+[data-deck="adult"]      { --accent: 150 22 92;   --on-accent: 255 255 255; }
+[data-deck="chaos"]      { --accent: 255 112 34;  --on-accent: 24 19 16; }
+[data-deck="social"]     { --accent: 244 236 220; --on-accent: 24 19 16; }
+
 /* Each card kind has its own colour, so the table can tell a truth from a dare at a glance. */
 [data-kind="truth"]  { --accent: 66 116 255;  --on-accent: 255 255 255; }
 [data-kind="dare"]   { --accent: 232 60 46;   --on-accent: 255 255 255; }

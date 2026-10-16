@@ -9,7 +9,7 @@ Last updated 2026-10-16.
 | Idea | What it is | Where it lives |
 |---|---|---|
 | Deck | What you buy. A mood with a price per card (Icebreaker, Barkada, Spicy, Adult, Chaos...). A deck is a filter over the card library by category and intensity. | `src/lib/game/decks.ts` |
-| Kind | How a card is played: truth, dare, dice, coin, bottle, wheel, timer, vote, rule. Sets the card colour and the tool on the card. | `src/lib/game/card-kinds.ts` |
+| Kind | How a card is played: truth, dare, dice, coin, bottle, wheel, timer, vote, rule. Sets the tool on the card and the colour of the tool screen. | `src/lib/game/card-kinds.ts` |
 | Wild card | A free, one-off challenge for the whole table, inserted between cards. Not part of any deck, never costs coins. | `src/lib/game/wild-cards.ts` |
 
 A card belongs to a deck because of its category and intensity, and has a kind because of how it is played. You never tag a card with a deck.
@@ -36,7 +36,7 @@ A card is a `QueuedCard` (`src/lib/game/escalation-engine.ts`).
 
 ## 3. The nine kinds
 
-Each kind has its own colour (`data-kind` in `src/app/globals.css`). The card back wears the colour of its kind too, so the back already tells the table what kind of card is coming.
+The card colour comes from its deck (`data-deck` in `src/app/globals.css`): Icebreaker blue, Family green, Life teal, Deep purple, Barkada yellow, Lovers pink, Spicy red, Adult plum, Chaos orange. The card back wears the same deck colour. The kind is written on the card ("Truth", "Dice") and its tool opens on a full screen in the kind's colour (`data-kind`). Cards without a deck, from old saved games, fall back to their kind colour.
 
 | Kind | Colour | `cardType` | Tool on the card | How it is played |
 |---|---|---|---|---|
@@ -212,7 +212,8 @@ Cards that need a minimum are dropped from games with fewer players. Bottle and 
 
 - Flag them `adult: true` and put them in `src/lib/data/adult-cards.ts` (questions and dares) or as adult rows in `tool-cards.ts` (tool cards).
 - They are drawn only from the Adult deck and from Chaos. Both need the table to confirm everyone is 18 or older before the cards can be bought.
-- **Flirty, never graphic.** Suggestive questions, compliments, flirting, dating stories. No explicit sexual acts, no nudity, no pressure to touch anyone, no cards about a person who has not agreed to play.
+- **Frank and sexual in theme, never graphic.** Real users asked for Adult to be about sex, so the deck covers experiences, preferences, hookup stories, "never have I ever" and bold dares between adults who agreed to play. Do not describe acts in detail. No nudity or sexual acts between players, no touching beyond what a player agrees to (a kiss on the cheek is asked, and a no costs a penalty only for the asker), nothing about anyone who is not at the table, nothing about minors, force or anyone who cannot consent. Every card can be skipped.
+- The table confirms "18 or older and agrees to play" before buying the Adult deck or Chaos.
 - Use the `sexual_content` topic where it fits so a group can switch it off.
 - Intensity is 3 to 5.
 

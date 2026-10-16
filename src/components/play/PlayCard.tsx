@@ -57,10 +57,12 @@ export function PlayCard({ card, revealed, onReveal, onDone, onRule, nonDrinking
   const meta = KIND_META[kind];
   const text = fillDrink(card.text, nonDrinking);
   const deckName = card.deckId ? deckOf(card.deckId)?.name : undefined;
+  /** The deck sets the card colour. Cards without a deck (old saved games) keep their type colour. */
+  const paint = card.deckId ? { 'data-deck': card.deckId } : { 'data-kind': kind };
 
   if (!revealed) {
     return (
-      <motion.button key={`back-${card.id}`} data-kind={kind} onClick={() => { haptic('tap'); onReveal(); }} aria-label="Reveal card"
+      <motion.button key={`back-${card.id}`} {...paint} onClick={() => { haptic('tap'); onReveal(); }} aria-label="Reveal card"
         initial={{ opacity: 0, x: 150, y: -50, rotate: 9 }} animate={{ opacity: 1, x: 0, y: 0, rotate: 0 }} whileTap={{ scale: 0.98 }}
         transition={{ type: 'spring', stiffness: 210, damping: 22 }}
         style={{ ...back.style, '--trim-a': 'var(--on-accent)', '--trim-b': 'var(--accent)' } as React.CSSProperties}
@@ -78,7 +80,7 @@ export function PlayCard({ card, revealed, onReveal, onDone, onRule, nonDrinking
 
   return (
     <motion.div
-      key={card.id} data-kind={wild ? undefined : kind} initial={{ rotateY: -88, opacity: 0.4 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+      key={card.id} {...(wild ? {} : paint)} initial={{ rotateY: -88, opacity: 0.4 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 24 }}
       style={{ x, rotate, touchAction: 'pan-y', transformPerspective: 1100 }} drag={swipe ? 'x' : false} dragSnapToOrigin dragElastic={0.6}
       onDragEnd={(_, info) => {
         if (info.offset.x > SWIPE) { haptic('success'); onDone(); }

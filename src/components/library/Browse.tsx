@@ -80,7 +80,7 @@ export function Browse() {
           );
         }).concat(
           adultOn && cards.some((c) => c.adult) ? [
-            <Fold key="adult" title="After dark" hint="18+. Flirty and bold. Turn this off in Settings any time." tone="red" count={cards.filter((c) => c.adult).length}>
+            <Fold key="adult" title="After dark" hint="18+. Frank and about sex. Turn this off in Settings any time." tone="red" count={cards.filter((c) => c.adult).length}>
               {CATEGORY_GROUPS.flatMap((g) => g.cats).map((cat) => {
                 const list = cards.filter((c) => c.adult && c.category === cat);
                 if (list.length === 0) return null;

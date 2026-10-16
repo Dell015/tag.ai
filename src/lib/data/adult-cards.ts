@@ -2,7 +2,8 @@ import type { QueuedCard } from '@/lib/game/escalation-engine';
 import type { CardCategory } from '@/types/game';
 
 /**
- * 18+ cards. Flirty and suggestive, never graphic, never about anyone who has not agreed to play.
+ * 18+ cards. Frank and sexual in theme: experiences, preferences, stories and bold dares between adults who
+ * agreed to play. Never graphic, no acts or nudity between players, never about anyone who is not at the table.
  * They are drawn only when the "18+ cards" setting is on. Group topic filters still apply
  * through the "sexual_content" tag, so a table can switch them off for one game.
  */
@@ -34,6 +35,71 @@ const ROWS: Row[] = [
   ["Do your best slow walk across the room. The group scores it out of 10.", "action", 3, "dares"],
   ["Offer a 10-second shoulder massage to anyone who says yes.", "action", 3, "dares"],
   ["Compliment the person on your right on something other than their looks.", "action", 2, "dares"],
+  // Sex: frank questions about experience and preference. Answer or take the penalty, never graphic.
+  ["How many people have you slept with? Say the number or {drink} twice.", "question", 5, "confessions"],
+  ["What is your favourite thing about sex, in one sentence?", "question", 4, "confessions"],
+  ["Have you ever had sex somewhere you could have been caught? Where?", "question", 5, "confessions"],
+  ["What is the longest you have gone without sex, and how did you cope?", "question", 4, "confessions"],
+  ["Have you ever faked it? Answer or {drink}.", "question", 5, "confessions"],
+  ["Rate yourself in bed from 1 to 10. The group can disagree.", "question", 4, "confessions"],
+  ["What is the best sex you have had? No names, just why it was good.", "question", 5, "memories"],
+  ["What is one thing you wish a partner would try more often?", "question", 5, "confessions"],
+  ["What is one thing you would never do in bed, no matter who asked?", "question", 4, "hot_takes"],
+  ["Tell the story of a hookup you regretted the next morning.", "question", 5, "memories"],
+  ["What is the strangest place you have had sex?", "question", 5, "memories"],
+  ["Slow and romantic or fast and wild? Pick one and defend it.", "question", 4, "hot_takes"],
+  ["How many dates is too soon to sleep with someone?", "question", 3, "hot_takes"],
+  ["Have you ever had a friends with benefits setup? How did it end?", "question", 4, "relationships"],
+  ["What is the most awkward thing that has happened during sex?", "question", 5, "memories"],
+  ["What is a fantasy you are willing to say out loud in front of this group?", "question", 5, "confessions"],
+  ["Have you ever sent a nude? Answer or {drink}.", "question", 5, "confessions"],
+  ["Have you ever been attracted to someone in this room? Answer or {drink}.", "question", 5, "confessions"],
+  ["What is your biggest turn-off in bed?", "question", 4, "hot_takes"],
+  ["Morning, afternoon or night? Say when you like it best.", "question", 4, "confessions"],
+  ["Have you ever hooked up with an ex after you broke up? Tell the story.", "question", 5, "memories"],
+  ["What is the most adventurous thing you have tried in bed?", "question", 5, "confessions"],
+  ["Would you give up sex or your phone for a year?", "question", 3, "hypotheticals"],
+  ["Who here would you least expect to be wild in bed? Explain.", "question", 5, "roasts"],
+  ["What is the first thing you do after sex?", "question", 4, "confessions"],
+  ["What is something about sex you learned the hard way?", "question", 4, "confessions"],
+  ["Have you ever been too drunk to remember a hookup? Answer or {drink}.", "question", 5, "confessions"],
+  ["What is a guilty pleasure turn-on you rarely admit?", "question", 5, "confessions"],
+  ["Who here do you think has the most experience? Why?", "question", 4, "hot_takes"],
+  ["Have you ever slept with a friend's ex? Answer or {drink} twice.", "question", 5, "confessions"],
+  ["Which do you rate higher, kissing or sex? Explain.", "question", 3, "hot_takes"],
+  ["What is a rule you have for hooking up that you broke once?", "question", 4, "confessions"],
+  ["Have you ever been walked in on? Who walked in?", "question", 5, "memories"],
+  ["What is the pettiest reason you stopped seeing someone after sleeping together?", "question", 4, "confessions"],
+  ["Great sex with bad conversation, or great conversation with bad sex?", "question", 3, "hypotheticals"],
+  ["What is the most you have spent trying to impress someone you wanted to sleep with?", "question", 4, "confessions"],
+  ["What is the biggest lie you have told to get someone into bed?", "question", 5, "confessions"],
+  ["Which famous person would you sleep with if nobody would ever know?", "question", 4, "hypotheticals"],
+  ["What do you think is the most overrated thing about sex?", "question", 3, "hot_takes"],
+  ["What is the most attractive thing someone can do in bed that has nothing to do with skill?", "question", 3, "hot_takes"],
+  // Never have I ever: everyone who has, pays
+  ["Never have I ever had sex in a car. Everyone who has must {drink}.", "question", 4, "confessions"],
+  ["Never have I ever hooked up with someone I met the same night. Everyone who has must {drink}.", "question", 4, "confessions"],
+  ["Never have I ever slept with a coworker. Everyone who has must {drink}.", "question", 5, "confessions"],
+  ["Never have I ever kissed someone in this room. Everyone who has must {drink}.", "question", 5, "confessions"],
+  ["Never have I ever used a dating app only for hookups. Everyone who has must {drink}.", "question", 4, "confessions"],
+  ["Never have I ever lied about my number of partners. Everyone who has must {drink}.", "question", 5, "confessions"],
+  ["Never have I ever gone skinny dipping. Everyone who has must {drink}.", "question", 3, "confessions"],
+  ["Never have I ever had a threesome. Everyone who has must {drink}.", "question", 5, "confessions"],
+  ["Never have I ever sent a message to the wrong person that I should not have sent. Everyone who has must {drink}.", "question", 4, "confessions"],
+  ["Never have I ever had a crush on someone in a relationship. Everyone who has must {drink}.", "question", 4, "confessions"],
+  ["Never have I ever hooked up at a wedding. Everyone who has must {drink}.", "question", 4, "confessions"],
+  ["Never have I ever caught feelings for a one-night stand. Everyone who has must {drink}.", "question", 4, "confessions"],
+  // Bold dares, always skippable and only with players who agree
+  ["Describe your type in bed in exactly ten words.", "action", 4, "dares"],
+  ["Hold eye contact with a player who agrees for 15 seconds. If either of you laughs, you both {drink}.", "action", 4, "dares"],
+  ["Say the sexiest thing you can about a food. The group scores you out of 10.", "action", 3, "dares"],
+  ["Read the last flirty message you sent out loud, or {drink} twice.", "action", 5, "dares"],
+  ["Tell the group your best pickup line, then your worst.", "action", 3, "dares"],
+  ["Pick a player and tell them what you thought the first time you met them. Keep it respectful.", "action", 4, "dares"],
+  ["Ask the player on your left for a kiss on the cheek. If they say no, you {drink}.", "action", 4, "dares"],
+  ["Describe your perfect night in with someone, no names, in 20 seconds.", "action", 4, "dares"],
+  ["Give your best seductive voice reading of the next card. The group votes if it worked.", "action", 3, "dares"],
+  ["Tell the group the most attractive thing about each player. One sentence each, kept kind.", "action", 3, "dares"],
 ];
 
 export const ADULT_CARDS: QueuedCard[] = ROWS.map(([text, cardType, intensity, category], i) => ({

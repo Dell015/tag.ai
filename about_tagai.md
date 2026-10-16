@@ -1390,3 +1390,11 @@ When a card needs the die, coin, bottle or wheel, tapping its button opens a ful
 ### 23.28 Suggest a card
 
 Under Me there is a Suggest a card page. A player picks a card type and a deck, writes the card and sends it. Friends like the cards they enjoy. Each week the top contributor (1 point a card, 2 points for each like from someone else) can claim 10 coins, and a week where nobody got a like has no winner. For now the cards and rankings are sample data on this device. Moderation, real rankings and the payout come with accounts.
+
+### 23.29 Card colour follows the deck
+
+Cards are coloured by the deck they came from: Icebreaker blue, Family green, Life teal, Deep purple, Barkada yellow, Lovers pink, Spicy red, Adult plum, Chaos orange. Before, truth cards were always blue, so an Adult-only game looked like an Icebreaker game. The card type is still written on every card, and its tool opens on a full screen in the type's colour.
+
+### 23.30 The Adult deck gets bolder
+
+Players told us Adult felt like Spicy with an 18+ label, so Adult is now about sex. It has frank questions about experience, preferences and hookup stories, "never have I ever" cards, bold dares between adults who agreed to play, and Adult versions of the dice, coin, bottle, wheel, vote and timer cards. It stays non-graphic, with no nudity or acts between players, and every card can be skipped. Before buying it, the table confirms everyone is 18 or older and agrees to play. Spicy stays about heat and drama.

@@ -120,7 +120,7 @@ const ROWS: Row[] = [
   { kind: 'rule', intensity: 4, text: 'Nobody touches their phone until the next wild card. Whoever does takes 2 {shots}.', rule: 'Phones down. Touch one and take 2 {shots}', penalty: 2 },
   { kind: 'rule', intensity: 5, text: 'The player who reads each card chooses who takes the penalty on it, until the next wild card.', rule: 'The reader picks who pays' },
 
-  // 18+ (drawn only from the Adult deck and Chaos). Flirty, never graphic.
+  // 18+ (drawn only from the Adult deck and Chaos). Frank and sexual in theme, never graphic.
   { kind: 'coin', intensity: 4, adult: true, text: 'Flip the coin. Flirt or pay.', outcomes: ['Heads: flirt with the player on your right for 10 seconds.', 'Tails: you {drink}.'] },
   { kind: 'dice', intensity: 4, adult: true, text: 'Roll the dice. Your number decides.', tool: { dice: 1 },
     outcomes: ['Whisper a compliment to the player on your left.', '{drink}.', 'Pick a player. You both {drink}.', 'Tell your worst date story.', 'Say who here you would take on a date.', 'Safe. Everyone else must {drink}.'] },
@@ -128,6 +128,18 @@ const ROWS: Row[] = [
   { kind: 'vote', intensity: 4, adult: true, text: 'Who here is the best flirt? The winner picks someone to {drink}.', tool: { seconds: 3 } },
   { kind: 'wheel', intensity: 5, adult: true, text: 'Spin the wheel. Things are about to get personal.', tool: { labels: ['Truth: your last kiss', 'Dare: flirt for 10 seconds', '{drink} twice', 'Compliment a player', 'Free pass', 'Everyone {drink}'] } },
   { kind: 'timer', intensity: 4, adult: true, text: 'You have 30 seconds. Describe your perfect date with no filler words. Slip up and {drink}.', tool: { seconds: 30 } },
+  { kind: 'dice', intensity: 5, adult: true, text: 'Roll the die. Your number sets the question you answer.', tool: { dice: 1 },
+    outcomes: ['What is your favourite thing in bed?', 'What is your wildest hookup story, in one sentence?', 'How many people have you slept with? Say it or {drink} twice.', 'What is a turn-on you rarely admit?', 'Who here would you sleep with? Say it or {drink} twice.', 'You are safe. Ask anyone any bedroom question.'] },
+  { kind: 'dice', intensity: 4, adult: true, text: 'Roll the dice. That many players answer: what is your biggest bedroom red flag in a partner?', tool: { dice: 1 }, people: { min: 3, max: null } },
+  { kind: 'coin', intensity: 5, adult: true, text: 'Flip the coin. Tell it or pay.', outcomes: ['Heads: tell your wildest hookup story.', 'Tails: {drink} twice and pass the card.'] },
+  { kind: 'coin', intensity: 4, adult: true, text: 'Flip the coin. Heads you ask, tails you answer.', outcomes: ['Heads: ask any player a question about their love life.', 'Tails: the group asks you one question about your love life.'] },
+  { kind: 'bottle', intensity: 5, adult: true, text: 'Spin the bottle. Ask the player it lands on any bedroom question. They answer or {drink} twice.', people: { min: 3, max: null } },
+  { kind: 'bottle', intensity: 5, adult: true, text: 'Spin the bottle. You and the player it lands on both say how many people you have slept with, or {drink} twice each.', people: { min: 3, max: null } },
+  { kind: 'bottle', intensity: 4, adult: true, text: 'Spin the bottle. The player it lands on says who in this room they would kiss.', people: { min: 3, max: null } },
+  { kind: 'wheel', intensity: 5, adult: true, text: 'Spin the wheel. It decides how personal you get.', tool: { labels: ['Your wildest hookup', 'Your biggest turn-on', 'Your type in bed', '{drink} twice', 'Who here you would kiss', 'Free pass'] } },
+  { kind: 'vote', intensity: 5, adult: true, text: 'Who here is the wildest in bed? Count down and point. Most fingers answers one question from the group.', tool: { seconds: 3 }, people: { min: 3, max: null } },
+  { kind: 'vote', intensity: 4, adult: true, text: 'Who here has the most experience? Count down and point. They pick someone to {drink}.', tool: { seconds: 3 }, people: { min: 3, max: null } },
+  { kind: 'timer', intensity: 5, adult: true, text: 'You have 30 seconds. Tell your best hookup story with no names. Stop early and {drink} twice.', tool: { seconds: 30 } },
 ];
 
 const make = (r: Row, i: number): QueuedCard => ({
