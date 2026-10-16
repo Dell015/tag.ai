@@ -1,54 +1,45 @@
 import { rooms, type Room } from '@/lib/data/rooms';
 import { autoPool } from '@/lib/data/card-pool';
 import { useShopStore } from '@/stores/shop-store';
-import { applySlots, toQueuedCards, useDeckStore } from '@/stores/deck-store';
 import { useGameStore } from '@/stores/game-store';
 import { useProfileStore } from '@/stores/profile-store';
 import { useWalletStore } from '@/stores/wallet-store';
-import { isPotValid, potTotal, plannedCards } from '@/lib/game/pot';
+import { isPotValid, gameBasket, basketCost, basketCards } from '@/lib/game/pot';
+import { buildBasketQueue, modeForBasket } from '@/lib/game/card-queue-builder';
 
 export const LAST_ROOM_KEY = 'tagai-last-room';
 
-/** The cards a game draws from: the Auto pool, or only the chosen decks (a small deck makes a shorter game). */
-export function buildLibrary(room: Room) {
-  const auto = autoPool(useShopStore.getState().owned, true);
-  const ids = room.config.deckIds ?? [];
-  if (ids.length === 0) return auto;
-  const decks = useDeckStore.getState().decks.filter((d) => ids.includes(d.id));
-  const own = applySlots(decks.flatMap(toQueuedCards), room.config.slotFills ?? []);
-  return own.length > 0 ? own : auto;
+/** Every card that exists for this player: the library plus the packs they own. */
+export function buildLibrary() {
+  return autoPool(useShopStore.getState().owned, true);
 }
 
 export function allAgreed(room: Room): boolean {
   return room.players.length >= 2 && room.players.every((p) => room.agreedPlayers.includes(p.userId));
 }
 
+/** What the table bought: cards per deck, and what they cost in coins. */
+export function roomBasket(room: Room) {
+  const basket = gameBasket(room.config.potStyle ?? 'solo', room.config.basket, room.config.playerBaskets);
+  return { basket, cards: basketCards(basket), coins: basketCost(basket) };
+}
+
 /**
- * Builds the card queue on the host's phone, sets turn order, and flips the room
- * to `active`. Gameplay itself is local-first (CLAUDE.md §3), so other devices
- * only need the status change.
+ * Builds the card queue on the host's phone from the basket, sets turn order, and flips the room
+ * to `active`. Gameplay is local-first (CLAUDE.md section 3), so nothing else needs the network.
  */
 export function startGame(room: Room, trashedCardIds: string[]): boolean {
-  if (!room.config.gameMode || !allAgreed(room)) return false;
-  const players = [...room.players].sort((a, b) => a.turnOrder - b.turnOrder);
-  const shares = players.map((p) => room.config.shares?.[p.userId] ?? 0);
-  const total = potTotal(room.config.potStyle ?? 'solo', room.config.potCoins ?? 0, players.length, shares);
-  const coins = useProfileStore.getState().profile?.coins ?? 0;
-  if (!isPotValid(total) || coins + 1e-9 < total) return false;
+  if (!allAgreed(room)) return false;
+  const { basket, coins: total } = roomBasket(room);
+  const wallet = useProfileStore.getState().profile?.coins ?? 0;
+  if (!isPotValid(total) || wallet + 1e-9 < total) return false;
 
-  useGameStore.getState().initializeQueue(
-    {
-      gameMode: room.config.gameMode,
-      extraModes: room.config.extraModes ?? [],
-      cardCountTarget: plannedCards(total, [room.config.gameMode, ...(room.config.extraModes ?? [])]),
-      comfortFilters: room.config.comfortFilters,
-      trashedCardIds,
-      playerCount: players.length,
-      fitPlayers: (room.config.deckIds ?? []).length === 0,
-    },
-    buildLibrary(room),
-  );
-  useWalletStore.getState().apply('pot', -total, `Pot for a ${room.config.gameMode} game`);
+  const players = [...room.players].sort((a, b) => a.turnOrder - b.turnOrder);
+  const queue = buildBasketQueue({ basket, comfortFilters: room.config.comfortFilters, trashedCardIds, playerCount: players.length, fitPlayers: true }, buildLibrary());
+  if (queue.cards.length === 0) return false;
+
+  useGameStore.getState().initializeBasket(queue, modeForBasket(basket));
+  useWalletStore.getState().apply('pot', -total, 'Pot for a tag.ai game');
   useGameStore.getState().fundPot(total);
   useGameStore.setState({
     turnRotation: {

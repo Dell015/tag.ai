@@ -2,20 +2,19 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button, NumberStepper, Sheet } from '@/components/ui';
-import { averageCardCost, formatPot } from '@/lib/game/pot';
-import type { GameMode } from '@/types/game';
+import { formatPot } from '@/lib/game/pot';
 
 /** Add coins from the host's wallet to the pot. */
-export function TopUpSheet({ open, onClose, wallet, pot, cardsLeft, mode, onAdd, title = 'Top up the pot' }: {
-  open: boolean; onClose: () => void; wallet: number; pot: number; cardsLeft: number; mode: GameMode; onAdd: (coins: number) => void; title?: string;
+export function TopUpSheet({ open, onClose, wallet, pot, cardsLeft, costLeft, onAdd, title = 'Top up the pot' }: {
+  open: boolean; onClose: () => void; wallet: number; pot: number; cardsLeft: number; costLeft: number; onAdd: (coins: number) => void; title?: string;
 }) {
-  const need = Math.max(1, Math.ceil(cardsLeft * averageCardCost(mode) - pot));
+  const need = Math.max(1, Math.ceil(costLeft - pot));
   const [coins, setCoins] = useState(0);
   const amount = coins || Math.min(need, Math.max(1, Math.floor(wallet)));
   const short = wallet < 1;
   return (
     <Sheet open={open} onClose={onClose} title={title}>
-      <p className="-mt-2 text-lg text-muted">The pot has {formatPot(pot)} coins. {cardsLeft} cards are left, which needs about {formatPot(cardsLeft * averageCardCost(mode))}.</p>
+      <p className="-mt-2 text-lg text-muted">The pot has {formatPot(pot)} coins. {cardsLeft} cards are left, which needs about {formatPot(costLeft)}.</p>
       <div className="my-6 flex items-center justify-between gap-3">
         <span className="text-xl font-bold">Add</span>
         <NumberStepper label="coins to add" value={amount} min={1} max={Math.max(1, Math.floor(wallet))} onChange={setCoins} />

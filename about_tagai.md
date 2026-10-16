@@ -1233,3 +1233,118 @@ We do not read every card by hand. The pipeline is:
 - **Drink responsibly copy:** never required to drink, non-drinking mode, do not drive, no pressure on anyone.
 - **Privacy:** the app does not record conversations, only game stats.
 - **Needs a lawyer:** the Terms and Privacy drafts must be reviewed by Philippine counsel before launch. A terms page limits risk but cannot remove all liability, and the Data Privacy Act applies once accounts exist.
+
+### 23.17 Adult deck structure (Proposed, rules agreed by owner, 2026-10-16)
+
+The Adult deck is the topic people love most at an inuman. It uses five levels: **1 Flirty, 2 Suggestive, 3 Bold, 4 Frank, 5 Unfiltered**. The host sets a ceiling per game.
+
+**Agreed rules:** frank talk between consenting adults, not pornographic scenes. A dare is never nudity or touching someone who has not agreed, and anyone can refuse without a drink. Nothing non-consensual and nothing involving minors, at any level. Every player confirms they are 18 or older before the deck is used.
+
+**Sub-categories (22):**
+
+| Group | Sub-category | Levels |
+|---|---|---|
+| Attraction | Flirting and attraction | 1 to 3 |
+| Attraction | Rizz and pickup lines | 1 to 3 |
+| Attraction | Kisses and chemistry | 1 to 4 |
+| Attraction | Confidence and compliments | 1 to 2 |
+| Dating life | Dates and flings | 2 to 4 |
+| Dating life | Dating apps and ghosting | 1 to 3 |
+| Dating life | DMs and social media crushes | 1 to 3 |
+| Dating life | Firsts (first kiss, first love, first heartbreak) | 1 to 3 |
+| Dating life | Hotel, trip and holiday flings | 2 to 4 |
+| Dating life | Office romance | 2 to 3 |
+| Past | Exes and old flames | 2 to 4 |
+| Past | Breakups and revenge | 2 to 4 |
+| Past | Drunk confessions | 2 to 4 |
+| Past | Almost got caught (risky moments) | 3 to 5 |
+| Opinions | Turn-ons and turn-offs | 2 to 4 |
+| Opinions | Red flags and green flags | 1 to 3 |
+| Opinions | Loyalty and jealousy | 3 to 4 |
+| Opinions | Relationship hot takes (open relationships, who pays, before marriage) | 2 to 4 |
+| Group | Who in this room (rankings, matchmaking, most likely to) | 2 to 4 |
+| Group | Flirty dares | 2 to 4 |
+| Frank | Fantasies and what-ifs | 3 to 5 |
+| Frank | Bedroom talk (experience and preferences, frank wording) | 4 to 5 |
+
+- **Existing cards:** the 25 adult cards are re-filed into these sub-categories, mostly at levels 1 to 3.
+- **Content order:** levels 4 and 5 are written last and kept small.
+- **Care points:** "Who in this room" cards tease, never humiliate, and never target body or appearance. Cards never ask anyone to describe harm or something done to them.
+
+### 23.18 Talk topics are separate from the card game (Owner decision, 2026-10-16)
+
+Philosophical debates, discussion prompts and "things to talk about" do not belong in the card game. They live in a separate topic deck with no game mechanics (no turns, shots or pot). The card game stays focused on cards that make people answer, dare or drink.
+
+**Open points (not yet decided):** where the topic deck sits in the app, whether it costs coins, what content it holds beyond debates (see the list in the chat reply, to be logged once chosen), and whether the host can switch from the game into talk topics mid-session.
+
+### 23.19 Two products in one app, one phone (Owner decisions, 2026-10-16)
+
+**Names:** the app has two things to play, called **Drinking game** and **Topic deck**.
+
+**Decisions**
+- **Entry:** the Play tab offers the two as separate choices. The player picks which one to play before starting. There is no switching from one to the other mid-session (chosen: owner said "can only choose which deck to play"). Placement is the owner's delegated call: two large entries at the top of Play, so no extra tab.
+- **Cost:** the Topic deck costs coins, like the game decks.
+- **One phone only:** a single phone runs the whole session, for both the Drinking game and the Topic deck. Guests do not need the app, an account or a room code. Players are just names the host enters. This supersedes the room-code and guest-join idea for play (impact listed below).
+- **Filters:** the Topic deck has topic filters before it starts, the same as the Drinking game (for example skipping religion or politics).
+- **Topic deck flow:** players tap to see the next question, and can go back to earlier questions. No turns, shots or pot.
+- **Social media deck content:** each topic is judged by context. A story or experience prompt stays in the Drinking game. A debate or discussion topic goes to the Topic deck. Each card carries a tag for which one it fits.
+- **Topic deck content:** no extra topics beyond the list in 23.18 yet.
+
+**Impact on what is built (to review, nothing changed yet)**
+- Room code and guest join screens become unused or hidden.
+- Seat sequence and rearranging (23.4) become a host-only screen.
+- Per-player shot rules still work, because the host marks who drinks.
+- "Collect in cash" already assumes one host phone, so it stays.
+
+
+### 23.20 Phase 1 built: decks, baskets and one phone (2026-10-16)
+
+**What a game looks like now**
+1. Tap **Start a game** on home. There is no room code and no join screen.
+2. Add the people at the table by name (2 or more).
+3. **Buy your cards.** Pick who pays: *I pay it all*, *Split it* (equal shares) or *Each buys* (you set what each player buys). For each deck use the stepper (steps of 5) to choose how many cards to buy. Each deck shows its price per card and how many cards it holds.
+4. **Skip these topics**, then **Drink rules**, then **House rules** where everyone taps their name to agree. Start.
+
+**Decks and prices (coins per card)**
+
+| Deck | Price | Contents today |
+|---|---|---|
+| Icebreaker | 0.1 | Light, intensity 1 to 3 (hot takes, hypotheticals, memories, dares) |
+| Family | 0.1 | Clean, intensity 1 to 2, no risky topics |
+| Life | 0.15 | Memories, hypotheticals and deep, up to intensity 4 (needs its own content later) |
+| Barkada | 0.2 | Roasts, hot takes, dares, controversial, confessions, intensity 2 up |
+| Deep | 0.25 | Deep, confessions and memories, intensity 2 up (needs its own content later) |
+| Lovers | 0.25 | Relationships, confessions, memories, intensity 2 up |
+| Spicy | 0.3 | Anything at intensity 3 or higher |
+| Adult | 0.4 | The 18+ cards. Needs the table to confirm everyone is 18 or older |
+| Social media | 0.5 | Coming soon (no cards yet) |
+| Chaos | 0.6 | Every non-adult card |
+
+**Mechanics**
+- The total of the basket is the pot, taken from the host's wallet. Each card drawn uses its deck's price. Wild cards are free and come on top of the bought cards (about one in every six). What is left in the pot comes back at the end.
+- A card is never drawn twice. Decks that share cards (Chaos shares with all) are filled specific decks first, Chaos last.
+- Topic filters still apply on top of every deck. Heat still guides intensity within a deck.
+- Family rules heat (cap 2.0) only when it is the only deck bought. Mixing it with others uses the other decks' heat.
+- Friends settle in cash at 1 coin = P1: split charges everyone an equal share, each-buys charges each player their own basket.
+- During a game you can switch the remaining cards to another deck (Adult is not offered there).
+- Saved cards live under Me. The Library, personal decks and Discover are gone.
+
+**Defaults I chose, to confirm with the owner:** Chaos excludes Adult cards; Life and Deep reuse existing cards until they get their own; Social media stays "Coming soon" until content is written; the minimum basket is 3 coins.
+
+
+### 23.21 Chaos includes Adult, and the Topic deck is built (2026-10-16)
+
+**Owner answers:** Chaos includes Adult cards. The Topic deck is a separate game in the menu. Social media stays "Coming soon" and will be added later. Prices were approved to adjust; they live in one list (`lib/game/decks.ts`) and are open to change.
+
+**Chaos with Adult**
+- Chaos draws from every card, adult ones included, after the other decks have taken theirs. Topic filters still apply, so a table that skips Sexual Content gets no adult cards even in Chaos.
+- Buying Chaos needs the same "everyone is 18 or older" confirmation as the Adult deck. Chaos and Adult are not offered for switching mid-game, because the table has not confirmed at that point.
+
+**Topic deck (separate from the Drinking game)**
+- The Play menu has two entries: **Drinking game** and **Topic deck**. You pick one before starting and cannot switch inside a session.
+- What it is: things to talk about, such as moral questions, fate and choice, mind and self, society and the future, life reflections, everyday hot takes, dilemmas and stories. No turns, no shots, no pot, no player names, one phone.
+- Setup is one screen: pick the groups to include (all on by default), how many topics (10 to 100, steps of 5, 0.1 coin each), and topics to skip (same filters as the Drinking game, prefilled from your settings).
+- Play: one topic at a time, Next and Back with no limit. Going back never changes what was used. Ending early refunds the topics you never reached. The session is saved, so the phone can close and you can resume from home.
+- Content today: 48 topics across 8 groups, written original. A few carry filter tags (politics, religion, death, money, career). More topics come later, and Social media debates will move here or into the Drinking game depending on their context.
+
+**Open for later:** a loose timer or turn order for talks (owner chose none for now), more groups, and whether Topic deck packs belong in the Shop.

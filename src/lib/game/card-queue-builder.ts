@@ -17,6 +17,7 @@ import { QueuedCard } from './escalation-engine';
 import { fitsPlayers } from './players-needed';
 import { GAME_MODES, blendModes } from './game-modes';
 import { expandComfortFilters, isCardFiltered } from './comfort-filters';
+import { DECKS, deckOf, deckPool, basketCards, type Basket } from './decks';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,8 @@ export interface CardQueueConfig {
   playerCount: number;
   /** Drop cards that need more (or fewer) people than are playing. On by default; off for your own decks. */
   fitPlayers?: boolean;
+  /** Leave wild cards out (the basket builder adds them once for the whole game). */
+  noWild?: boolean;
 }
 
 export interface CardQueue {
@@ -239,7 +242,7 @@ export function buildCardQueue(
   const { base: wildBase, variance: wildVariance } = modeConfig.wildCardFrequency;
 
   // Estimate wild card count: one every (base) cards on average
-  const wildCardCount = Math.max(1, Math.floor(totalNeeded / wildBase));
+  const wildCardCount = config.noWild ? 0 : Math.max(1, Math.floor(totalNeeded / wildBase));
 
   // Action cards: approximately 1 in every 8
   const actionCardCount = Math.min(
@@ -348,4 +351,66 @@ function insertWildCards(
   }
 
   return result;
+}
+
+
+// ─── Basket builder: cards bought per deck ───────────────────────────────────
+
+export interface BasketQueueConfig {
+  basket: Basket;
+  comfortFilters: string[];
+  trashedCardIds: string[];
+  playerCount: number;
+  fitPlayers?: boolean;
+}
+
+export interface BasketQueue extends CardQueue {
+  /** Deck modes that were used, for heat and wild card pacing. */
+  modes: GameMode[];
+  /** Cards the basket asked for versus what the pools could give. */
+  asked: number;
+  /** Total length of the game including free wild cards. */
+  target: number;
+}
+
+/**
+ * Builds a queue from what was bought: N cards from each deck, no card twice, then free wild cards
+ * mixed in. Chaos is drawn last so it only fills with cards the other decks did not take.
+ */
+export function buildBasketQueue(config: BasketQueueConfig, library: QueuedCard[]): BasketQueue {
+  const used = new Set<string>();
+  const order = [...DECKS.filter((d) => d.id !== 'chaos'), ...DECKS.filter((d) => d.id === 'chaos')];
+  const cards: QueuedCard[] = [];
+  const buffer: QueuedCard[] = [];
+  const modes: GameMode[] = [];
+
+  for (const deck of order) {
+    const n = Math.max(0, config.basket[deck.id] ?? 0);
+    if (n === 0 || !deck.ready) continue;
+    const pool = deckPool(deck, library).filter((c) => !used.has(c.id));
+    const built = buildCardQueue(
+      { gameMode: deck.mode, cardCountTarget: n, comfortFilters: config.comfortFilters, trashedCardIds: config.trashedCardIds, playerCount: config.playerCount, fitPlayers: config.fitPlayers, noWild: true },
+      pool,
+    );
+    if (built.cards.length === 0) continue;
+    modes.push(deck.mode);
+    const tag = (c: QueuedCard): QueuedCard => ({ ...c, deckId: deck.id });
+    built.cards.forEach((c) => { used.add(c.id); cards.push(tag(c)); });
+    built.buffer.forEach((c) => { used.add(c.id); buffer.push(tag(c)); });
+  }
+
+  const mix = blendModes(modes.length ? modes : ['barkada']);
+  const base = shuffle(cards);
+  const wildCount = base.length === 0 ? 0 : Math.max(1, Math.floor(base.length / mix.wildCardFrequency.base));
+  const wilds = Array.from({ length: wildCount }, () => generateWildCard());
+  const queue = insertWildCards(base, wilds, mix.wildCardFrequency.base, mix.wildCardFrequency.variance);
+  return { cards: queue, buffer: shuffle(buffer), modes, asked: basketCards(config.basket), target: queue.length };
+}
+
+/** The game mode that rules heat for a basket: Family only when it is the only deck. */
+export function modeForBasket(basket: Basket): GameMode {
+  const ids = Object.entries(basket).filter(([, n]) => (n ?? 0) > 0).map(([id]) => id);
+  if (ids.length === 1 && deckOf(ids[0])) return deckOf(ids[0])!.mode;
+  const first = ids.map((id) => deckOf(id)?.mode).find((m) => m && m !== 'family');
+  return first ?? 'barkada';
 }

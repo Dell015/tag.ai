@@ -1,12 +1,11 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, ConfirmSheet, Icon, Screen, Splash, toast } from '@/components/ui';
+import { Button, ConfirmSheet, Icon, Screen, Splash } from '@/components/ui';
 import { PlayerRow } from '@/components/lobby/PlayerRow';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
-import { joinRoom } from '@/lib/data/join';
 import { rooms, withPlayer, withoutPlayer, MAX_PLAYERS } from '@/lib/data/rooms';
 
 export default function LobbyPage() {
@@ -16,43 +15,20 @@ export default function LobbyPage() {
   const { ready, profile } = useRequireProfile(`/game/${code}`);
   const { status, room } = useRoom(code);
   const [guest, setGuest] = useState('');
-  const joined = useRef(false);
   const [leaving, setLeaving] = useState(false);
-
-  // Arriving from an invite link: join automatically while the room is in the lobby.
-  useEffect(() => {
-    if (!ready || !profile || !room || joined.current) return;
-    if (!room.players.some((p) => p.userId === profile.id)) {
-      joined.current = true;
-      const res = joinRoom(code, profile);
-      if (!res.ok) toast(res.error, { tone: 'warn' });
-    }
-  }, [ready, profile, room, code]);
 
   if (!ready || !profile || status === 'loading') return <Splash />;
 
   if (status === 'missing' || !room) {
     return (
-      <Screen title="Room not found" back="/">
-        <p className="text-lg text-muted">Room <b className="text-text">{code}</b> doesn&apos;t exist on this phone. Rooms live on the host&apos;s device for now, so open the invite there or host a new one.</p>
+      <Screen title="Game not found" back="/">
+        <p className="text-lg text-muted">This game is not on this phone. Start a new one from home.</p>
         <Link href="/" className="mt-6 block"><Button full>Back home</Button></Link>
       </Screen>
     );
   }
 
   const isHost = room.hostId === profile.id;
-  const link = typeof window !== 'undefined' ? `${window.location.origin}/game/${code}` : '';
-
-  const share = async () => {
-    try {
-      if (navigator.share) await navigator.share({ title: 'Join my tag.ai game', text: `Room ${code}`, url: link });
-      else {
-        await navigator.clipboard.writeText(link);
-        toast('Invite link copied', { tone: 'ok' });
-      }
-    } catch { /* cancelled */ }
-  };
-
   const addGuest = () => {
     const name = guest.trim();
     if (name.length < 1) return;
@@ -79,7 +55,7 @@ export default function LobbyPage() {
         isHost ? (
           <>
             <Button size="lg" full disabled={room.players.length < 2} onClick={() => router.push(`/game/${code}/setup`)}>
-              {room.players.length < 2 ? 'Add at least 2 players' : 'Next: pick a deck'}
+              {room.players.length < 2 ? 'Add at least 2 players' : 'Next: buy cards'}
             </Button>
           </>
         ) : (
@@ -87,17 +63,7 @@ export default function LobbyPage() {
         )
       }
     >
-      <section>
-        <p className="text-base font-bold text-muted">Room code</p>
-        <div className="mt-2 flex gap-1.5" aria-label={code.split('').join(' ')}>
-          {code.split('').map((c, i) => (
-            <span key={i} className="flex h-[4.5rem] flex-1 items-center justify-center rounded-lg bg-accent text-[3.2rem] font-extrabold text-onaccent" style={{ fontStretch: '75%' }}>{c}</span>
-          ))}
-        </div>
-        <Button variant="secondary" full className="mt-3" onClick={share}><Icon name="share" size={22} />Share invite link</Button>
-      </section>
-
-      <h2 className="mb-1 mt-9 flex items-baseline justify-between text-4xl">
+      <h2 className="mb-1 mt-2 flex items-baseline justify-between text-4xl">
         Players <span className="text-lg font-bold text-muted">{room.players.length}/{MAX_PLAYERS}</span>
       </h2>
       <ul>
@@ -128,8 +94,8 @@ export default function LobbyPage() {
           <Button type="submit" variant="secondary" disabled={full || !guest.trim()}><Icon name="plus" size={20} />Add</Button>
         </form>
       )}
-      {isHost && <p className="mt-2 text-sm text-muted">No account needed. Friends without the app play from your phone.</p>}
-      <ConfirmSheet open={leaving} title="Leave this room?" body="Everyone you added will be removed from the lobby." confirmLabel="Leave room" danger
+      {isHost && <p className="mt-2 text-sm text-muted">One phone runs the whole game. Friends do not need the app.</p>}
+      <ConfirmSheet open={leaving} title="Leave this game?" body="Everyone you added will be removed." confirmLabel="Leave game" danger
         onConfirm={() => { rooms.remove(code); router.push('/'); }} onClose={() => setLeaving(false)} />
     </Screen>
   );

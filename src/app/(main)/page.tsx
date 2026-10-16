@@ -1,5 +1,5 @@
 'use client';
-import type { GameMode } from '@/types/game';
+import { ADULT_TOPIC } from '@/lib/adult';
 import { formatPot } from '@/lib/game/pot';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useShopStore } from '@/stores/shop-store';
@@ -11,19 +11,21 @@ import { useProfileStore } from '@/stores/profile-store';
 import { rooms } from '@/lib/data/rooms';
 import { LAST_ROOM_KEY } from '@/lib/data/start-game';
 import { useGameStore } from '@/stores/game-store';
+import { useTalkStore } from '@/stores/talk-store';
 import { useEffect, useState } from 'react';
 
 const TIPS = [
   'Add friends by name. They do not need an account.',
   'Skip is always allowed. Nobody has to answer.',
   'Wild cards are free. They never use coins from the pot.',
-  'Save a card you love and build your own deck from it.',
+  'Pick how many cards to buy from each deck. Cheap decks last longer.',
 ];
 
 export default function HomePage() {
   const router = useRouter();
   const profile = useProfileStore((s) => s.profile)!;
   const phase = useGameStore((s) => s.sessionPhase);
+  const talking = useTalkStore((s) => s.active);
   const [resume, setResume] = useState<string | null>(null);
   useEffect(() => {
     try {
@@ -50,9 +52,7 @@ export default function HomePage() {
       ...r,
       config: {
         ...r.config,
-        gameMode: d.defaultDeck as GameMode,
-        cardCountTarget: d.defaultLength,
-        comfortFilters: d.skipTopics,
+        comfortFilters: d.skipTopics.filter((t) => t !== ADULT_TOPIC),
         drinkRuleTemplate: d.defaultDrinkRule,
         nonDrinkingMode: d.nonDrinkingDefault,
         customDrinkRules: d.customRules,
@@ -80,9 +80,10 @@ export default function HomePage() {
 
       <section className="mt-auto space-y-3 pb-4 pt-3">
         {resume && <Link href={`/game/${resume}/play`} className="block"><Button size="lg" full>Resume your game</Button></Link>}
-        <Button size="lg" full variant={resume ? 'secondary' : 'primary'} onClick={host}>Host a game</Button>
-        <Link href="/join" className="block"><Button size="lg" variant="secondary" full>Join with a code</Button></Link>
-        {coach ? <p className="pt-2 text-center text-lg font-bold">Start here. Host a game, then add your friends by name.</p>
+        {talking && <Link href="/talk/play" className="block"><Button size="lg" full>Resume topic deck</Button></Link>}
+        <Button size="lg" full variant={resume || talking ? 'secondary' : 'primary'} onClick={host}>Drinking game</Button>
+        <Link href="/talk" className="block"><Button size="lg" variant="secondary" full>Topic deck</Button></Link>
+        {coach ? <p className="pt-2 text-center text-lg font-bold">Start here. Pick the Drinking game and add your friends by name, or open the Topic deck to just talk.</p>
           : tip && <Link href="/help" className="block pt-2 text-center text-muted">{tip}</Link>}
       </section>
     </div>

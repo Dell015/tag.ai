@@ -21,8 +21,10 @@ const GLOSSARY = [
 ];
 
 const FAQ = [
-  ['Do my friends need the app?', 'No. You add them by name and pass one phone around. If they want to join from their own phone, they can enter your room code.'],
-  ['What do coins do?', 'Coins pay for the cards in a game, through the pot. You can also spend them in the Shop on tools, card packs and looks.'],
+  ['Do my friends need the app?', 'No. You add them by name and pass one phone around. One phone runs the whole game.'],
+  ['What do coins do?', 'Before a game you buy cards from the decks you want. Each deck has its own price per card, and the cards go into the pot. You can also spend coins in the Shop on tools, card packs and looks.'],
+  ['How do decks and prices work?', 'Easy decks like Icebreaker and Family cost the least. Spicy, Adult and Social media cost more, and Chaos, which mixes everything, costs the most. Wild cards are free.'],
+  ['What is the Adult deck?', 'Flirty to frank cards for adults only. Everyone at the table confirms they are 18 or older before it is used.'],
   ['Can I play without alcohol?', 'Yes. Turn on non-drinking mode in the drink rules step. Drinks become dares and forfeits.'],
   ['How do I remove a card?', 'Tap Trash while a card is showing. It will not come back in your games. You can restore it in Settings, under Trashed cards.'],
   ['Does it work offline?', 'Yes. Once a game starts, it runs on your phone without a connection.'],

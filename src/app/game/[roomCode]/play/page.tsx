@@ -19,14 +19,15 @@ import { rooms } from '@/lib/data/rooms';
 import { ruleLine } from '@/lib/game/setup-options';
 import { haptic } from '@/lib/haptics';
 import { play as playSound } from '@/lib/sound';
-import { GAME_MODES } from '@/lib/game/game-modes';
+import { DECK_BY_ID, basketNames, type DeckId } from '@/lib/game/decks';
 import { useToastStore } from '@/stores/toast-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { ConfirmSheet, Sheet } from '@/components/ui';
 import { TopUpSheet } from '@/components/play/TopUpSheet';
 import { ToolsSheet } from '@/components/play/ToolsSheet';
 import { autoPool } from '@/lib/data/card-pool';
-import { owedByPlayer, returnShares } from '@/lib/game/pot';
+import { owedForBasket, returnShares, cardCost } from '@/lib/game/pot';
+import { roomBasket } from '@/lib/data/start-game';
 import { useShopStore } from '@/stores/shop-store';
 import { withPlayer } from '@/lib/data/rooms';
 import { FOCUS_RULES } from '@/lib/game/mid-game';
@@ -106,9 +107,9 @@ export default function PlayPage() {
     return (
       <Recap
         potStart={g.potStart} potRefunded={g.potRefunded}
-        returns={returnShares(owedByPlayer(room.config.potStyle ?? 'solo', room.config.potCoins ?? 0, room.players, room.hostId, room.config.shares ?? {}), g.potStart, g.potRefunded).map((r) => ({ name: room.players.find((p) => p.userId === r.userId)?.displayName ?? '', pesos: r.pesos }))}
+        returns={returnShares(owedForBasket(room.config.potStyle ?? 'solo', roomBasket(room).coins, room.players, room.hostId, room.config.playerBaskets ?? {}), g.potStart, g.potRefunded).map((r) => ({ name: room.players.find((p) => p.userId === r.userId)?.displayName ?? '', pesos: r.pesos }))}
         saved={hearted.map((id) => g.cardQueue.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c)}
-        mode={g.gameMode} played={g.cardsPlayed} skipped={g.skippedCount} hearted={g.heartedCount} peak={g.peakHeat}
+        mode={g.gameMode} deckName={basketNames(roomBasket(room).basket)} played={g.cardsPlayed} skipped={g.skippedCount} hearted={g.heartedCount} peak={g.peakHeat}
         onHome={() => { g.resetGame(); router.replace('/'); }}
         onAgain={() => {
           g.resetGame();
@@ -216,8 +217,8 @@ export default function PlayPage() {
         open={pause} onClose={() => setPause(false)} room={room}
         players={g.turnRotation.players} heat={g.heatLevel} pot={g.pot} onTopUp={() => { setPause(false); setTopUp(true); }}
         onTools={() => { setPause(false); setTools(true); }}
-        mood={g.gameMode}
-        onMood={(m) => { g.changeMood(m, autoPool(ownedPacks, true), { comfortFilters: room.config.comfortFilters, trashedCardIds: useProfileStore.getState().trashedCardIds }); toast(`Switched to ${GAME_MODES[m].name}`, { tone: 'ok' }); }}
+        mood={g.cardQueue[g.currentCardIndex]?.deckId as DeckId | undefined}
+        onMood={(m) => { g.changeMood(m, autoPool(ownedPacks, true), { comfortFilters: room.config.comfortFilters, trashedCardIds: useProfileStore.getState().trashedCardIds }); toast(`Switched to ${DECK_BY_ID[m].name}`, { tone: 'ok' }); }}
         onFocus={(k) => { const n = g.focusNext(k); toast(n > 0 ? `${FOCUS_RULES[k as 'deep' | 'dares'].label}` : 'No matching cards left', {}); }}
         onAddPlayer={(name) => { const id = `guest-${Math.random().toString(36).slice(2, 10)}`; const av = `c${(g.turnRotation.players.length + 2) % 10}`; g.addPlayerToTurns({ id, name, avatarUrl: av }); rooms.update(code, (r) => withPlayer(r, { id, userId: id, displayName: name, avatarUrl: av, isGuest: true })); }}
         onMove={g.movePlayer}
@@ -232,8 +233,9 @@ export default function PlayPage() {
         onEnd={() => { setPause(false); g.endGame(); }}
       />
       <ToolsSheet open={tools} onClose={() => setTools(false)} players={g.turnRotation.players.map((p) => p.name)} />
-      <TopUpSheet open={topUp} onClose={() => setTopUp(false)} wallet={wallet} pot={g.pot} mode={g.gameMode}
+      <TopUpSheet open={topUp} onClose={() => setTopUp(false)} wallet={wallet} pot={g.pot}
         cardsLeft={Math.max(0, g.cardCountTarget - g.cardsPlayed)}
+        costLeft={g.cardQueue.slice(g.currentCardIndex).reduce((a, c) => a + cardCost(c), 0)}
         onAdd={(n) => { if (applyCoins('topup', -n, 'Added to the pot')) { g.topUpPot(n); setEmpty(false); toast(`Added ${n} to the pot`, { tone: 'ok' }); } }} />
       <Sheet open={empty && !topUp} onClose={() => undefined} title="Pot is empty">
         <p className="-mt-2 mb-6 text-lg text-muted">The game is paused. Add coins to keep going, or end it here.</p>

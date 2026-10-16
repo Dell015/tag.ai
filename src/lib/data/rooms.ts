@@ -8,6 +8,7 @@
  */
 
 import type { GameMode, SessionPlayer } from '@/types/game';
+import type { Basket } from '@/lib/game/decks';
 import { generateRoomCode } from '@/lib/validators';
 
 export interface RoomConfig {
@@ -24,7 +25,11 @@ export interface RoomConfig {
   potStyle: 'solo' | 'split' | 'chipin';
   /** Chip in: coins (pesos) each player puts in, by user id. Collected in cash by the host. */
   shares?: Record<string, number>;
-  /** Empty means the Auto pool (curated cards plus owned packs). */
+  /** Cards bought per deck, shared by everyone (I pay it all, or split it). */
+  basket?: Basket;
+  /** Chip in: what each player buys for themselves, by user id. */
+  playerBaskets?: Record<string, Basket>;
+  /** Retired with the Library. Kept so older saved rooms still load. */
   deckIds: string[];
   /** Words that fill [SLOT] blanks in the chosen decks. */
   slotFills: string[];

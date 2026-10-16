@@ -12,7 +12,8 @@ import { safeStorage } from '@/lib/storage';
 import { steerNextCard } from '@/lib/game/steering';
 import { calculateHeat, QueuedCard } from '@/lib/game/escalation-engine';
 import { advanceTurn, TurnState } from '@/lib/game/turn-rotation';
-import { buildCardQueue, CardQueueConfig } from '@/lib/game/card-queue-builder';
+import { buildCardQueue, buildBasketQueue, CardQueueConfig, BasketQueue } from '@/lib/game/card-queue-builder';
+import { deckOf, type DeckId } from '@/lib/game/decks';
 import { GAME_MODES, blendModes } from '@/lib/game/game-modes';
 import { decrementHeatSpike, decrementCrownImmunity, applyShuffleWildCard } from '@/lib/game/wild-cards';
 import { cardCost, round3 } from '@/lib/game/pot';
@@ -91,11 +92,13 @@ export interface GameState {
   endGame: () => void;
   resetGame: () => void;
   initializeQueue: (config: CardQueueConfig, library: QueuedCard[]) => void;
+  /** Starts a game from a queue built out of a basket (cards bought per deck). */
+  initializeBasket: (queue: BasketQueue, gameMode: GameMode) => void;
   applyWildCardEffect: (wildCardType: WildCardType) => void;
   /** Pulls deep questions or dares forward in the queue. Returns how many cards matched. */
   focusNext: (kind: FocusKind) => number;
-  /** Switches deck for the rest of the game. */
-  changeMood: (mode: GameMode, library: QueuedCard[], opts: { comfortFilters: string[]; trashedCardIds: string[] }) => void;
+  /** Switches to another deck for the rest of the game. */
+  changeMood: (deck: DeckId, library: QueuedCard[], opts: { comfortFilters: string[]; trashedCardIds: string[] }) => void;
   addPlayerToTurns: (p: { id: string; name: string; avatarUrl: string }) => void;
   movePlayer: (id: string, dir: -1 | 1) => void;
   /** Sets the pot at game start. */
@@ -235,19 +238,21 @@ export const useGameStore = create<GameState>()(
         set({ cardQueue: r.queue, bufferCards: r.buffer });
         return r.matched;
       },
-      changeMood: (mode, library, opts) => {
+      changeMood: (deckId, library, opts) => {
         const st = get();
+        const def = deckOf(deckId);
+        if (!def) return;
         const seen = st.cardQueue.slice(0, st.currentCardIndex + 1).map((c) => c.id);
         const remaining = st.cardCountTarget - st.currentCardIndex - 1;
-        if (remaining <= 0) { set({ gameMode: mode }); return; }
-        const built = buildCardQueue(
-          { gameMode: mode, cardCountTarget: remaining, comfortFilters: opts.comfortFilters, trashedCardIds: [...opts.trashedCardIds, ...seen], playerCount: st.turnRotation.players.length },
+        if (remaining <= 0) { set({ gameMode: def.mode }); return; }
+        const built = buildBasketQueue(
+          { basket: { [deckId]: remaining }, comfortFilters: opts.comfortFilters, trashedCardIds: [...opts.trashedCardIds, ...seen], playerCount: st.turnRotation.players.length, fitPlayers: true },
           library,
         );
         if (built.cards.length === 0) return;
         set({
-          gameMode: mode,
-          cardQueue: [...st.cardQueue.slice(0, st.currentCardIndex + 1), ...built.cards],
+          gameMode: def.mode,
+          cardQueue: [...st.cardQueue.slice(0, st.currentCardIndex + 1), ...built.cards.slice(0, remaining)],
           bufferCards: built.buffer,
         });
       },
@@ -369,6 +374,21 @@ export const useGameStore = create<GameState>()(
           gameMode: config.gameMode,
           heatLevel: modeConfig.entryHeat,
           peakHeat: modeConfig.entryHeat,
+          turnRotation: get().turnRotation,
+          sessionPhase: 'play',
+        });
+      },
+
+      initializeBasket: (queue, gameMode) => {
+        const entry = blendModes(queue.modes.length ? queue.modes : [gameMode]).entryHeat;
+        set({
+          ...INITIAL,
+          cardQueue: queue.cards,
+          bufferCards: queue.buffer,
+          cardCountTarget: queue.target,
+          gameMode,
+          heatLevel: entry,
+          peakHeat: entry,
           turnRotation: get().turnRotation,
           sessionPhase: 'play',
         });

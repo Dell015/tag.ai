@@ -3,6 +3,7 @@
  * Cost per card = 1 / questions-per-coin. Wild cards are free.
  */
 import { GAME_MODES, blendModes } from '@/lib/game/game-modes';
+import { deckOf, basketCost, basketCards, sumBaskets, type Basket } from '@/lib/game/decks';
 import type { GameMode } from '@/types/game';
 
 export const MIN_POT = 3;
@@ -10,13 +11,15 @@ export const MAX_POT = 200;
 export const HEAT_UP_COST = 2;
 export const LOW_POT_RATIO = 0.2;
 
-interface CostCard { cardType: 'question' | 'action' | 'wild'; intensity: number }
+interface CostCard { cardType: 'question' | 'action' | 'wild'; intensity: number; deckId?: string }
 
 const PER_COIN = { casual: 15, standard: 10, spicy: 6, deep: 4, dare: 5 } as const;
 
 /** Coins one card uses from the pot. */
 export function cardCost(card: CostCard): number {
   if (card.cardType === 'wild') return 0;
+  const deck = card.deckId ? deckOf(card.deckId) : undefined;
+  if (deck) return deck.price;
   if (card.cardType === 'action') return 1 / PER_COIN.dare;
   if (card.intensity <= 1) return 1 / PER_COIN.casual;
   if (card.intensity <= 3) return 1 / PER_COIN.standard;
@@ -103,4 +106,29 @@ export function isLow(remaining: number, start: number): boolean {
 export function formatPot(n: number): string {
   const r = Math.round(n * 10) / 10;
   return Number.isInteger(r) ? String(r) : r.toFixed(1);
+}
+
+// ─── Baskets: cards bought per deck ──────────────────────────────────────────
+
+/** Everything bought for the game: the shared basket plus any personal baskets (chip in). */
+export function gameBasket(style: PotStyle, shared: Basket | undefined, personal: Record<string, Basket> | undefined): Basket {
+  return style === 'chipin' ? sumBaskets(...Object.values(personal ?? {})) : sumBaskets(shared);
+}
+
+/**
+ * What each person owes the host in pesos (1 coin = P1). Solo owes nothing, split divides the
+ * total equally, chip in charges each player for their own basket. The host owes nobody.
+ */
+export function owedForBasket(style: PotStyle, total: number, players: { userId: string }[], hostId: string, personal: Record<string, Basket> = {}): { userId: string; pesos: number }[] {
+  if (style === 'solo') return [];
+  const others = players.filter((p) => p.userId !== hostId);
+  if (style === 'split') return others.map((p) => ({ userId: p.userId, pesos: round3(total / Math.max(1, players.length)) }));
+  return others.map((p) => ({ userId: p.userId, pesos: basketCost(personal[p.userId] ?? {}) }));
+}
+
+export { basketCost, basketCards };
+
+/** Price of one card: up to two decimals, no trailing zeros (0.1, 0.25, 0.6). */
+export function formatPrice(n: number): string {
+  return String(Math.round(n * 100) / 100);
 }

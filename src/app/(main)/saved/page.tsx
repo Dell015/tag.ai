@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Old route kept as a redirect (the new home is /library?tab=saved). */
+/** Old route kept as a redirect (saved cards now live under Me). */
 export default function Redirect() {
-  redirect('/library?tab=saved');
+  redirect('/me/saved');
 }

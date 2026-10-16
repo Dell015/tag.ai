@@ -46,7 +46,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   defaultDeck: 'barkada',
   defaultLength: 20,
-  skipTopics: ['18+ Cards'],
+  skipTopics: [] as string[],
   defaultDrinkRule: 'Classic',
   nonDrinkingDefault: false,
   customRules: [],
@@ -93,7 +93,11 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'tagai-settings',
-      version: 1,
+      version: 2,
+      migrate: (state) => {
+        const old = state as Partial<Settings>;
+        return { ...old, skipTopics: (old.skipTopics ?? []).filter((t) => t !== '18+ Cards') } as SettingsState;
+      },
       storage: safeStorage(),
       skipHydration: true,
       partialize: (s) => {

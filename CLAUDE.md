@@ -27,12 +27,12 @@ Design principles that still hold: face-down ritual; generous coins; every sessi
 
 ---
 
-## 2. Current status (updated 2026-10-15, end of Stage A)
+## 2. Current status (updated 2026-10-16, deck restructure Phase 1)
 
 **Stage A frontend is built and runs entirely on a mock data layer (localStorage + BroadcastChannel). No Supabase calls are made by any page.** After the overnight run of 2026-10-15 (milestones F1 to F9 of `docs/FRONTEND_PLAN.md`), these work end to end in a browser:
 
-- `/welcome` (intro, 18+ gate, nickname and colour, 10 welcome coins) then four tabs: **Play** (`/`), **Library** (`/library`: My decks, Saved, Discover sample), **Shop** (`/shop`: Coins, Tools, Packs, Style), **Me** (`/me`: wallet, saved cards, leaderboard sample, invite sample, settings, help).
-- Host or join, lobby with guests by name, then a **7-step setup**: deck, card source (Auto or your own decks, with `[SLOT]` blanks), length, topics, coin pot, drink rules, house rules. Play: coin pot charged per card, tools tray, all nine wild-card interactions, dare timers, 3 second resume, change mood, focus next cards, add and reorder players, report a card, undo. Recap: card of the night, saved tonight, share image.
+- `/welcome` (intro, 18+ gate, nickname and colour, 10 welcome coins) then three tabs (since 2026-10-16): **Play** (`/`), **Shop** (`/shop`: Coins, Tools, Packs, Style), **Me** (`/me`: wallet, saved cards, leaderboard sample, invite sample, settings, help).
+- Start a game, add friends by name (one phone, no room codes), then a **4-step setup** (2026-10-16): buy cards per deck (basket, with who pays), topics, drink rules, house rules. Play: coin pot charged per card, tools tray, all nine wild-card interactions, dare timers, 3 second resume, change mood, focus next cards, add and reorder players, report a card, undo. Recap: card of the night, saved tonight, share image.
 - Settings (`/me/settings`) apply for real: vibration, sounds, wake lock, swipe off, undo time, confirm trash, pips, rules line, left-handed, text size, motion, contrast, game defaults prefill new rooms.
 - **Not built yet:** F7 real data (Discover, leaderboard and invite are labelled Sample), jsdom component tests, Filipino strings, QR invite, payments. Next: Stage B (backend), see §6.
 
@@ -122,6 +122,12 @@ Numbered so they can be referenced in commits.
 | D17 | **Own decks play alone.** Choosing "My decks" as the card source uses only those cards, so a small deck makes a shorter game. `[SLOT]` blanks are filled from three words the host types, or those cards are left out. | Decided in the run. |
 | D18 | Bottom tabs show only on the four top-level screens. Retired routes `/profile`, `/saved`, `/decks` stay as redirect stubs because the device tools cannot delete files. | |
 | D19 | Display settings are mirrored to `<html data-text|motion|contrast|hand>` by `SettingsApplier`; CSS reads them. Equipped accent theme sets `--accent` on `<html>` outside games. | |
+
+| D20 | **Decks replace the Library and game modes (Phase 1 built 2026-10-16).** Before a game the host buys a number of cards from each deck (the basket). Decks: Icebreaker, Family, Life, Deep, Barkada, Lovers, Spicy, Adult, Social media (coming soon, no cards yet), Chaos. Each has a price per card (`lib/game/decks.ts`): 0.1, 0.1, 0.15, 0.25, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6 coins. Social media is the second most expensive and Chaos the most. Wild cards are free. The basket total is the pot. Pot styles: I pay it all, Split it, Each buys (per-player baskets). Friends settle in cash. | Owner approval 2026-10-16. |
+| D21 | **One phone runs everything.** Room codes, the join screen and invite sharing are removed from the UI (`/join` and `/game/[code]/join` redirect home). Players are names the host adds. | Owner 2026-10-16. |
+| D22 | **Library and personal decks are removed.** `/library` and its sub routes redirect home. Saved cards moved to `/me/saved`. Tabs are Play, Shop, Me. Old components stay in the folder unused because the device tools cannot delete files. | Owner 2026-10-16. |
+| D23 | **18+ is the Adult deck, not a filter.** The "18+ Cards" topic is retired (stripped from saved settings). The Adult deck needs a table confirmation that everyone is 18 or older before it can be bought. Chaos includes Adult cards (owner 2026-10-16), so buying Chaos also needs the 18+ confirmation, and Chaos is not offered for mid-game deck switching. | Owner 2026-10-16. |
+| D24 | **Topic deck is a separate game on the Play menu (built 2026-10-16).** Debates and things to talk about, no turns, shots or pot. 0.1 coin per topic, bought by quantity (10 to 100, steps of 5), group chips and skip-topic filters before starting, tap Next, Back at any time, unused topics refunded when you end. Routes `/talk` and `/talk/play`, store `talk-store`, content `lib/data/talk-topics.ts` (48 topics, 8 groups). Names are "Drinking game" and "Topic deck". Social media deck stays Coming soon. | Owner 2026-10-16. See `about_tagai.md` 23.18 to 23.21. |
 
 Open / unknown (owner can't remember — decide when it comes up, then record it above):
 - Whether phone-OTP login is still wanted (docs said email/Google/phone; code has email + Google only).
@@ -283,6 +289,10 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-16 (Topic deck, Chaos)** — Chaos now includes Adult cards and needs the 18+ confirmation. Built the Topic deck as a separate game on the home menu (`/talk`, `/talk/play`, `talk-store`, `lib/game/talk.ts`, 48 starter topics in 8 groups, tests). Home buttons are now Drinking game and Topic deck. 190 tests pass, lint clean, build OK.
+
+- **2026-10-16 (deck restructure, Phase 1)** — Replaced the Library and game modes with decks bought by quantity (`lib/game/decks.ts`, `buildBasketQueue`, per-deck cost via `deckId` on cards). New "Buy your cards" setup step with solo, split and each-buys, 18+ confirm for the Adult deck. Removed room codes and the join flow from the UI, redirected Library routes, moved Saved to Me, tabs are Play, Shop, Me. 184 tests pass, lint clean, build OK. Next: Topic deck (Phase 2), Social media content, Life and Deep content, seat sequence, Why? cards.
 
 - **2026-10-15 (overnight run, F1 to F9)** — Autonomous run per `docs/OVERNIGHT_RUN.md`, files written straight into the owner's folder. F1 shell (4 tabs, 12 shared components). F2 settings store and page with every row applied, Me hub, trashed cards. F3 wallet ledger and coin pot (`lib/game/pot.ts`, pot step, per-card charge, low and empty states, top up, refund, wallet history; 20+ new tests). F4 shop (catalogue, buy and equip, avatar frames, card backs, accent themes, packs feed the Auto pool). F5 play depth (tools tray, wild-card flows, dare timers, 3 s resume, change mood, focus next cards, add and reorder players, report card; `lib/game/mid-game.ts` with tests). F6 library (deck store, editor with `[SLOT]`, saved list with search, filter and multi-select, card source step). Extras: Help and FAQ, draft legal pages, 18+ gate, Discover, leaderboard and invite samples, recap upgrades and share image, install and offline prompts, sounds (off by default), home tips. 161 tests pass, lint clean, build OK.
 

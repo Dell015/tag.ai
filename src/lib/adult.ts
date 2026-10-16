@@ -1,7 +1,8 @@
-import { useSettingsStore } from '@/stores/settings-store';
-
-/** 18+ cards are an ordinary skippable topic. Skipped by default, so a new table has to opt in. */
+/** Retired filter name. Older saved settings may still carry it, so it is stripped when a game is set up. */
 export const ADULT_TOPIC = '18+ Cards';
 
-/** True when the player's defaults do not skip 18+ cards (used by Browse, Saved and the Shop). */
-export const useAdultOn = () => useSettingsStore((s) => !s.skipTopics.includes(ADULT_TOPIC));
+/**
+ * 18+ cards are now the Adult deck, bought like any other. The app itself is for adults only
+ * (the welcome screen asks), and the table confirms again before the Adult deck is used.
+ */
+export const useAdultOn = () => true;

@@ -2,14 +2,12 @@
 import { useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { Button, Chip, ConfirmSheet, ListRow, Screen, SegmentedControl, TextField, Toggle, toast } from '@/components/ui';
-import { GAME_MODES } from '@/lib/game/game-modes';
 import { PRESET_TOPICS, normalizeTopic } from '@/lib/game/comfort-filters';
 import { DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 import { useSettingsStore, type Language, type MotionPref, type PotStyle, type TextSize } from '@/stores/settings-store';
 import { useProfileStore } from '@/stores/profile-store';
 import { useGameStore } from '@/stores/game-store';
 import { useWalletStore } from '@/stores/wallet-store';
-import type { GameMode } from '@/types/game';
 
 const BUILD = 'a1';
 
@@ -49,7 +47,7 @@ export default function SettingsPage() {
   const [ask, setAsk] = useState<null | 'profile' | 'game' | 'all'>(null);
   const [taps, setTaps] = useState(0);
 
-  const customTopics = s.skipTopics.filter((t) => !(PRESET_TOPICS as readonly string[]).includes(t));
+  const customTopics = s.skipTopics.filter((t) => !(PRESET_TOPICS as readonly string[]).includes(t) && t !== '18+ Cards');
   const toggleTopic = (t: string) => s.set('skipTopics', s.skipTopics.includes(t) ? s.skipTopics.filter((x) => x !== t) : [...s.skipTopics, t]);
 
   const exportData = () => {
@@ -78,13 +76,6 @@ export default function SettingsPage() {
   return (
     <Screen title="Settings" back="/me">
       <Group title="Game defaults">
-        <Block label="Default deck" hint="Preselected when you start a game.">
-          <div className="flex flex-wrap gap-2">
-            {(Object.keys(GAME_MODES) as GameMode[]).map((m) => (
-              <Chip key={m} selected={s.defaultDeck === m} onClick={() => s.set('defaultDeck', m)}>{GAME_MODES[m].name}</Chip>
-            ))}
-          </div>
-        </Block>
         <Block label="Topics to skip" hint="Cards on these topics never show up.">
           <div className="flex flex-wrap gap-2">
             {PRESET_TOPICS.map((t) => <Chip key={t} selected={s.skipTopics.includes(t)} onClick={() => toggleTopic(t)}>{t}</Chip>)}
@@ -156,7 +147,7 @@ export default function SettingsPage() {
 
       <Group title="Content">
         <ListRow label="Trashed cards" value={trashedCount} href="/me/settings/trashed" />
-        <ListRow label="Saved cards" href="/library?tab=saved" />
+        <ListRow label="Saved cards" href="/me/saved" />
       </Group>
 
       <Group title="Data and about">

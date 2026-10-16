@@ -3,18 +3,18 @@ import { useEffect, useState } from 'react';
 import { Avatar, Button, Chip, Icon, Sheet } from '@/components/ui';
 import { MAX_PLAYERS, type Room } from '@/lib/data/rooms';
 import { DRINK_RULE_TEMPLATES } from '@/lib/game/setup-options';
-import { GAME_MODES } from '@/lib/game/game-modes';
+import { DECKS, type DeckId } from '@/lib/game/decks';
 import { HEAT_UP_COST, formatPot } from '@/lib/game/pot';
 import { FOCUS_RULES, type FocusKind } from '@/lib/game/mid-game';
-import type { GameMode } from '@/types/game';
 
-const MODES: GameMode[] = ['icebreaker', 'barkada', 'lovers', 'spicy', 'chaos', 'family'];
+/** Decks you can switch to mid-game. Adult and Chaos need everyone confirmed 18+ before the game, so they are not offered here. */
+const SWITCHABLE = DECKS.filter((d) => d.ready && !d.adult && !d.includesAdult);
 
 export function PauseSheet({ open, onClose, room, players, heat, onHeat, onRemovePlayer, onEnd, pot, onTopUp, mood, onMood, onFocus, onAddPlayer, onMove, onTools, onReport }: {
   open: boolean; onClose: () => void; room: Room | null;
   players: { id: string; name: string; avatarUrl: string }[];
   heat: number; onHeat: (delta: number) => void; pot: number; onTopUp: () => void;
-  mood: GameMode; onMood: (m: GameMode) => void; onFocus: (k: FocusKind) => void;
+  mood: DeckId | undefined; onMood: (m: DeckId) => void; onFocus: (k: FocusKind) => void;
   onAddPlayer: (name: string) => void; onMove: (id: string, dir: -1 | 1) => void;
   onTools: () => void; onReport: () => void;
   onRemovePlayer: (id: string) => void; onEnd: () => void;
@@ -53,7 +53,7 @@ export function PauseSheet({ open, onClose, room, players, heat, onHeat, onRemov
       <h3 className="mb-3 mt-8 text-3xl">Change the mood</h3>
       <p className="-mt-2 mb-3 text-base text-muted">Switch the deck for the rest of the game.</p>
       <div className="flex flex-wrap gap-2">
-        {MODES.map((m) => <Chip key={m} selected={mood === m} onClick={() => mood !== m && onMood(m)}>{GAME_MODES[m].name}</Chip>)}
+        {SWITCHABLE.map((d) => <Chip key={d.id} selected={mood === d.id} onClick={() => mood !== d.id && onMood(d.id)}>{d.name}</Chip>)}
       </div>
       <h3 className="mb-3 mt-6 text-2xl">Focus the next cards</h3>
       <div className="grid gap-2">

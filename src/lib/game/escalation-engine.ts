@@ -34,6 +34,8 @@ export interface QueuedCard {
   adult?: boolean;
   /** Set to override the group size worked out from the wording. */
   people?: { min: number; max: number | null };
+  /** The deck this card was bought from. Sets what it costs from the pot. */
+  deckId?: string;
 }
 
 // ─── Heat Adjustment Constants ───────────────────────────────────────────────

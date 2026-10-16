@@ -35,6 +35,8 @@ function roomFromStore(base: Room): Room {
       potCoins: s.potCoins,
       potStyle: s.potStyle,
       shares: s.shares,
+      basket: s.basket,
+      playerBaskets: s.playerBaskets,
       deckIds: s.deckIds,
       slotFills: s.slotFills,
     },

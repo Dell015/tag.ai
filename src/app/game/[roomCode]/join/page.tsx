@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Old invite-link shape: forward to the new join screen with the code prefilled. */
-export default function LegacyJoin({ params }: { params: { roomCode: string } }) {
-  redirect(`/join?code=${encodeURIComponent(params.roomCode)}`);
+/** Room codes are retired: one phone runs the whole game. */
+export default function Redirect() {
+  redirect('/');
 }

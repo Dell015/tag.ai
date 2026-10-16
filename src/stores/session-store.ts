@@ -1,4 +1,5 @@
 import { GameMode, SessionPlayer } from '@/types/game';
+import type { Basket } from '@/lib/game/decks';
 import { create } from 'zustand';
 
 export interface SessionState {
@@ -22,6 +23,8 @@ export interface SessionState {
   potCoins: number;
   potStyle: 'solo' | 'split' | 'chipin';
   shares: Record<string, number>;
+  basket: Basket;
+  playerBaskets: Record<string, Basket>;
   deckIds: string[];
   slotFills: string[];
 
@@ -59,6 +62,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   potCoins: 0,
   potStyle: 'solo' as 'solo' | 'split' | 'chipin',
   shares: {} as Record<string, number>,
+  basket: {} as Basket,
+  playerBaskets: {} as Record<string, Basket>,
   deckIds: [] as string[],
   slotFills: [] as string[],
 
