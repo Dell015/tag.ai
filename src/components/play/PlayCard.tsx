@@ -39,8 +39,10 @@ function CardBody({ children, watch }: { children: React.ReactNode; watch: strin
  * colour (truth, dare, dice and so on). Swipe either way for the next card. The buttons underneath
  * do the same, always.
  */
-export function PlayCard({ card, revealed, onReveal, onDone, others, nonDrinking }: {
+export function PlayCard({ card, revealed, onReveal, onDone, onRule, others, everyone, nonDrinking }: {
   card: QueuedCard; revealed: boolean; onReveal: () => void; onDone: () => void;
+  /** A rule card made its rule on the spot with a tool. */
+  onRule: (text: string) => void; everyone: string[];
   others: { id: string; name: string }[]; nonDrinking: boolean;
 }) {
   const swipe = useSettingsStore((st) => st.swipe);
@@ -103,12 +105,12 @@ export function PlayCard({ card, revealed, onReveal, onDone, others, nonDrinking
           <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto scrollbar-none">
             <h2 className="display text-[4.2rem] leading-[0.9]">{wild.title}</h2>
             <p className="mt-4 text-balance text-2xl font-bold leading-snug">{wildDescription(card.wildCardType!, nonDrinking)}</p>
-            <WildExtras key={card.id} type={card.wildCardType!} />
+            <WildExtras key={card.id} type={card.wildCardType!} players={everyone} nonDrinking={nonDrinking} />
           </div>
         ) : (
           <CardBody watch={card.id}>
-            <p className="display text-balance" style={{ lineHeight: 1.02, fontSize: `calc(${meta.tool ? Math.min(sizeFor(text.length), 2.6) : sizeFor(text.length)}rem * var(--card-scale, 1))` }}>{text}</p>
-            {meta.tool && <CardToolView key={card.id} kind={kind} tool={card.tool} outcomes={card.outcomes} players={others.map((p) => p.name)} nonDrinking={nonDrinking} />}
+            <p className="display text-balance" style={{ lineHeight: 1.02, fontSize: `calc(${(meta.tool || card.tool?.via) ? Math.min(sizeFor(text.length), 2.6) : sizeFor(text.length)}rem * var(--card-scale, 1))` }}>{text}</p>
+            {(meta.tool || card.tool?.via) && <CardToolView key={card.id} kind={card.tool?.via ?? kind} tool={card.tool} outcomes={card.outcomes} players={others.map((p) => p.name)} nonDrinking={nonDrinking} onResult={kind === 'rule' ? (t) => onRule(t.replace(/^(Heads|Tails): /, '')) : undefined} />}
             {kind === 'rule' && <p className="mt-4 text-lg font-extrabold">Stays on until the next wild card.</p>}
             {kind === 'dare' && dareSeconds(text) && <TimerChip key={card.id} seconds={dareSeconds(text)!} />}
           </CardBody>

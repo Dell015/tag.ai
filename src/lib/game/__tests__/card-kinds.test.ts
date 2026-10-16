@@ -4,6 +4,7 @@ import { kindOf, KIND_META, fillDrink, penaltyFor } from '@/lib/game/card-kinds'
 import { libraryCards } from '@/lib/data/card-pool';
 import { DECK_BY_ID, deckPool } from '@/lib/game/decks';
 import { useGameStore } from '@/stores/game-store';
+import { WILD_CARD_DEFINITIONS } from '@/lib/game/wild-cards';
 
 const ALL = [...TOOL_CARDS, ...ADULT_TOOL_CARDS];
 
@@ -27,9 +28,9 @@ describe('card kinds', () => {
 
   it('tool settings match the kind', () => {
     for (const c of ALL) {
-      if (c.kind === 'dice' && c.tool?.dice === 1 && c.outcomes) expect(c.outcomes, c.id).toHaveLength(6);
-      if (c.kind === 'coin') expect(c.outcomes, c.id).toHaveLength(2);
-      if (c.kind === 'wheel') expect(c.tool?.labels?.length, c.id).toBeGreaterThanOrEqual(2);
+      if ((c.tool?.via ?? c.kind) === 'dice' && c.tool?.dice === 1 && c.outcomes) expect(c.outcomes, c.id).toHaveLength(6);
+      if ((c.tool?.via ?? c.kind) === 'coin') expect(c.outcomes, c.id).toHaveLength(2);
+      if ((c.tool?.via ?? c.kind) === 'wheel') expect(c.tool?.labels?.length, c.id).toBeGreaterThanOrEqual(2);
       if (c.kind === 'timer') expect(c.tool?.seconds, c.id).toBeGreaterThan(0);
       if (c.kind === 'dice') expect(c.tool?.dice, c.id).toBeDefined();
     }
@@ -90,9 +91,9 @@ describe('shuffle after buying', () => {
     expect(spreadOut(cards).map((c) => c.id).sort()).toEqual(cards.map((c) => c.id).sort());
   });
 
-  it('only builds the four challenge wild cards', () => {
+  it('only builds the challenge wild cards', () => {
     const q = buildBasketQueue({ basket: { chaos: 60 }, comfortFilters: [], trashedCardIds: [], playerCount: 4 }, libraryCards(true)).cards;
-    const known = ['call_out', 'voice_note', 'group_pose', 'dance_off'];
+    const known = Object.keys(WILD_CARD_DEFINITIONS);
     expect(q.filter((c) => c.cardType === 'wild').every((c) => known.includes(c.wildCardType as string))).toBe(true);
   });
 });
@@ -102,7 +103,7 @@ describe('rule cards and penalties', () => {
   it('rule cards say what is on screen while they hold', () => {
     const rules = TOOL_CARDS.filter((c) => c.kind === 'rule');
     expect(rules.length).toBeGreaterThanOrEqual(10);
-    rules.forEach((c) => { expect(c.rule, c.id).toBeTruthy(); expect(c.text, c.id).toMatch(/until the next wild card|next wild card/); });
+    rules.forEach((c) => { expect(c.rule || c.tool?.via, c.id).toBeTruthy(); expect(c.text, c.id).toMatch(/next wild card/); });
   });
   it('a rule stays on until a wild card clears it', () => {
     useGameStore.getState().resetGame();
@@ -115,5 +116,55 @@ describe('rule cards and penalties', () => {
     libraryCards(true).forEach((c) => { const n = penaltyFor(c); expect(n, c.id).toBeGreaterThanOrEqual(1); expect(n, c.id).toBeLessThanOrEqual(3); });
     expect(penaltyFor({ cardType: 'action', intensity: 5 })).toBe(2);
     expect(penaltyFor({ cardType: 'question', intensity: 5 })).toBe(1);
+  });
+});
+
+import { drawForHeat, MAX_HEAT_AT } from '@/lib/game/steering';
+
+describe('heat decides what is drawn', () => {
+  const card = (id: string, intensity: number, deckId: string, category: 'hot_takes' | 'dares' = 'hot_takes') =>
+    ({ id, text: id, cardType: 'question' as const, intensity, category, topics: [], deckId });
+  const queue = [card('hard1', 5, 'adult'), card('easy1', 1, 'icebreaker'), card('mid1', 3, 'barkada'), card('hard2', 5, 'spicy'), card('easy2', 1, 'family')];
+
+  it('draws the easiest cards first at low heat, the hardest at high heat', () => {
+    const low = drawForHeat(queue, 0, 1);
+    expect(['easy1', 'easy2']).toContain(low[0].id);
+    const high = drawForHeat([queue[1], queue[0], queue[2], queue[3], queue[4]], 0, 4.5);
+    expect(['hard1', 'hard2']).toContain(high[0].id);
+  });
+
+  it('keeps wild cards where they are', () => {
+    const wild = { id: 'w', text: '', cardType: 'wild' as const, intensity: 0, category: 'hot_takes' as const, topics: [], wildCardType: 'call_out' as const };
+    const q = [card('hard1', 5, 'adult'), wild, card('easy1', 1, 'icebreaker')];
+    const out = drawForHeat(q, 0, 1);
+    expect(out[1].id).toBe('w');
+    expect(out.map((c) => c.id).sort()).toEqual(['easy1', 'hard1', 'w']);
+  });
+
+  it('is completely random when the meter is full', () => {
+    const picks = new Set<string>();
+    for (let i = 0; i < 80; i++) picks.add(drawForHeat(queue, 0, MAX_HEAT_AT + 0.05)[0].id);
+    expect(picks.size).toBeGreaterThanOrEqual(4);
+  });
+});
+
+import { heatPace } from '@/lib/game/escalation-engine';
+
+describe('heat pace', () => {
+  it('uses full steps for short games and slows long ones', () => {
+    expect(heatPace(20)).toBe(1);
+    expect(heatPace(10)).toBe(1);
+    expect(heatPace(90)).toBeLessThan(0.3);
+    expect(heatPace(500)).toBe(0.15);
+  });
+  it('a 90 card game does not fill the meter in the first quarter', () => {
+    useGameStore.getState().resetGame();
+    useGameStore.setState({
+      turnRotation: { players: [{ id: 'a', name: 'A', avatarUrl: 'c0', turnOrder: 0 }, { id: 'b', name: 'B', avatarUrl: 'c1', turnOrder: 1 }], currentIndex: 0 },
+      cardQueue: Array.from({ length: 90 }, (_, i) => ({ id: `y${i}`, text: 't', cardType: 'question' as const, intensity: 2, category: 'hot_takes' as const, topics: [] })),
+      cardCountTarget: 90, heatLevel: 1,
+    });
+    for (let i = 0; i < 22; i++) useGameStore.getState().dismissCard();
+    expect(useGameStore.getState().heatLevel).toBeLessThan(3);
   });
 });

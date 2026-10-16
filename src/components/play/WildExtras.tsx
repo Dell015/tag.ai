@@ -2,6 +2,7 @@
 import { useCountdown } from './ToolsSheet';
 import type { WildCardType } from '@/types/game';
 import { Icon } from '@/components/ui';
+import { CardToolView } from './CardTools';
 
 const fmt = (n: number) => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`;
 
@@ -38,10 +39,13 @@ export function DrinkBanner({ nonDrinking, who = 'Everyone' }: { nonDrinking: bo
   );
 }
 
-export function WildExtras({ type }: { type: WildCardType }) {
+export function WildExtras({ type, players, nonDrinking }: { type: WildCardType; players: string[]; nonDrinking: boolean }) {
   switch (type) {
     case 'group_pose': return <TimerChip seconds={5} label="Hold the pose" />;
     case 'dance_off': return <TimerChip seconds={15} label="Start dancing" />;
+    case 'call_out':
+    case 'voice_note': return <CardToolView kind="bottle" players={players} nonDrinking={nonDrinking} />;
+    case 'lucky_roll': return <CardToolView kind="dice" tool={{ dice: 1 }} players={players} nonDrinking={nonDrinking} />;
     default: return null;
   }
 }

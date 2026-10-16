@@ -21,6 +21,8 @@ export interface WildCardEffect {
   immunityCards?: number;
   /** Shots for failing the challenge (2 or 3). */
   penalty?: number;
+  /** The tool the card shows when it is drawn: a bottle or a die, so the card invents itself on the spot. */
+  via?: 'bottle' | 'dice';
 }
 
 // ─── Shuffle Helper ──────────────────────────────────────────────────────────
@@ -115,14 +117,16 @@ export const WILD_CARD_DEFINITIONS: Record<WildCardType, WildCardEffect> = {
   call_out: {
     type: 'call_out',
     title: 'Call Out',
-    description: 'Call someone who is not in this group. When they answer, shout anything, then hang up.',
+    description: 'Spin the bottle. The player it lands on calls someone who is not in this group, shouts anything when they answer, then hangs up.',
     penalty: 3,
+    via: 'bottle',
   },
   voice_note: {
     type: 'voice_note',
     title: 'Voice Note',
-    description: 'Send a 10 second voice note to a friend who is not here. Sing it, shout it or whisper it.',
+    description: 'Spin the bottle. The player it lands on sends a 10 second voice note to a friend who is not here. Sing it, shout it or whisper it.',
     penalty: 2,
+    via: 'bottle',
   },
   group_pose: {
     type: 'group_pose',
@@ -135,6 +139,13 @@ export const WILD_CARD_DEFINITIONS: Record<WildCardType, WildCardEffect> = {
     title: 'Dance Off',
     description: 'Everyone dances for 15 seconds. The group votes for the worst dancer, who takes the penalty.',
     penalty: 2,
+  },
+  lucky_roll: {
+    type: 'lucky_roll',
+    title: 'Lucky Roll',
+    description: 'Roll the die. That many players must {drink}. You choose who.',
+    penalty: 2,
+    via: 'dice',
   },
 };
 

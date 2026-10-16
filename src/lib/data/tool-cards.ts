@@ -80,6 +80,30 @@ const ROWS: Row[] = [
   { kind: 'vote', intensity: 4, text: 'Who here would last longest in a zombie apocalypse? The winner gives a dare.', tool: { seconds: 3 } },
   { kind: 'vote', intensity: 4, text: 'Who here is most likely to start a business and fail? Most votes: {drink}.', tool: { seconds: 3 } },
 
+  // The tool decides the penalty, so the card invents itself on the spot
+  { kind: 'dice', intensity: 3, text: 'Roll the die. Your number is your penalty.', tool: { dice: 1 },
+    outcomes: ['Take {shot}.', 'Take 2 {shots}.', 'Take 3 {shots}.', 'Take 3 {shots}. Unlucky.', 'Safe. Give 2 {shots} to anyone.', 'Safe. Pick who takes 3 {shots}.'] },
+  { kind: 'dice', intensity: 4, text: 'Roll two dice. The lower number is how many {shots} you take, the higher is how many you give.', tool: { dice: 2 } },
+  { kind: 'dice', intensity: 2, text: 'Roll the die. That many players must say one thing they like about you.', tool: { dice: 1 }, people: { min: 3, max: null } },
+  { kind: 'dice', intensity: 5, text: 'Roll two dice. Take the total, but never more than 3 {shots}. Doubles mean you give them all away.', tool: { dice: 2 } },
+  { kind: 'coin', intensity: 3, text: 'Flip the coin. Give or take.', outcomes: ['Heads: give 2 {shots} to anyone.', 'Tails: take 2 {shots}.'] },
+  { kind: 'coin', intensity: 4, text: 'Flip the coin. Double or nothing.', outcomes: ['Heads: nothing happens.', 'Tails: take 3 {shots}.'] },
+  { kind: 'coin', intensity: 2, text: 'Flip the coin. Heads picks who goes next.', outcomes: ['Heads: you pick who takes the next card.', 'Tails: the player on your left picks who takes the next card.'] },
+  { kind: 'wheel', intensity: 3, text: 'Spin the wheel for your penalty.', tool: { labels: ['Take {shot}', 'Take 2 {shots}', 'Take 3 {shots}', 'Give 2 {shots}', 'Safe', 'Everyone takes {shot}'] } },
+  { kind: 'wheel', intensity: 4, text: 'Spin the wheel. The group decides what you do for the result.', tool: { labels: ['Truth', 'Dare', 'Sing', 'Dance', 'Joke', 'Free pass'] } },
+  { kind: 'bottle', intensity: 3, text: 'Spin the bottle. The player it lands on takes 2 {shots}.', people: { min: 3, max: null } },
+  { kind: 'bottle', intensity: 4, text: 'Spin the bottle. The player it lands on takes {shot} and picks who takes the next one.', people: { min: 3, max: null } },
+  { kind: 'bottle', intensity: 2, text: 'Spin the bottle. The player it lands on gives you a compliment, and you give one back.', people: { min: 3, max: null } },
+  { kind: 'vote', intensity: 3, text: 'Who here would survive longest without their phone? Everyone else votes. The winner gives out 2 {shots}.', tool: { seconds: 3 } },
+  { kind: 'timer', intensity: 3, text: 'You have 30 seconds. Name as many things as you can that start with the letter the player on your left picks. Every miss is {shot}.', tool: { seconds: 30 } },
+
+  // Rule cards that make their rule on the spot with a tool
+  { kind: 'rule', intensity: 3, text: 'Roll the die. Your number sets the rule until the next wild card.', tool: { via: 'dice', dice: 1 },
+    outcomes: ['No names. Say one and take {shot}.', 'No pointing. Point and take {shot}.', 'Left hand only. Slip and take {shot}.', 'Whisper only. Get loud and take {shot}.', 'Say "po" after every sentence. Forget and take {shot}.', 'Phones down. Touch one and take 2 {shots}.'] },
+  { kind: 'rule', intensity: 3, text: 'Flip the coin. It sets the rule until the next wild card.', tool: { via: 'coin' },
+    outcomes: ['Heads: all {shots} are doubled.', 'Tails: nobody drinks. Everyone does a dare for every card instead.'] },
+  { kind: 'rule', intensity: 4, text: 'Spin the wheel. The rule it lands on holds until the next wild card.', tool: { via: 'wheel', labels: ['All {shots} are doubled.', 'No swearing. Swear and take {shot}.', 'Questions only. Slip and take {shot}.', 'No yes or no. Slip and take {shot}.', 'Cheers before every drink. Forget and you {drink}.', 'Compliment first. Forget and take {shot}.'] } },
+
   // Rules: they hold until the next wild card, and the app keeps the rule on screen meanwhile.
   { kind: 'rule', intensity: 4, text: 'All {shots} are doubled until the next wild card.', rule: '{shots} are doubled' },
   { kind: 'rule', intensity: 2, text: 'Speak only one language that everybody agrees on until the next wild card. Whoever slips takes {shot}.', rule: 'One language only. Slip and take {shot}' },

@@ -12,6 +12,8 @@ export interface CardTool {
   labels?: string[];
   /** Timer: seconds to count down. */
   seconds?: number;
+  /** Rule and wild cards: which tool they use (dice, coin, bottle or wheel). */
+  via?: CardKind;
 }
 
 export const KIND_META: Record<CardKind, { label: string; tool: boolean; blurb: string }> = {

@@ -4,7 +4,8 @@ const LABELS = ['Chill', 'Warm', 'Spicy', 'Hot', 'Inferno'];
 
 /** Five blocks in the deck colour. Level is 1.0 to 5.0; the last filled block shows partial fill. */
 export function HeatBar({ level, spiking }: { level: number; spiking?: boolean }) {
-  const label = LABELS[Math.min(4, Math.max(0, Math.round(level) - 1))];
+  const full = level >= 4.95;
+  const label = full ? 'Anything goes' : LABELS[Math.min(4, Math.max(0, Math.round(level) - 1))];
   return (
     <div className="flex items-center gap-3" role="meter" aria-label="Heat level" aria-valuemin={1} aria-valuemax={5} aria-valuenow={Number(level.toFixed(1))}>
       <div className="flex flex-1 gap-1">
@@ -17,7 +18,7 @@ export function HeatBar({ level, spiking }: { level: number; spiking?: boolean }
           );
         })}
       </div>
-      <span className={cn('w-[4.5rem] text-right text-base font-extrabold', spiking && 'text-danger')}>{spiking ? 'Heat spike' : label}</span>
+      <span className={cn('w-[6.5rem] text-right text-base font-extrabold', spiking && 'text-danger')}>{spiking ? 'Heat spike' : label}</span>
     </div>
   );
 }

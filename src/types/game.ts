@@ -21,7 +21,7 @@ export type SessionStatus = 'lobby' | 'active' | 'ended';
 
 export type GameMode = 'icebreaker' | 'barkada' | 'lovers' | 'spicy' | 'chaos' | 'family';
 
-export type WildCardType = 'call_out' | 'voice_note' | 'group_pose' | 'dance_off';
+export type WildCardType = 'call_out' | 'voice_note' | 'group_pose' | 'dance_off' | 'lucky_roll';
 
 export interface Card {
   id: string;

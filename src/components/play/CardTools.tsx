@@ -22,12 +22,16 @@ const Go = ({ onClick, disabled, children }: { onClick: () => void; disabled?: b
   <button onClick={onClick} disabled={disabled} className="min-h-tap w-full rounded-xl bg-onaccent px-5 text-xl font-extrabold text-accent active:translate-y-px disabled:opacity-50">{children}</button>
 );
 
-function Dice({ count, outcomes, nonDrinking }: { count: 1 | 2; outcomes?: string[]; nonDrinking: boolean }) {
+function Dice({ count, outcomes, nonDrinking, onResult }: { count: 1 | 2; outcomes?: string[]; nonDrinking: boolean; onResult?: (t: string) => void }) {
   const [vals, setVals] = useState<number[] | null>(null);
   const [rolling, setRolling] = useState(false);
   const roll = () => {
     haptic('tap'); setRolling(true);
-    setTimeout(() => { setVals(Array.from({ length: count }, () => 1 + pick(6))); setRolling(false); haptic('success'); }, 700);
+    setTimeout(() => {
+      const v = Array.from({ length: count }, () => 1 + pick(6));
+      setVals(v); setRolling(false); haptic('success');
+      onResult?.(count === 1 && outcomes?.[v[0] - 1] ? fillDrink(outcomes[v[0] - 1], nonDrinking) : String(v.reduce((a, b) => a + b, 0)));
+    }, 700);
   };
   const total = vals?.reduce((a, b) => a + b, 0) ?? 0;
   return (
@@ -45,12 +49,16 @@ function Dice({ count, outcomes, nonDrinking }: { count: 1 | 2; outcomes?: strin
   );
 }
 
-function Coin({ outcomes, nonDrinking }: { outcomes?: string[]; nonDrinking: boolean }) {
+function Coin({ outcomes, nonDrinking, onResult }: { outcomes?: string[]; nonDrinking: boolean; onResult?: (t: string) => void }) {
   const [side, setSide] = useState<0 | 1 | null>(null);
   const [busy, setBusy] = useState(false);
   const flip = () => {
     haptic('tap'); setBusy(true);
-    setTimeout(() => { setSide(Math.random() < 0.5 ? 0 : 1); setBusy(false); haptic('success'); }, 900);
+    setTimeout(() => {
+      const sd = Math.random() < 0.5 ? 0 : 1;
+      setSide(sd); setBusy(false); haptic('success');
+      onResult?.(outcomes?.[sd] ? fillDrink(outcomes[sd], nonDrinking) : sd === 0 ? 'Heads' : 'Tails');
+    }, 900);
   };
   return (
     <div className="mt-4">
@@ -65,7 +73,7 @@ function Coin({ outcomes, nonDrinking }: { outcomes?: string[]; nonDrinking: boo
 }
 
 /** A disc you spin. It lands on a real slice: the pointer at the top reads the winner. */
-function Spinner({ labels, kind, nonDrinking }: { labels: string[]; kind: 'bottle' | 'wheel'; nonDrinking: boolean }) {
+function Spinner({ labels, kind, nonDrinking, onResult }: { labels: string[]; kind: 'bottle' | 'wheel'; nonDrinking: boolean; onResult?: (t: string) => void }) {
   const [angle, setAngle] = useState(0);
   const [result, setResult] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -76,7 +84,7 @@ function Spinner({ labels, kind, nonDrinking }: { labels: string[]; kind: 'bottl
     haptic('tap'); setBusy(true); setResult(null);
     const target = 360 * 5 - (kind === 'wheel' ? (idx + 0.5) * slice : idx * slice);
     setAngle(target);
-    setTimeout(() => { setResult(labels[idx]); setBusy(false); haptic('success'); }, 2300);
+    setTimeout(() => { setResult(labels[idx]); setBusy(false); haptic('success'); onResult?.(fillDrink(labels[idx], nonDrinking)); }, 2300);
   };
   const stops = labels.map((_, i) => `${i % 2 ? 'rgb(var(--on-accent))' : 'rgb(var(--accent))'} ${i * slice}deg ${(i + 1) * slice}deg`).join(', ');
   return (
@@ -125,12 +133,12 @@ function Vote({ seconds }: { seconds: number }) {
 }
 
 /** The tool a card brings with it. It sits under the card text and keeps drags off the card. */
-export function CardToolView({ kind, tool, outcomes, players, nonDrinking }: { kind: CardKind; tool?: CardTool; outcomes?: string[]; players: string[]; nonDrinking: boolean }) {
+export function CardToolView({ kind, tool, outcomes, players, nonDrinking, onResult }: { kind: CardKind; tool?: CardTool; outcomes?: string[]; players: string[]; nonDrinking: boolean; onResult?: (text: string) => void }) {
   let body: React.ReactNode = null;
-  if (kind === 'dice') body = <Dice count={tool?.dice ?? 1} outcomes={outcomes} nonDrinking={nonDrinking} />;
-  else if (kind === 'coin') body = <Coin outcomes={outcomes} nonDrinking={nonDrinking} />;
-  else if (kind === 'bottle') body = <Spinner kind="bottle" labels={players.length > 1 ? players : ['Anyone']} nonDrinking={nonDrinking} />;
-  else if (kind === 'wheel') body = <Spinner kind="wheel" labels={tool?.labels ?? ['Truth', 'Dare']} nonDrinking={nonDrinking} />;
+  if (kind === 'dice') body = <Dice count={tool?.dice ?? 1} outcomes={outcomes} nonDrinking={nonDrinking} onResult={onResult} />;
+  else if (kind === 'coin') body = <Coin outcomes={outcomes} nonDrinking={nonDrinking} onResult={onResult} />;
+  else if (kind === 'bottle') body = <Spinner kind="bottle" labels={players.length > 1 ? players : ['Anyone']} nonDrinking={nonDrinking} onResult={onResult} />;
+  else if (kind === 'wheel') body = <Spinner kind="wheel" labels={tool?.labels ?? ['Truth', 'Dare']} nonDrinking={nonDrinking} onResult={onResult} />;
   else if (kind === 'timer') body = <Timer seconds={tool?.seconds ?? 30} />;
   else if (kind === 'vote') body = <Vote seconds={tool?.seconds ?? 3} />;
   if (!body) return null;

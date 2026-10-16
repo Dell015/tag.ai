@@ -110,14 +110,15 @@ Set `penalty` on a card only when it is not the default. Allowed range is 1 to 3
 
 ### Wild cards
 
-Wild cards are free, one-off challenges for the whole table. There are four, defined in `WILD_CARD_DEFINITIONS`:
+Wild cards are free, one-off challenges for the whole table. There are five, defined in `WILD_CARD_DEFINITIONS`:
 
 | Wild card | What happens | Shots if failed |
 |---|---|---|
-| Call Out | Call someone who is not in this group. When they answer, shout anything, then hang up. | 3 |
-| Voice Note | Send a 10 second voice note to a friend who is not here. | 2 |
+| Call Out | Spin the bottle. The player it lands on calls someone who is not in this group, shouts anything when they answer, then hangs up. | 3 |
+| Voice Note | Spin the bottle. The player it lands on sends a 10 second voice note to a friend who is not here. | 2 |
 | Freeze | Everyone strikes a pose on three and holds it for 5 seconds. First to move pays. | 2 |
 | Dance Off | Everyone dances for 15 seconds. The group votes the worst dancer, who pays. | 2 |
+| Lucky Roll | Roll the die. That many players must drink. You choose who. | 2 |
 
 A wild card must be:
 
@@ -125,11 +126,12 @@ A wild card must be:
 - **Doable by a table that has been drinking.** One clear action, one sentence, no maths.
 - **About the real world.** Calls, voice notes and bodies in a room, not things the app tracks.
 - **Penalised with 2 or 3 shots**, set in `penalty`.
+- **Self-inventing where it helps.** A wild card can bring a tool (`via` on its definition: a bottle to pick who, a die to pick how many) so the table does not decide anything by arguing.
 - **Safe.** Never ask someone to contact a person who has not agreed to be part of a joke, never about appearance, never anything that could be recorded to shame someone.
 
 Wild cards are inserted about every 4 to 8 cards (a mix of the decks' wild gaps). A wild card also clears any rule that is on.
 
-To add a wild card: add its id to `WildCardType` in `src/types/game.ts`, add it to `WILD_CARD_DEFINITIONS` and to `WILD_CARD_TYPES` in `card-queue-builder.ts`, add its optional extra (a timer, say) in `WildExtras.tsx`, and update the `known` list in the game-store `migrate` so saved games keep it. The tests in `wild-copy.test.ts` check the count, the 2 or 3 shots and the wording.
+To add a wild card: add its id to `WildCardType` in `src/types/game.ts`, add it to `WILD_CARD_DEFINITIONS` and to `WILD_CARD_TYPES` in `card-queue-builder.ts`, add its optional extra (a timer, say) in `WildExtras.tsx`, (the game-store `migrate` reads the known list from `WILD_CARD_DEFINITIONS`, so saved games keep it). The tests in `wild-copy.test.ts` check the count, the 2 or 3 shots and the wording.
 
 ### Rule cards
 
@@ -142,6 +144,24 @@ A rule must be:
 - **Written with its penalty.** "Whoever slips takes {shot}." Use 1 shot, or 2 for something hard like phones down. The `rule` field is the line on the bar and should repeat the penalty when it helps ("No swearing. Swear and take {shot}").
 - **Ended by the text.** The text must contain "until the next wild card".
 - **Safe for the deck.** Level 1 or 2 rules can go into Family. Do not write a rule that forces anyone to touch, reveal or say something about another person's body.
+
+### Cards that invent themselves with a tool
+
+A tool can decide the penalty, the person or the rule, so nobody has to make something up. Use this whenever a card would otherwise say "someone decides".
+
+| Tool | What it can decide | Example |
+|---|---|---|
+| Dice (one die, six `outcomes`) | A penalty size, a rule, a task | "Roll the die. Your number is your penalty." 1 is a shot, 3 is 3 shots, a 5 is safe. |
+| Dice (two dice, text uses the total or the two numbers) | How many, who gives and who takes | "The lower number is how many shots you take, the higher is how many you give." |
+| Coin (two `outcomes`) | Give or take, double or nothing, a rule | "Heads: give 2 shots. Tails: take 2 shots." |
+| Wheel (`tool.labels`) | A penalty or a rule from a list of six | "Spin the wheel for your penalty." |
+| Bottle | Who takes it, who does it | "The player it lands on takes 2 shots." |
+| Vote | Who takes it | "Most votes takes 2 shots." |
+| Timer | How long, what counts as failing | "30 seconds. Every miss is a shot." |
+
+**Rule cards that make their rule with a tool.** Give the rule card `tool: { via: 'dice' | 'coin' | 'wheel', ... }` and write the rule lines as the `outcomes` (six for a die, two for a coin) or `tool.labels` (wheel). Do not set `rule`: the result becomes the rule bar. Every outcome must be a complete rule with its own penalty ("No names. Say one and take {shot}.") because that exact line is what stays on screen. A coin outcome may start with "Heads: " or "Tails: "; the prefix is dropped on the bar.
+
+Keep penalties from tools to 1 to 3 shots. A die can map 4, 5 and 6 to safe results or to a repeat of 3 shots; never to 4, 5 or 6 shots.
 
 ## 8. Writing rules for the text
 
@@ -225,7 +245,9 @@ A rule card:
 
 ## 12. Things the app does with cards that you should know
 
-- **Shuffle.** After buying, all cards are mixed so the table does not get runs of one deck, kind or category. Wild cards are added after.
+- **Heat decides the order.** The heat meter (1 to 5) picks what is drawn next. At heat 1 the draw prefers the easiest cards (intensity 1, Icebreaker and Family first), and it climbs: at heat 4 it prefers the hardest cards (intensity 4 to 5, Adult last). Cards between wild cards are reordered this way each draw; wild cards keep their places. A card of the same category or deck as the one before is pushed down so there are no runs. When the meter is full (4.95 or more) the draw is completely random from everything left, and the heat bar says "Anything goes". If skips bring the heat back down, the draw goes back to climbing.
+- **Heat pace.** In games of about 20 cards or fewer, heat moves in full steps (dismiss +0.3, wild +0.5, heart +0.5, skip -0.2). In longer games the steps shrink (`heatPace`: 20.5 divided by the number of cards, never below 0.15), so the meter fills about two thirds of the way through the game and the climb from easy to hard is slow enough to feel. Family mode is capped at heat 2.0 and never goes random.
+- **Shuffle.** After buying, all cards are mixed so the table does not get runs of one deck, kind or category (`spreadOut`), then the heat draw takes over. Wild cards are added after.
 - **Skip** gives the same player a new card. It lowers heat a little, uses a card from the pot and does not pass the phone.
 - **Pot.** Each card costs its deck's price. Wild cards are free.
 - **Saved and trashed cards** are remembered by id.

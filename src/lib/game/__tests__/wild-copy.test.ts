@@ -12,8 +12,8 @@ describe('wild card copy', () => {
   });
   it('every wild card is a one-off challenge with a penalty of 2 or 3 shots', () => {
     const defs = Object.values(WILD_CARD_DEFINITIONS);
-    expect(defs).toHaveLength(4);
-    defs.forEach((d) => { expect([2, 3]).toContain(d.penalty); expect(wildDescription(d.type, false)).not.toMatch(/\{|next \d+ cards|immun/i); });
+    expect(defs).toHaveLength(5);
+    defs.forEach((d) => { expect([2, 3]).toContain(d.penalty); expect(wildDescription(d.type, false)).not.toMatch(/\{(?!drink)|next \d+ cards|immun/i); });
   });
   it('has no em dashes or exclamation marks in any description', () => {
     Object.values(WILD_CARD_DEFINITIONS).forEach((d) => {

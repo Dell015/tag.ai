@@ -9,13 +9,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { safeStorage } from '@/lib/storage';
-import { steerNextCard } from '@/lib/game/steering';
-import { calculateHeat, QueuedCard } from '@/lib/game/escalation-engine';
+import { drawForHeat } from '@/lib/game/steering';
+import { calculateHeat, heatPace, QueuedCard } from '@/lib/game/escalation-engine';
 import { advanceTurn, TurnState } from '@/lib/game/turn-rotation';
 import { buildCardQueue, buildBasketQueue, CardQueueConfig, BasketQueue } from '@/lib/game/card-queue-builder';
 import { deckOf, type DeckId } from '@/lib/game/decks';
 import { GAME_MODES, blendModes } from '@/lib/game/game-modes';
-import { decrementHeatSpike, decrementCrownImmunity } from '@/lib/game/wild-cards';
+import { WILD_CARD_DEFINITIONS, decrementHeatSpike, decrementCrownImmunity } from '@/lib/game/wild-cards';
 import { cardCost, round3 } from '@/lib/game/pot';
 import { focusUpcoming, addToTurns, movePlayer as movePlayerInTurns, type FocusKind } from '@/lib/game/mid-game';
 import { GameMode, WildCardType } from '@/types/game';
@@ -186,6 +186,7 @@ function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
     event,
     consecutiveSkips,
     gameMode: state.gameMode,
+    pace: heatPace(state.cardCountTarget),
   });
 
   const newHeatSpikeRemaining = decrementHeatSpike(state.heatSpikeRemaining);
@@ -207,7 +208,7 @@ function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
   const shouldEnd = newCardsPlayed >= state.cardCountTarget;
 
   if (!shouldEnd) {
-    cardQueue = steerNextCard(cardQueue, newCardIndex, effectiveHeat);
+    cardQueue = drawForHeat(cardQueue, newCardIndex, effectiveHeat);
   }
 
   return {
@@ -301,6 +302,7 @@ export const useGameStore = create<GameState>()(
           event: 'heart',
           consecutiveSkips: state.consecutiveSkips,
           gameMode: state.gameMode,
+          pace: heatPace(state.cardCountTarget),
         });
 
         const newHeatSpikeRemaining = decrementHeatSpike(state.heatSpikeRemaining);
@@ -392,7 +394,7 @@ export const useGameStore = create<GameState>()(
         const entry = blendModes(queue.modes.length ? queue.modes : [gameMode]).entryHeat;
         set({
           ...INITIAL,
-          cardQueue: queue.cards,
+          cardQueue: drawForHeat(queue.cards, 0, entry),
           bufferCards: queue.buffer,
           cardCountTarget: queue.target,
           gameMode,
@@ -411,6 +413,7 @@ export const useGameStore = create<GameState>()(
           event: 'wild_card',
           consecutiveSkips: state.consecutiveSkips,
           gameMode: state.gameMode,
+          pace: heatPace(state.cardCountTarget),
         });
         set({ heatLevel: newHeat, peakHeat: Math.max(state.peakHeat, newHeat), activeRule: null });
       },
@@ -421,7 +424,7 @@ export const useGameStore = create<GameState>()(
       // Version 3 changed the wild cards: take any old ones out of a saved game's queue.
       migrate: (persisted) => {
         const s = persisted as { cardQueue?: QueuedCard[]; bufferCards?: QueuedCard[] };
-        const known = ['call_out', 'voice_note', 'group_pose', 'dance_off'];
+        const known = Object.keys(WILD_CARD_DEFINITIONS);
         const gone = (c: QueuedCard) => c.cardType === 'wild' && !known.includes(c.wildCardType as string);
         if (Array.isArray(s?.cardQueue)) s.cardQueue = s.cardQueue.filter((c) => !gone(c));
         if (Array.isArray(s?.bufferCards)) s.bufferCards = s.bufferCards.filter((c) => !gone(c));

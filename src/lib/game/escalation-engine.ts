@@ -17,6 +17,8 @@ export interface EscalationInput {
   event: EscalationEvent;
   consecutiveSkips: number;
   gameMode: GameMode;
+  /** Scales every step (see heatPace). Defaults to 1. */
+  pace?: number;
 }
 
 export interface EscalationOutput {
@@ -72,8 +74,14 @@ const FAMILY_MODE_MAX_HEAT = 2.0;
  * Family mode caps at 2.0.
  * Heat is always clamped between 1.0 and 5.0.
  */
+/**
+ * How fast heat moves for a game of this length. Short games use the full steps; longer ones
+ * are slowed so the meter fills about two thirds of the way through, not in the first 12 cards.
+ */
+export const heatPace = (cardCountTarget: number): number => Math.max(0.15, Math.min(1, 20.5 / Math.max(1, cardCountTarget)));
+
 export function calculateHeat(input: EscalationInput): EscalationOutput {
-  const { currentHeat, event, consecutiveSkips, gameMode } = input;
+  const { currentHeat, event, consecutiveSkips, gameMode, pace = 1 } = input;
 
   let delta: number;
 
@@ -84,7 +92,7 @@ export function calculateHeat(input: EscalationInput): EscalationOutput {
     delta = HEAT_ADJUSTMENTS[event];
   }
 
-  let newHeat = currentHeat + delta;
+  let newHeat = currentHeat + delta * pace;
 
   // Apply Family mode cap
   if (gameMode === 'family') {

@@ -199,7 +199,7 @@ export default function PlayPage() {
       </header>
 
       <main className="min-h-0 flex-1 [perspective:1200px]">
-        {card && <PlayCard card={card} revealed={revealed} onReveal={reveal} onDone={() => resolve('dismiss')}
+        {card && <PlayCard card={card} revealed={revealed} onReveal={reveal} onDone={() => resolve('dismiss')} onRule={(t) => g.setRule(t)} everyone={g.turnRotation.players.map((p) => p.name)}
           others={g.turnRotation.players.filter((p) => p.id !== current.id)} nonDrinking={room.config.nonDrinkingMode} />}
       </main>
 

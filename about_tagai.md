@@ -1374,3 +1374,10 @@ The old wild cards that were hard to follow (Crown, Heat Spike, Shuffle, Whisper
 A new kind of card, the Rule card, changes how everyone plays until the next wild card: shots doubled, one language only, no names, no pointing, phones down. The rule stays on screen in a bar at the top while it is on, and the next wild card clears it.
 
 Every card now shows its consequence at the bottom: "Fail or refuse: take a shot". Truths and most dares are 1 shot, harder dares 2, wild cards 2 or 3. Non-drinking tables see forfeits instead. After you buy, the cards are mixed so there is no run of the same category, and the face-down card already wears the colour of its kind. The full rules for writing each kind of card are in `docs/CARD_GUIDE.md`.
+
+
+### 23.26 Heat drives the order, and tools invent cards
+
+The heat meter now decides what comes next. At the start the cards are the easiest ones (Icebreaker and Family first), and as the meter fills the cards get harder, ending with the Adult cards. When the meter is completely full the draw is totally random and the bar says "Anything goes". In long games the meter fills more slowly, so the climb takes most of the game instead of the first dozen cards.
+
+More cards now use the tools to make themselves up on the spot. Roll the die and your number is your penalty. Flip the coin to give or take. Spin the wheel for your penalty. Spin the bottle to pick who pays. Rule cards can roll, flip or spin to make their own rule, which then stays on screen until the next wild card. The Call Out and Voice Note wild cards spin the bottle to pick who does it, and a new wild card, Lucky Roll, rolls a die to say how many players drink.

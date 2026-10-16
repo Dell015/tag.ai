@@ -17,7 +17,7 @@ Core mechanics:
 - **Gestures:** tap = flip (cards start face-down, deliberately), swipe left/right = dismiss, hold-drag to trash = permanently remove for that user, heart = save to the user's library.
 - **Heat meter (1.0–5.0):** escalation engine. Dismiss +0.3, heart +0.5, wild +0.5, skip −0.2, 3 skips in a row −1.0. Heat biases which cards appear; it never hard-locks them.
 - **6 game modes:** Icebreaker, Barkada, Lovers, Spicy, Chaos, Family. Each sets entry heat, intensity distribution, wild-card frequency. Family caps heat at 2.0 and only uses intensity ≤ 2.
-- **4 wild cards (changed 2026-10-16, see D27):** Call Out, Voice Note, Freeze, Dance Off. One-off challenges, 2 or 3 shots if failed. Rule cards hold until the next wild card.
+- **5 wild cards (changed 2026-10-16, see D27 and D28):** Call Out, Voice Note, Freeze, Dance Off, Lucky Roll. One-off challenges, 2 or 3 shots if failed. Rule cards hold until the next wild card.
 - **Drink rules:** 4 templates (Classic, Chaos, Soft Mode, Points-Based) + up to 5 custom rules + a non-drinking mode. All players tap "I Agree".
 - **Comfort filters:** 10 presets + custom text topics the group wants off the table.
 - **Coins (planned, not implemented):** 1 peso = 1 coin; cards cost coins from a shared pot; new users get 10 welcome coins; PayMongo for purchases. In Phase 1 the pot is a "Free Mode" stub.
@@ -134,6 +134,8 @@ Numbered so they can be referenced in commits.
 | D26 | **Turn order is the order players tap to agree** on the house rules step (owner idea 2026-10-16). Each tapped name shows its number, tapping again undoes it, the first tap plays first (`playOrder` in `start-game.ts`). | Owner 2026-10-16. |
 
 | D27 | **Wild cards, rule cards and consequences (2026-10-16).** Removed Whisper Round, Crown, Heat Spike, Shuffle and the other lingering wild cards because they were hard to follow. Wild cards are now four one-off challenges (Call Out 3 shots, Voice Note 2, Freeze 2, Dance Off 2). New card kind **Rule** (14 cards): holds until the next wild card, shown in a lime bar at the top while it is on (`activeRule` in game-store). Every card shows a consequence line at the bottom, "Fail or refuse: take N shots" (`penaltyFor`, 1 to 3). Drink words use tokens `{drink}`, `{shot}`, `{shots}` so non-drinking tables see forfeits. The card back now wears the colour of its kind. After buying, cards are spread so there are no runs of one category (`spreadOut`). Full rules for making cards: `docs/CARD_GUIDE.md`. | Owner 2026-10-16. |
+
+| D28 | **Heat drives the card order (2026-10-16).** Easy cards first (Icebreaker and Family at low heat), harder as the meter fills, a full meter is a completely random draw (`drawForHeat` in `steering.ts`, replaces the old window steering). Heat steps are paced by game length so the meter fills about two thirds through (`heatPace`). Cards can invent themselves with tools: dice, coin, wheel, bottle, vote and timer decide penalties, who pays, or the rule itself (rule cards with `tool.via`), wild cards Call Out, Voice Note use the bottle and Lucky Roll uses a die (now 5 wild cards). | Owner 2026-10-16. |
 
 Open / unknown (owner can't remember — decide when it comes up, then record it above):
 - Whether phone-OTP login is still wanted (docs said email/Google/phone; code has email + Google only).
@@ -296,6 +298,8 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-16 (heat order, tool-made cards)** — Cards now come easy to hard as the heat meter fills and fully random at max heat, heat is paced by game length, 17 penalty/rule cards where the dice, coin, wheel or bottle decide, rule cards that make their rule on the spot, Lucky Roll wild card, bottle on Call Out and Voice Note. 210 tests pass, lint clean, build OK.
 
 - **2026-10-16 (wild cards, rules, penalties, shuffle)** — Removed hard-to-follow wild cards (Whisper Round, Crown, Heat Spike, Shuffle and the rest), new challenge wild cards with 2 or 3 shot penalties, Rule cards with an on-screen bar, a consequence line on every card, spread shuffle, card back in kind colour, `docs/CARD_GUIDE.md`. 205 tests pass, lint clean, build OK.
 
