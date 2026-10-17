@@ -1,12 +1,29 @@
 /**
  * Topic deck content: things to talk about, not cards to answer. No turns, no shots.
- * Each topic has a group and optional filter tags (see lib/game/comfort-filters.ts).
- * Kept small on purpose while the groups are being settled.
+ * Each topic has a group, a format (how the table plays it), a "go deeper" follow-up and optional
+ * filter tags (see lib/game/comfort-filters.ts). How to write them: docs/TOPIC_GUIDE.md.
  */
 export type TalkGroupId = 'moral' | 'fate' | 'self' | 'society' | 'reflect' | 'takes' | 'dilemma' | 'stories';
 
+/**
+ * How the table plays a topic.
+ * agree: a statement. Count down, everyone shows agree or disagree, the table taps the split.
+ * ab: two options. Count down, everyone picks A or B, the table taps the split.
+ * think: a reflective question. A one minute thinking timer, then talk.
+ * story: someone tells it. The bottle picks who, then a one minute timer.
+ */
+export type TalkFormat = 'agree' | 'ab' | 'think' | 'story';
+
 export interface TalkGroup { id: TalkGroupId; label: string; hint: string }
-export interface TalkTopic { id: string; group: TalkGroupId; text: string; topics?: string[] }
+export interface TalkTopic {
+  id: string; group: TalkGroupId; text: string; topics?: string[];
+  /** Missing in old saved sessions: the group decides (see formatOf). */
+  format?: TalkFormat;
+  /** One sharper follow-up, shown when the table taps "Go deeper". */
+  deeper?: string;
+  /** The two options of an "ab" topic, short enough for a button. */
+  a?: string; b?: string;
+}
 
 export const TALK_GROUPS: TalkGroup[] = [
   { id: 'moral', label: 'Right and wrong', hint: 'Where people draw the line' },
@@ -19,55 +36,95 @@ export const TALK_GROUPS: TalkGroup[] = [
   { id: 'stories', label: 'Stories', hint: 'Tell the table what happened' },
 ];
 
-const rows: [TalkGroupId, string, string[]?][] = [
-  ['moral', 'Is it ever okay to lie to someone you love?'],
-  ['moral', 'If a friend cheats on their partner, do you tell the partner?'],
-  ['moral', 'Is it wrong to forgive someone who never said sorry?'],
-  ['moral', 'Should people be judged by their worst moment or their usual self?'],
-  ['moral', 'Is keeping a secret for a friend always the loyal thing to do?'],
-  ['moral', 'Can someone be a good person without believing in anything?', ['religion']],
-  ['moral', 'Would you return a wallet with a lot of cash and no ID in it?'],
-  ['fate', 'Do we choose who we fall for, or does it just happen?'],
-  ['fate', 'Is success mostly talent, effort or luck?'],
-  ['fate', 'If you could see how your life ends, would you look?', ['death']],
-  ['fate', 'Do things happen for a reason, or do we invent the reason afterwards?'],
-  ['fate', 'Is there one person out there for everyone?'],
-  ['fate', 'Is there anything after we die?', ['religion', 'death']],
-  ['fate', 'If you replayed your life from the start, how much would change?'],
-  ['self', 'If every part of you was slowly replaced, would you still be you?'],
-  ['self', 'Are you the same person online as in real life?'],
-  ['self', 'Can people really change, or do they just get better at hiding?'],
-  ['self', 'What would you do if nobody could ever find out?'],
-  ['self', 'Do you know yourself better than your best friend knows you?'],
-  ['society', 'Will we be better or worse off with AI in everything?'],
-  ['society', 'Is social media making friendships stronger or thinner?'],
-  ['society', 'Should rich people be allowed to buy their way out of every problem?', ['money']],
-  ['society', 'Would you live in a world with no phones if everyone agreed?'],
-  ['society', 'Is it better to be loved by many or deeply by one?'],
-  ['society', 'Should a country put the environment ahead of jobs?', ['politics']],
-  ['society', 'What will people in 50 years find strange about how we live?'],
-  ['reflect', 'What would you tell yourself at 18?'],
-  ['reflect', 'What is something you did not value until it was gone?'],
-  ['reflect', 'What does a good life look like to you, and is it the one you are living?'],
-  ['reflect', 'Which small decision changed your life the most?'],
-  ['reflect', 'What are you proud of that nobody around you knows about?'],
-  ['reflect', 'What is the best advice you ever ignored?'],
-  ['takes', 'Is a hotdog a sandwich?'],
-  ['takes', 'Is it rude to leave a group chat without saying anything?'],
-  ['takes', 'Should you split the bill evenly or pay for what you ordered?', ['money']],
-  ['takes', 'Is reading the last page of a book first cheating?'],
-  ['takes', 'Are people who are always early more respectful or just anxious?'],
-  ['takes', 'Which is worse: being left on read or being ghosted?'],
-  ['dilemma', 'Would you rather know every truth or be happy believing a lie?'],
-  ['dilemma', 'Would you rather have a job you love that pays little, or one you hate that pays well?', ['money', 'career']],
-  ['dilemma', 'Would you rather lose all your memories or never make a new one?'],
-  ['dilemma', 'Would you rather be famous and disliked, or unknown and adored by a few?'],
-  ['dilemma', 'Would you rather always say what you think or never speak again?'],
-  ['stories', 'Tell the story of the best day you have had with someone at this table.'],
-  ['stories', 'Tell us about a time you were completely wrong and found out the hard way.'],
-  ['stories', 'Describe the strangest person you have ever met.'],
-  ['stories', 'What is the most memorable trip you have taken, and why?'],
-  ['stories', 'Tell us about a time a stranger changed your day.'],
+const DEFAULT_FORMAT: Record<TalkGroupId, TalkFormat> = { moral: 'agree', fate: 'think', self: 'think', society: 'agree', reflect: 'think', takes: 'agree', dilemma: 'ab', stories: 'story' };
+/** The format a topic plays in, falling back to its group for topics saved before formats existed. */
+export const formatOf = (t: TalkTopic): TalkFormat => {
+  const f = t.format ?? DEFAULT_FORMAT[t.group];
+  return f === 'ab' && !(t.a && t.b) ? 'think' : f;
+};
+
+type Row = { g: TalkGroupId; f: TalkFormat; text: string; deeper: string; a?: string; b?: string; topics?: string[] };
+const agree = (g: TalkGroupId, text: string, deeper: string, topics?: string[]): Row => ({ g, f: 'agree', text, deeper, topics });
+const think = (g: TalkGroupId, text: string, deeper: string, topics?: string[]): Row => ({ g, f: 'think', text, deeper, topics });
+const story = (text: string, deeper: string, topics?: string[]): Row => ({ g: 'stories', f: 'story', text, deeper, topics });
+const ab = (text: string, a: string, b: string, deeper: string, topics?: string[], g: TalkGroupId = 'dilemma'): Row => ({ g, f: 'ab', text, a, b, deeper, topics });
+
+const rows: Row[] = [
+  // Right and wrong
+  agree('moral', 'It is okay to lie to someone you love to protect them.', 'Where is the line between protecting someone and controlling them?'),
+  agree('moral', 'If a friend cheats, you have to tell their partner.', 'Does it change if the partner is also your friend?'),
+  agree('moral', 'You can forgive someone who never said sorry.', 'Who does the forgiving help, them or you?'),
+  agree('moral', 'People should be judged by their usual self, not their worst moment.', 'Is there a mistake so big it outweighs everything else?'),
+  agree('moral', 'Keeping a friend\'s secret is always the loyal thing to do.', 'What secret would make you break your word?'),
+  agree('moral', 'A person can be good without believing in anything.', 'What keeps a person good when nobody is watching?', ['religion']),
+  agree('moral', 'You should return a wallet full of cash with no ID in it.', 'Would your answer change if you were broke this week?'),
+  agree('moral', 'It is fine to cut someone off after one big betrayal.', 'What would a person have to do to earn a second chance?'),
+  // Fate and choice
+  agree('fate', 'We do not choose who we fall for. It just happens.', 'Then why do some people keep falling for the same type?'),
+  agree('fate', 'Success is mostly luck.', 'What was the luckiest break you ever got?'),
+  think('fate', 'If you could see how your life ends, would you look?', 'What if it turned out ordinary? Would that be a relief or a letdown?', ['death']),
+  agree('fate', 'Everything happens for a reason.', 'Name something that hurt at the time and made sense later.'),
+  agree('fate', 'There is one person out there for everyone.', 'If so, what are the odds you have already met yours?'),
+  think('fate', 'Is there anything after we die?', 'How does your answer change the way you live?', ['religion', 'death']),
+  think('fate', 'If you replayed your life from the start, how much would change?', 'What is the one thing you would keep exactly as it was?'),
+  // Mind and self
+  think('self', 'If every part of you was slowly replaced, would you still be you?', 'Which part of you could never be replaced?'),
+  agree('self', 'You are the same person online as in real life.', 'Who has met only one of your two versions?'),
+  agree('self', 'People can really change.', 'Who in your life actually did, and what made the difference?'),
+  think('self', 'What would you do if nobody could ever find out?', 'Why does being seen stop you?'),
+  agree('self', 'You know yourself better than your best friend knows you.', 'What does your best friend see in you that you do not?'),
+  // Society and the future
+  agree('society', 'AI will make life better for most of us.', 'Who gets left behind first?'),
+  agree('society', 'Social media makes friendships thinner.', 'Which friendship of yours only survives because of an app?'),
+  agree('society', 'Rich people should not be able to buy their way out of every problem.', 'Where would you draw the line on what money can buy?', ['money']),
+  agree('society', 'Life would be better with no phones, if everyone agreed.', 'What would you miss first?'),
+  ab('Pick one: be loved by many, or be loved deeply by one.', 'Loved by many', 'Loved by one', 'Which one do you already have more of?', undefined, 'society'),
+  agree('society', 'A country should put the environment ahead of jobs.', 'Would you accept a pay cut yourself for it?', ['politics']),
+  think('society', 'What will people in 50 years find strange about how we live?', 'What do we do today that they will judge us for most?'),
+  // Life reflections
+  think('reflect', 'What would you tell yourself at 18?', 'Would 18 year old you have listened?'),
+  think('reflect', 'What is something you did not value until it was gone?', 'Is there something you have now that you should value more?'),
+  think('reflect', 'What does a good life look like to you, and is it the one you are living?', 'What is the smallest change that would close the gap?'),
+  think('reflect', 'Which small decision changed your life the most?', 'What would your life look like if you had decided the other way?'),
+  think('reflect', 'What are you proud of that nobody around you knows about?', 'Why have you kept it to yourself?'),
+  think('reflect', 'What is the best advice you ever ignored?', 'What did ignoring it cost you, or save you?'),
+  // Everyday hot takes
+  agree('takes', 'A hotdog is a sandwich.', 'So what is the one thing that makes a sandwich a sandwich?'),
+  agree('takes', 'Leaving a group chat without saying anything is rude.', 'What is the politest way to leave one?'),
+  agree('takes', 'Splitting the bill evenly is the fair way.', 'What should you do when one person ordered far more?', ['money']),
+  agree('takes', 'Reading the last page of a book first is cheating.', 'Does knowing the ending ruin it, or make you enjoy it more?'),
+  agree('takes', 'People who are always early are more respectful, not just anxious.', 'Which are you, honestly?'),
+  ab('Pick one: being left on read, or being ghosted. Which is worse?', 'Left on read', 'Ghosted', 'Which one has happened to you more?', undefined, 'takes'),
+  agree('takes', 'Sweet spaghetti is the right kind of spaghetti.', 'What is the one dish you will defend to the end?'),
+  agree('takes', 'Karaoke is better when you are bad at it.', 'What song do you refuse to sing in front of people?'),
+  agree('takes', 'Rice is needed in every proper meal.', 'What meal comes closest to breaking that rule?'),
+  agree('takes', 'It is rude to be on your phone at the dinner table.', 'When did you last break that rule?'),
+  // Dilemmas
+  ab('Would you rather know every truth, or be happy believing a lie?', 'Know every truth', 'Happy in a lie', 'What is one truth you are glad you do not know?'),
+  ab('Would you rather have a job you love that pays little, or one you hate that pays well?', 'Love it, low pay', 'Hate it, high pay', 'How much more would it take to make you switch?', ['money', 'career']),
+  ab('Would you rather lose all your memories, or never make a new one?', 'Lose them all', 'Never make new ones', 'Which memory would you fight hardest to keep?'),
+  ab('Would you rather be famous and disliked, or unknown and adored by a few?', 'Famous, disliked', 'Unknown, adored', 'Who are the few?'),
+  ab('Would you rather always say what you think, or never speak again?', 'Say everything', 'Never speak', 'What is the first thing you would say if you could not hold back?'),
+  ab('Would you rather read minds, or turn invisible?', 'Read minds', 'Turn invisible', 'Whose mind would you read first, and whose would you regret reading?'),
+  ab('Would you rather always arrive 20 minutes early, or always be 10 minutes late?', 'Always early', 'Always late', 'Which one is already you?'),
+  ab('Would you rather give up your phone for a year, or give up rice for a year?', 'No phone', 'No rice', 'What would you do with the extra time?'),
+  ab('Would you rather live in the city, always busy, or in the province, quiet and far from everyone?', 'The city', 'The province', 'Where do you see yourself at 60?'),
+  ab('Would you rather marry someone your family loves and you like, or someone you love and your family cannot stand?', 'Family loves them', 'You love them', 'Who is in the room when you decide, you or your family?'),
+  ab('Would you rather know the day you will die, or never know?', 'Know the day', 'Never know', 'What is the first thing you would change?', ['death']),
+  // Stories
+  story('Tell the story of the best day you have had with someone at this table.', 'What made that day better than all the ordinary ones?'),
+  story('Tell us about a time you were completely wrong and found out the hard way.', 'What would you do differently now?'),
+  story('Describe the strangest person you have ever met.', 'What did you learn from them?'),
+  story('Tell us about the most memorable trip you have taken, and why.', 'Who would you take back with you?'),
+  story('Tell us about a time a stranger changed your day.', 'Have you ever been that stranger for someone?'),
+  story('Tell us about a time you were scared and it turned out fine.', 'What helped you get through it?'),
+  story('Tell us about the best meal of your life and who you shared it with.', 'Could you ever cook or find it again?'),
+  story('Tell us about someone who shaped who you are.', 'Do they know?'),
+  story('Tell us about a time you got completely lost.', 'Who found you, or how did you find your way?'),
+  story('Tell us about the most embarrassing thing that happened to you at school or work.', 'Is it funny to you now?'),
 ];
 
-export const TALK_TOPICS: TalkTopic[] = rows.map(([group, text, topics], i) => ({ id: `talk-${String(i + 1).padStart(3, '0')}`, group, text, ...(topics ? { topics } : {}) }));
+export const TALK_TOPICS: TalkTopic[] = rows.map((r, i) => ({
+  id: `talk-${String(i + 1).padStart(3, '0')}`, group: r.g, text: r.text, format: r.f, deeper: r.deeper,
+  ...(r.a ? { a: r.a, b: r.b } : {}), ...(r.topics ? { topics: r.topics } : {}),
+}));

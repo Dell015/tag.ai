@@ -17,26 +17,26 @@ interface Row {
 
 const ROWS: Row[] = [
   // Dice, one die with a line for each number
-  { kind: 'dice', intensity: 2, text: 'Roll the dice. Your number decides your fate.', tool: { dice: 1 },
+  { kind: 'dice', intensity: 2, text: 'Roll the die. Your number decides your fate.', tool: { dice: 1 },
     outcomes: ['Pick someone to {drink}.', 'You {drink}.', 'Safe. Nothing happens.', 'Tell an embarrassing story.', 'Give a dare to the person on your left.', 'Everyone {drink}.'] },
-  { kind: 'dice', intensity: 3, text: 'Roll the dice. Do what your number says.', tool: { dice: 1 },
+  { kind: 'dice', intensity: 3, text: 'Roll the die. Do what your number says.', tool: { dice: 1 },
     outcomes: ['Do your best impression of someone here.', 'Sing the chorus of any song.', 'Read your last sent message out loud, or {drink}.', 'Say something nice about every player.', 'Do 10 jumping jacks.', 'Pass the dice to the next player. You are free.'] },
-  { kind: 'dice', intensity: 5, text: 'Roll the dice. No take-backs.', tool: { dice: 1 },
+  { kind: 'dice', intensity: 5, text: 'Roll the die. No take-backs.', tool: { dice: 1 },
     outcomes: ['Truth: your biggest regret.', 'Truth: who here you trust least.', 'Dare: the group gives you a nickname for the night.', '{drink} twice.', 'Swap seats with anyone you like.', 'Free pass. Give it to someone.'] },
   // Dice, the number is the rule
-  { kind: 'dice', intensity: 3, text: 'Roll the dice and count that many players clockwise from you. That player must {drink}.', tool: { dice: 1 }, people: { min: 3, max: null } },
-  { kind: 'dice', intensity: 3, text: 'Roll two dice. Name that many Filipino teleserye. Miss one and {drink}.', tool: { dice: 2 } },
-  { kind: 'dice', intensity: 1, text: 'Roll the dice. Make that many funny faces in a row.', tool: { dice: 1 } },
-  { kind: 'dice', intensity: 1, text: 'Roll the dice. Say that many things you are grateful for tonight.', tool: { dice: 1 }, category: 'memories' },
-  { kind: 'dice', intensity: 3, text: 'Roll the dice. Ask that many players one question each. Honest answers only.', tool: { dice: 1 }, people: { min: 3, max: null } },
+  { kind: 'dice', intensity: 3, text: 'Roll the die and count that many players clockwise from you. That player must {drink}.', tool: { dice: 1 }, people: { min: 3, max: null } },
+  { kind: 'dice', intensity: 3, text: 'Roll the die. Name that many Filipino teleserye. Miss one and {drink}.', tool: { dice: 1 } },
+  { kind: 'dice', intensity: 1, text: 'Roll the die. Make that many funny faces in a row.', tool: { dice: 1 } },
+  { kind: 'dice', intensity: 1, text: 'Roll the die. Say that many things you are grateful for tonight.', tool: { dice: 1 }, category: 'memories' },
+  { kind: 'dice', intensity: 3, text: 'Roll the die. Ask that many players one question each. Honest answers only.', tool: { dice: 1 }, people: { min: 3, max: null } },
 
   // Coin, heads then tails
   { kind: 'coin', intensity: 1, text: 'Flip the coin and follow the side it lands on.', outcomes: ['Heads: ask the group any question.', 'Tails: the group asks you one question.'] },
   { kind: 'coin', intensity: 2, text: 'Flip the coin. Heads is kind, tails is not.', outcomes: ['Heads: give every player a compliment.', 'Tails: you {drink}.'] },
   { kind: 'coin', intensity: 3, text: 'Flip the coin. Luck decides who pays.', outcomes: ['Heads: pick someone to {drink}.', 'Tails: you {drink}.'] },
   { kind: 'coin', intensity: 3, text: 'Flip the coin. Heads is a secret, tails is a sip.', outcomes: ['Heads: tell a secret nobody here knows.', 'Tails: {drink} and keep it.'] },
-  { kind: 'coin', intensity: 1, text: 'Flip the coin. Keep it light.', outcomes: ['Heads: do your best animal sound.', 'Tails: tell a joke.'] },
-  { kind: 'coin', intensity: 4, text: 'Flip the coin. Someone pays for it.', outcomes: ['Heads: the person on your left must {drink}.', 'Tails: the person on your right must {drink}.'] },
+  { kind: 'coin', intensity: 1, text: 'Flip the coin. Animal sound or joke.', outcomes: ['Heads: do your best animal sound.', 'Tails: tell a joke.'] },
+  { kind: 'coin', intensity: 4, text: 'Flip the coin. A neighbour pays for it.', outcomes: ['Heads: the person on your left must {drink}.', 'Tails: the person on your right must {drink}.'] },
   { kind: 'coin', intensity: 4, text: 'Flip the coin. Truth or dare, but you do not choose.', outcomes: ['Heads: truth. Answer anything the group asks.', 'Tails: dare. The group picks it.'] },
   { kind: 'coin', intensity: 5, text: 'Flip the coin. Win or share the loss.', outcomes: ['Heads: you are safe this round.', 'Tails: you and the person across from you {drink}.'] },
 
@@ -53,7 +53,7 @@ const ROWS: Row[] = [
   // Wheel
   { kind: 'wheel', intensity: 1, text: 'Spin the wheel and do what it says.', tool: { labels: ['Funny face', 'Tell a joke', 'Animal sound', 'Spin again', 'High five', 'Free pass'] } },
   { kind: 'wheel', intensity: 2, text: 'Spin the wheel. It decides.', tool: { labels: ['Sing', 'Speak in rhymes', 'Joke', 'Impression', 'Pass', 'Cheers'] } },
-  { kind: 'wheel', intensity: 3, text: 'Spin the wheel and own the result.', tool: { labels: ['Truth', 'Dare', '{drink}', 'Swap seats', 'Free pass', 'Compliment a player'] } },
+  { kind: 'wheel', intensity: 3, text: 'Spin the wheel. You do the one it lands on.', tool: { labels: ['Truth: the group asks', 'Dare: the group picks', '{drink}', 'Swap seats', 'Free pass', 'Compliment a player'] } },
   { kind: 'wheel', intensity: 3, text: 'Spin the wheel. No skipping.', tool: { labels: ['Tell a secret', 'Imitate a player', 'Sing a line', 'Tongue twister', 'Sing an ad jingle', 'Free pass'] } },
   { kind: 'wheel', intensity: 4, text: 'Spin the wheel. Brace yourself.', tool: { labels: ['{drink} twice', 'Truth', 'Dare', 'Pick someone to {drink}', 'Free pass', 'Everyone {drink}'] } },
   { kind: 'wheel', intensity: 5, text: 'Spin the wheel. Last chance to look brave.', tool: { labels: ['Truth: biggest regret', 'Dare: the group picks', '{drink} twice', 'Pick two players to {drink}', 'Free pass', 'Everyone {drink}'] } },
@@ -71,9 +71,9 @@ const ROWS: Row[] = [
   { kind: 'timer', intensity: 5, text: 'You have 60 seconds. Confess something you have never told this group. Silence is a {drink}.', tool: { seconds: 60 }, category: 'confessions' },
 
   // Vote, everyone points at once
-  { kind: 'vote', intensity: 1, text: 'Who here has the best laugh? Count down, then everyone points.', tool: { seconds: 3 } },
-  { kind: 'vote', intensity: 1, text: 'Who here would win a singing contest? Count down, then everyone points.', tool: { seconds: 3 } },
-  { kind: 'vote', intensity: 2, text: 'Who here is most likely to be late to their own wedding? Count down, then everyone points.', tool: { seconds: 3 } },
+  { kind: 'vote', intensity: 1, text: 'Who here has the best laugh? Count down and point. The winner picks someone to {drink}.', tool: { seconds: 3 } },
+  { kind: 'vote', intensity: 1, text: 'Who here would win a singing contest? Count down and point. The winner picks someone to {drink}.', tool: { seconds: 3 } },
+  { kind: 'vote', intensity: 2, text: 'Who here is most likely to be late to their own wedding? Count down and point. Most fingers: {drink}.', tool: { seconds: 3 } },
   { kind: 'vote', intensity: 2, text: 'Who here is the best cook? The winner picks a player to {drink}.', tool: { seconds: 3 } },
   { kind: 'vote', intensity: 3, text: 'Who here is most likely to forget a friend\'s birthday? Most votes: {drink}.', tool: { seconds: 3 } },
   { kind: 'vote', intensity: 3, text: 'Who here is most likely to text their ex tonight? Most votes: {drink}.', tool: { seconds: 3 } },
@@ -83,9 +83,9 @@ const ROWS: Row[] = [
   // The tool decides the penalty, so the card invents itself on the spot
   { kind: 'dice', intensity: 3, text: 'Roll the die. Your number is your penalty.', tool: { dice: 1 },
     outcomes: ['Take {shot}.', 'Take 2 {shots}.', 'Take 3 {shots}.', 'Take 3 {shots}. Unlucky.', 'Safe. Give 2 {shots} to anyone.', 'Safe. Pick who takes 3 {shots}.'] },
-  { kind: 'dice', intensity: 4, text: 'Roll two dice. The lower number is how many {shots} you take, the higher is how many you give.', tool: { dice: 2 } },
+  { kind: 'dice', intensity: 4, text: 'Roll two dice. The lower number is how many {shots} you take and the higher is how many you give. Never more than 3 each.', tool: { dice: 2 } },
   { kind: 'dice', intensity: 2, text: 'Roll the die. That many players must say one thing they like about you.', tool: { dice: 1 }, people: { min: 3, max: null } },
-  { kind: 'dice', intensity: 5, text: 'Roll two dice. Take the total, but never more than 3 {shots}. Doubles mean you give them all away.', tool: { dice: 2 } },
+  { kind: 'dice', intensity: 5, text: 'Roll two dice. Take the total in {shots}, up to 3. On a double you give them away instead.', tool: { dice: 2 } },
   { kind: 'coin', intensity: 3, text: 'Flip the coin. Give or take.', outcomes: ['Heads: give 2 {shots} to anyone.', 'Tails: take 2 {shots}.'] },
   { kind: 'coin', intensity: 4, text: 'Flip the coin. Double or nothing.', outcomes: ['Heads: nothing happens.', 'Tails: take 3 {shots}.'] },
   { kind: 'coin', intensity: 2, text: 'Flip the coin. Heads picks who goes next.', outcomes: ['Heads: you pick who takes the next card.', 'Tails: the player on your left picks who takes the next card.'] },
@@ -99,9 +99,9 @@ const ROWS: Row[] = [
 
   // Rule cards that make their rule on the spot with a tool
   { kind: 'rule', intensity: 3, text: 'Roll the die. Your number sets the rule until the next wild card.', tool: { via: 'dice', dice: 1 },
-    outcomes: ['No names. Say one and take {shot}.', 'No pointing. Point and take {shot}.', 'Left hand only. Slip and take {shot}.', 'Whisper only. Get loud and take {shot}.', 'Say "po" after every sentence. Forget and take {shot}.', 'Phones down. Touch one and take 2 {shots}.'] },
+    outcomes: ['No names. Say one and take {shot}.', 'No pointing. Point and take {shot}.', 'Use only your left hand. Slip and take {shot}.', 'Whisper only. Get loud and take {shot}.', 'Say "po" after every sentence. Forget and take {shot}.', 'Phones down. Touch one and take 2 {shots}.'] },
   { kind: 'rule', intensity: 3, text: 'Flip the coin. It sets the rule until the next wild card.', tool: { via: 'coin' },
-    outcomes: ['Heads: all {shots} are doubled.', 'Tails: nobody drinks. Everyone does a dare for every card instead.'] },
+    outcomes: ['Heads: all {shots} are doubled.', 'Tails: no {shots} at all. Whoever fails a card does a dare instead.'] },
   { kind: 'rule', intensity: 4, text: 'Spin the wheel. The rule it lands on holds until the next wild card.', tool: { via: 'wheel', labels: ['All {shots} are doubled.', 'No swearing. Swear and take {shot}.', 'Questions only. Slip and take {shot}.', 'No yes or no. Slip and take {shot}.', 'Cheers before every drink. Forget and you {drink}.', 'Compliment first. Forget and take {shot}.'] } },
 
   // Rules: they hold until the next wild card, and the app keeps the rule on screen meanwhile.
@@ -118,11 +118,11 @@ const ROWS: Row[] = [
   { kind: 'rule', intensity: 1, text: 'Say cheers before every drink until the next wild card. Forget and you {drink}.', rule: 'Cheers before every drink' },
   { kind: 'rule', intensity: 3, text: 'Compliment the player on your right before you answer anything until the next wild card. Forget and take {shot}.', rule: 'Compliment first. Forget and take {shot}' },
   { kind: 'rule', intensity: 4, text: 'Nobody touches their phone until the next wild card. Whoever does takes 2 {shots}.', rule: 'Phones down. Touch one and take 2 {shots}', penalty: 2 },
-  { kind: 'rule', intensity: 5, text: 'The player who reads each card chooses who takes the penalty on it, until the next wild card.', rule: 'The reader picks who pays' },
+  { kind: 'rule', intensity: 5, text: 'Until the next wild card, the player whose turn it is chooses who takes the penalty on their card.', rule: 'The reader picks who pays' },
 
   // 18+ (drawn only from the Adult deck and Chaos). Frank and sexual in theme, never graphic.
   { kind: 'coin', intensity: 4, adult: true, text: 'Flip the coin. Flirt or pay.', outcomes: ['Heads: flirt with the player on your right for 10 seconds.', 'Tails: you {drink}.'] },
-  { kind: 'dice', intensity: 4, adult: true, text: 'Roll the dice. Your number decides.', tool: { dice: 1 },
+  { kind: 'dice', intensity: 4, adult: true, text: 'Roll the die. Your number decides.', tool: { dice: 1 },
     outcomes: ['Whisper a compliment to the player on your left.', '{drink}.', 'Pick a player. You both {drink}.', 'Tell your worst date story.', 'Say who here you would take on a date.', 'Safe. Everyone else must {drink}.'] },
   { kind: 'bottle', intensity: 4, adult: true, text: 'Spin the bottle. Tell the player it lands on what you noticed first about them. Keep it kind.', people: { min: 3, max: null } },
   { kind: 'vote', intensity: 4, adult: true, text: 'Who here is the best flirt? The winner picks someone to {drink}.', tool: { seconds: 3 } },
@@ -130,7 +130,7 @@ const ROWS: Row[] = [
   { kind: 'timer', intensity: 4, adult: true, text: 'You have 30 seconds. Describe your perfect date with no filler words. Slip up and {drink}.', tool: { seconds: 30 } },
   { kind: 'dice', intensity: 5, adult: true, text: 'Roll the die. Your number sets the question you answer.', tool: { dice: 1 },
     outcomes: ['What is your favourite thing in bed?', 'What is your wildest hookup story, in one sentence?', 'How many people have you slept with? Say it or {drink} twice.', 'What is a turn-on you rarely admit?', 'Who here would you sleep with? Say it or {drink} twice.', 'You are safe. Ask anyone any bedroom question.'] },
-  { kind: 'dice', intensity: 4, adult: true, text: 'Roll the dice. That many players answer: what is your biggest bedroom red flag in a partner?', tool: { dice: 1 }, people: { min: 3, max: null } },
+  { kind: 'dice', intensity: 4, adult: true, text: 'Roll the die. That many players answer: what is your biggest bedroom red flag in a partner?', tool: { dice: 1 }, people: { min: 3, max: null } },
   { kind: 'coin', intensity: 5, adult: true, text: 'Flip the coin. Tell it or pay.', outcomes: ['Heads: tell your wildest hookup story.', 'Tails: {drink} twice and pass the card.'] },
   { kind: 'coin', intensity: 4, adult: true, text: 'Flip the coin. Heads you ask, tails you answer.', outcomes: ['Heads: ask any player a question about their love life.', 'Tails: the group asks you one question about your love life.'] },
   { kind: 'bottle', intensity: 5, adult: true, text: 'Spin the bottle. Ask the player it lands on any bedroom question. They answer or {drink} twice.', people: { min: 3, max: null } },

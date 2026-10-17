@@ -194,6 +194,16 @@ These are hard rules, checked by tests where noted.
 11. **No time limits you cannot see.** If a dare has a time ("for 30 seconds"), the app adds a timer button by itself. Write the number as digits and the unit as a word: "30 seconds".
 12. **No heavy topics in decks that are not for them.** Family and Icebreaker cards avoid sex, death, trauma, money trouble, politics, religion and exes. Tag topics honestly so the comfort filter can remove them.
 
+### Clarity checks (all enforced by tests)
+
+- **A truth is something you answer. A dare is something you do.** If the card starts with "Do", "Call", "Let", "Post", "Read", "Speak", "Sing", "Show" and so on, it is a dare (`action`), never a truth.
+- **One die says "die", two dice say "dice".** "Roll the die" for one, "Roll two dice" for two.
+- **Vote cards need a consequence.** Say what the winner or loser does.
+- **A tool result is a full sentence.** "Tails: whoever fails a card does a dare instead", not "Tails: nobody drinks".
+- **Wheel labels are short.** Under 22 characters. Long labels are split over two lines on the wheel.
+- No em dash, no exclamation mark, no doubled space, and no bare "drink" or "shot" (use the tokens).
+- Do not repeat an idea. If two cards ask the same thing, rewrite one.
+
 ## 9. How many players a card needs
 
 The app reads the wording to decide, unless you set `people`:
@@ -225,7 +235,7 @@ Cards that need a minimum are dropped from games with fewer players. Bottle and 
 4. **Fill the kind's fields** (section 3): `tool`, `outcomes`, `rule`, `people`.
 5. **Check the penalty.** The default is fine for most. Set `penalty` only if the card needs 2 or 3.
 6. **Add it to the right file:**
-   - Truths and dares for the library: add to `supabase/seed/cards.sql`, then run `node scripts/seed-to-ts.mjs` to regenerate `src/lib/data/cards.ts` (do not edit that file by hand).
+   - Truths and dares for the library: add to `supabase/seed/cards.sql`, then run `node scripts/seed-to-ts.mjs` to regenerate `src/lib/data/cards.ts` (do not edit that file by hand). To retire a card, change its last value from `true` to `false`: it keeps its id slot so saved card ids stay valid.
    - 18+ questions and dares: `src/lib/data/adult-cards.ts`.
    - Dice, coin, bottle, wheel, timer, vote and rule cards: a row in `ROWS` in `src/lib/data/tool-cards.ts`.
    - Shop packs: `src/lib/data/shop-catalogue.ts`.

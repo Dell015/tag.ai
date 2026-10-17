@@ -168,3 +168,23 @@ describe('heat pace', () => {
     expect(useGameStore.getState().heatLevel).toBeLessThan(3);
   });
 });
+
+describe('card text quality', () => {
+  const all = () => [...libraryCards(true)];
+  it('has no em dash, exclamation mark or doubled space in any card', () => {
+    const bad = all().filter((c) => /[—!]|  /.test(c.text) || (c.outcomes ?? []).some((o) => /[—!]/.test(o)));
+    expect(bad.map((c) => c.text)).toEqual([]);
+  });
+  it('never writes a drink word directly, so non-drinking tables work', () => {
+    const bad = all().filter((c) => /(^|[^{])\b(drinks?|shots?)\b/i.test(c.text.replace(/\{[a-z]+\}/g, '')) && !/\{/.test(c.text));
+    expect(bad.map((c) => c.text)).toEqual([]);
+  });
+  it('says "die" for one die and "dice" only for two', () => {
+    const bad = all().filter((c) => c.kind === 'dice' && ((c.tool?.dice ?? 1) === 1 ? /Roll the dice/.test(c.text) : /Roll the die\b/.test(c.text)));
+    expect(bad.map((c) => c.text)).toEqual([]);
+  });
+  it('files nothing that tells you to do something as a truth', () => {
+    const bad = all().filter((c) => !c.kind && c.cardType === 'question' && /^(Do (your|a|an|\d|ten)|Call|Let|Post|DM|Read|Speak|Sing|Show|Open|Stand|Recreate|Give|Describe|Whisper|Hold|Tell the group)\b/.test(c.text));
+    expect(bad.map((c) => c.text)).toEqual([]);
+  });
+});

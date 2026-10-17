@@ -42,6 +42,16 @@
 [data-deck="chaos"]      { --accent: 255 112 34;  --on-accent: 24 19 16; }
 [data-deck="social"]     { --accent: 244 236 220; --on-accent: 24 19 16; }
 
+/* Topic deck: each group of topics has its own colour. */
+[data-group="moral"]    { --accent: 232 60 46;   --on-accent: 255 255 255; }
+[data-group="fate"]     { --accent: 140 104 235; --on-accent: 255 255 255; }
+[data-group="self"]     { --accent: 36 190 205;  --on-accent: 24 19 16; }
+[data-group="society"]  { --accent: 66 116 255;  --on-accent: 255 255 255; }
+[data-group="reflect"]  { --accent: 255 130 178; --on-accent: 24 19 16; }
+[data-group="takes"]    { --accent: 255 199 44;  --on-accent: 24 19 16; }
+[data-group="dilemma"]  { --accent: 255 112 34;  --on-accent: 24 19 16; }
+[data-group="stories"]  { --accent: 48 190 112;  --on-accent: 24 19 16; }
+
 /* Each card kind has its own colour, so the table can tell a truth from a dare at a glance. */
 [data-kind="truth"]  { --accent: 66 116 255;  --on-accent: 255 255 255; }
 [data-kind="dare"]   { --accent: 232 60 46;   --on-accent: 255 255 255; }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { TALK_GROUPS, TALK_TOPICS } from '@/lib/data/talk-topics';
-import { buildTalkQueue, isTalkFiltered, talkCost, talkPool } from '../talk';
+import { TALK_GROUPS, TALK_TOPICS, formatOf } from '@/lib/data/talk-topics';
+import { buildTalkQueue, isTalkFiltered, splitVerdict, talkCost, talkPool, talkRecap } from '../talk';
 
 const all = TALK_GROUPS.map((g) => g.id);
 
@@ -37,4 +37,46 @@ describe('topic deck logic', () => {
     expect(q.every((t) => t.group === 'dilemma')).toBe(true);
     expect(q.length).toBe(talkPool(['dilemma'], []).length);
   });
+});
+
+describe('topic formats', () => {
+  it('every topic has a follow-up and a valid format, and every ab topic has two options', () => {
+    TALK_TOPICS.forEach((t) => {
+      expect(t.deeper && t.deeper.length > 8).toBe(true);
+      expect(['agree', 'ab', 'think', 'story']).toContain(formatOf(t));
+      if (t.format === 'ab') { expect(t.a).toBeTruthy(); expect(t.b).toBeTruthy(); expect(t.a!.length).toBeLessThanOrEqual(24); expect(t.b!.length).toBeLessThanOrEqual(24); }
+      expect([t.text, t.deeper, t.a, t.b].join(' ').includes(String.fromCharCode(0x2014))).toBe(false);
+      expect(t.text.includes('!')).toBe(false);
+    });
+  });
+  it('agree topics are statements, not questions', () => {
+    TALK_TOPICS.filter((t) => t.format === 'agree').forEach((t) => expect(t.text.endsWith('?')).toBe(false));
+  });
+  it('every group plays at least two formats overall and stories are told, not counted', () => {
+    expect(new Set(TALK_TOPICS.map((t) => formatOf(t))).size).toBe(4);
+    TALK_TOPICS.filter((t) => t.group === 'stories').forEach((t) => expect(formatOf(t)).toBe('story'));
+  });
+  it('falls back to the group format for topics saved before formats existed', () => {
+    expect(formatOf({ id: 'x', group: 'dilemma', text: 'Old' })).toBe('think');
+    expect(formatOf({ id: 'x', group: 'takes', text: 'Old' })).toBe('agree');
+    expect(formatOf({ id: 'x', group: 'stories', text: 'Old' })).toBe('story');
+  });
+  it('has enough topics in every group', () => TALK_GROUPS.forEach((g) => expect(talkPool([g.id], []).length).toBeGreaterThanOrEqual(5)));
+});
+
+describe('split verdict and recap', () => {
+  it('describes each kind of split', () => {
+    expect(splitVerdict({ a: 0, b: 0 }, 'Agree', 'Disagree').minority).toBe(false);
+    expect(splitVerdict({ a: 4, b: 0 }, 'Agree', 'Disagree').text).toBe('Everyone said agree.');
+    expect(splitVerdict({ a: 3, b: 1 }, 'Agree', 'Disagree')).toEqual({ text: '3 to 1. The disagree side has 30 seconds to argue back.', minority: true });
+    expect(splitVerdict({ a: 2, b: 2 }, 'A', 'B').text).toMatch(/Split 2 to 2/);
+  });
+  it('finds the most divided and the most agreed topic', () => {
+    const q = TALK_TOPICS.slice(0, 4);
+    const r = talkRecap({ [q[0].id]: { a: 3, b: 3 }, [q[1].id]: { a: 5, b: 1 }, [q[2].id]: { a: 4, b: 0 }, [q[3].id]: { a: 1, b: 0 } }, q);
+    expect(r.divided?.topic.id).toBe(q[0].id);
+    expect(r.agreed?.topic.id).toBe(q[2].id);
+    expect(r.voted).toBe(3);
+  });
+  it('has nothing to report when nothing was counted', () => expect(talkRecap({}, TALK_TOPICS.slice(0, 3))).toEqual({ divided: undefined, agreed: undefined, voted: 0 }));
 });

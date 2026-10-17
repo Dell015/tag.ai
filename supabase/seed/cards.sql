@@ -17,26 +17,26 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 
 -- Intensity 1 (Icebreaker / Family friendly)
 ('Jollibee is better than McDo. Fight me.', 'question', 1, 'hot_takes', ARRAY['food', 'opinions'], 'icebreaker', NULL, true),
-('Adobo should always have soy sauce — no exceptions.', 'question', 1, 'hot_takes', ARRAY['food', 'opinions'], 'icebreaker', NULL, true),
+('Adobo should always have soy sauce. No exceptions.', 'question', 1, 'hot_takes', ARRAY['food', 'opinions'], 'icebreaker', NULL, true),
 ('Jeepney or Grab? Which one is the real Filipino commute?', 'question', 1, 'hot_takes', ARRAY['lifestyle', 'opinions'], 'icebreaker', NULL, true),
 
 -- Intensity 2
-('Utang na loob is overrated — agree or disagree?', 'question', 2, 'hot_takes', ARRAY['culture', 'values'], 'barkada', NULL, true),
+('Utang na loob is overrated. Agree or disagree?', 'question', 2, 'hot_takes', ARRAY['culture', 'values'], 'barkada', NULL, true),
 ('Filipino time is just bad time management, not culture.', 'question', 2, 'hot_takes', ARRAY['culture', 'opinions'], 'barkada', NULL, true),
 
 -- Intensity 3
-('People who flex on socmed are just insecure. Hot take or truth?', 'question', 3, 'hot_takes', ARRAY['social_media', 'opinions'], 'barkada', NULL, true),
+('People who flex on socmed are just insecure. Agree or disagree?', 'question', 3, 'hot_takes', ARRAY['social_media', 'opinions'], 'barkada', NULL, true),
 ('Is it okay to ghost someone if they''re boring?', 'question', 3, 'hot_takes', ARRAY['relationships', 'dating'], 'spicy', NULL, true),
 
 -- Intensity 4
-('Couples who post everything are compensating. Agree?', 'question', 4, 'hot_takes', ARRAY['relationships', 'social_media'], 'spicy', NULL, true),
-('Body count matters in a relationship — hot take or fact?', 'question', 4, 'hot_takes', ARRAY['relationships', 'sexual_content'], 'spicy', NULL, true),
+('Couples who post everything are compensating. Agree or disagree?', 'question', 4, 'hot_takes', ARRAY['relationships', 'social_media'], 'spicy', NULL, true),
+('Body count matters in a relationship. Agree or disagree?', 'question', 4, 'hot_takes', ARRAY['relationships', 'sexual_content'], 'spicy', NULL, true),
 
 -- Intensity 5
-('Your most controversial opinion that would get you canceled?', 'question', 5, 'hot_takes', ARRAY['opinions', 'controversial'], 'chaos', NULL, true),
+('What is your most controversial opinion, the kind that could get you canceled?', 'question', 5, 'hot_takes', ARRAY['opinions', 'controversial'], 'chaos', NULL, true),
 
 -- Action card
-('Stand up and defend your hottest take for 30 seconds. Group votes if you''re convincing!', 'action', 2, 'hot_takes', ARRAY['opinions', 'challenge'], 'barkada', NULL, true),
+('Stand up and defend your hottest take for 30 seconds. The group votes if you convinced them.', 'action', 2, 'hot_takes', ARRAY['opinions', 'challenge'], 'barkada', NULL, true),
 
 -- ============================================================
 -- CATEGORY: relationships
@@ -61,10 +61,10 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 ('What''s the pettiest reason you''ve broken up with someone?', 'question', 4, 'relationships', ARRAY['dating', 'past_relationships'], 'spicy', NULL, true),
 
 -- Intensity 5
-('Confess: what''s the most toxic thing you''ve done in a relationship?', 'question', 5, 'relationships', ARRAY['dating', 'confessions', 'past_relationships'], 'chaos', NULL, true),
+('What is the most toxic thing you have done in a relationship?', 'question', 5, 'relationships', ARRAY['dating', 'confessions', 'past_relationships'], 'chaos', NULL, true),
 
 -- Action card
-('Call or text the last person you dated and say "I was thinking about you." Screenshot it!', 'action', 4, 'relationships', ARRAY['dating', 'dares', 'past_relationships'], 'spicy', NULL, true),
+('Call or text the last person you dated and say "I was thinking about you." Show the group the screenshot.', 'action', 4, 'relationships', ARRAY['dating', 'dares', 'past_relationships'], 'spicy', NULL, true),
 
 -- ============================================================
 -- CATEGORY: memories
@@ -91,7 +91,7 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 ('What memory still keeps you up at night with cringe?', 'question', 5, 'memories', ARRAY['embarrassment', 'vulnerability'], 'chaos', NULL, true),
 
 -- Action card
-('Recreate a pose from your most embarrassing childhood photo. Group guesses the context!', 'action', 2, 'memories', ARRAY['childhood', 'challenge', 'humor'], 'barkada', NULL, true),
+('Recreate a pose from your most embarrassing childhood photo. The group guesses the story.', 'action', 2, 'memories', ARRAY['childhood', 'challenge', 'humor'], 'barkada', NULL, true),
 
 -- ============================================================
 -- CATEGORY: confessions
@@ -118,7 +118,7 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 ('What''s the worst thing you''ve done that no one in this room knows about?', 'question', 5, 'confessions', ARRAY['secrets', 'vulnerability'], 'chaos', NULL, true),
 
 -- Action card
-('Open your gallery and show the group the last meme you saved. No scrolling allowed!', 'action', 2, 'confessions', ARRAY['humor', 'challenge'], 'barkada', NULL, true);
+('Open your gallery and show the group the last meme you saved. No scrolling.', 'action', 2, 'confessions', ARRAY['humor', 'challenge'], 'barkada', NULL, true);
 
 -- ============================================================
 -- CATEGORY: dares
@@ -127,27 +127,27 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, deck_id, is_curated) VALUES
 
 -- Intensity 1
-('Do your best impresssion of a teleserye villain. Commit to it!', 'question', 1, 'dares', ARRAY['acting', 'humor'], 'icebreaker', NULL, true),
-('Speak in pure Filipino/Tagalog for the next 3 rounds — no English!', 'question', 1, 'dares', ARRAY['language', 'challenge'], 'family', NULL, true),
+('Do your best impression of a teleserye villain. Commit to it.', 'action', 1, 'dares', ARRAY['acting', 'humor'], 'icebreaker', NULL, true),
+('Speak only Filipino for the next 3 rounds. No English.', 'action', 1, 'dares', ARRAY['language', 'challenge'], 'family', NULL, true),
 
 -- Intensity 2
-('Do a TikTok dance. The group picks which one.', 'question', 2, 'dares', ARRAY['dancing', 'social_media'], 'barkada', NULL, true),
-('Let the group post one story on your Instagram account.', 'question', 2, 'dares', ARRAY['social_media', 'trust'], 'barkada', NULL, true),
-('Call a random contact and sing them "Torete" for 10 seconds.', 'question', 2, 'dares', ARRAY['singing', 'humor'], 'barkada', NULL, true),
+('Do a TikTok dance. The group picks which one.', 'question', 2, 'dares', ARRAY['dancing', 'social_media'], 'barkada', NULL, false),
+('Let the group post one story on your Instagram account.', 'action', 2, 'dares', ARRAY['social_media', 'trust'], 'barkada', NULL, true),
+('Call a random contact and sing them "Torete" for 10 seconds.', 'action', 2, 'dares', ARRAY['singing', 'humor'], 'barkada', NULL, true),
 
 -- Intensity 3
-('Let someone in the group send one text from your phone to anyone.', 'question', 3, 'dares', ARRAY['trust', 'phones'], 'spicy', NULL, true),
-('Post a selfie right now with no filter, no retake. Caption: "Living my best life."', 'question', 3, 'dares', ARRAY['social_media', 'confidence'], 'barkada', NULL, true),
+('Let someone in the group send one text from your phone to anyone.', 'action', 3, 'dares', ARRAY['trust', 'phones'], 'spicy', NULL, true),
+('Post a selfie right now with no filter and no retake. Caption it "Living my best life."', 'action', 3, 'dares', ARRAY['social_media', 'confidence'], 'barkada', NULL, true),
 
 -- Intensity 4
-('DM your crush "hey" right now. Show the group.', 'question', 4, 'dares', ARRAY['dating', 'courage'], 'spicy', NULL, true),
-('Read aloud the last 5 messages in your most recent chat.', 'question', 4, 'dares', ARRAY['privacy', 'trust'], 'spicy', NULL, true),
+('DM your crush "hey" right now. Show the group.', 'action', 4, 'dares', ARRAY['dating', 'courage'], 'spicy', NULL, true),
+('Read aloud the last 5 messages in your most recent chat.', 'action', 4, 'dares', ARRAY['privacy', 'trust'], 'spicy', NULL, true),
 
 -- Intensity 5
-('Let the group go through your search history for 30 seconds.', 'question', 5, 'dares', ARRAY['privacy', 'trust', 'embarrassment'], 'chaos', NULL, true),
+('Let the group go through your search history for 30 seconds.', 'action', 5, 'dares', ARRAY['privacy', 'trust', 'embarrassment'], 'chaos', NULL, true),
 
 -- Action card
-('Do 10 push-ups or take a shot. Your choice, walang drama!', 'action', 3, 'dares', ARRAY['physical', 'drinking', 'challenge'], 'barkada', NULL, true),
+('Do 10 push-ups or take {shot}. Your choice.', 'action', 3, 'dares', ARRAY['physical', 'drinking', 'challenge'], 'barkada', NULL, true),
 
 -- ============================================================
 -- CATEGORY: hypotheticals
@@ -174,7 +174,7 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 ('If you could get away with one illegal thing, what would you do?', 'question', 5, 'hypotheticals', ARRAY['controversial', 'honesty'], 'chaos', NULL, true),
 
 -- Action card
-('The group gives you a hypothetical scenario. You have 15 seconds to act it out!', 'action', 2, 'hypotheticals', ARRAY['acting', 'challenge', 'humor'], 'barkada', NULL, true),
+('The group gives you a scenario. Act it out in 15 seconds.', 'action', 2, 'hypotheticals', ARRAY['acting', 'challenge', 'humor'], 'barkada', NULL, true),
 
 -- ============================================================
 -- CATEGORY: controversial
@@ -182,12 +182,12 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 
 -- Intensity 2
 ('Is it okay to check your partner''s phone if you suspect something?', 'question', 2, 'controversial', ARRAY['relationships', 'trust', 'opinions'], 'barkada', NULL, true),
-('Should parents have access to their adult kids'' finances?', 'question', 2, 'controversial', ARRAY['family', 'money'], 'barkada', NULL, true),
+('Should parents have a say in how their grown kids spend money?', 'question', 2, 'controversial', ARRAY['family', 'money'], 'barkada', NULL, true),
 
 -- Intensity 3
-('Is the oldest sibling really the "sacrifice" child?', 'question', 3, 'controversial', ARRAY['family', 'opinions'], 'barkada', NULL, true),
+('Is the eldest sibling always the one who sacrifices the most?', 'question', 3, 'controversial', ARRAY['family', 'opinions'], 'barkada', NULL, true),
 ('Is it worse to cheat emotionally or physically?', 'question', 3, 'controversial', ARRAY['relationships', 'opinions'], 'spicy', NULL, true),
-('Are arranged introductions by titas actually smart?', 'question', 3, 'controversial', ARRAY['family', 'dating', 'culture'], 'barkada', NULL, true),
+('Is it smart to let your tita set you up with someone?', 'question', 3, 'controversial', ARRAY['family', 'dating', 'culture'], 'barkada', NULL, true),
 
 -- Intensity 4
 ('Is it okay to cut off family if they''re toxic?', 'question', 4, 'controversial', ARRAY['family', 'mental_health', 'values'], 'spicy', NULL, true),
@@ -195,10 +195,10 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 
 -- Intensity 5
 ('What''s an opinion you have that would make this group hate you?', 'question', 5, 'controversial', ARRAY['opinions', 'controversy'], 'chaos', NULL, true),
-('Money or love? Be honest — no performative answers.', 'question', 5, 'controversial', ARRAY['money', 'love', 'values'], 'chaos', NULL, true),
+('Money or love? Be honest, no performative answers.', 'question', 5, 'controversial', ARRAY['money', 'love', 'values'], 'chaos', NULL, true),
 
 -- Action card
-('Pick the most controversial opinion you hold. The group debates you for 1 minute — you can''t back down!', 'action', 3, 'controversial', ARRAY['opinions', 'debate', 'challenge'], 'spicy', NULL, true);
+('Pick the most controversial opinion you hold. The group debates you for 1 minute and you cannot back down.', 'action', 3, 'controversial', ARRAY['opinions', 'debate', 'challenge'], 'spicy', NULL, true);
 
 -- ============================================================
 -- CATEGORY: roasts
@@ -208,11 +208,11 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 
 -- Intensity 2
 ('What''s one thing about the person to your left that lowkey annoys you?', 'question', 2, 'roasts', ARRAY['friends', 'humor'], 'barkada', NULL, true),
-('Roast someone''s fashion sense in this group — but make it funny.', 'question', 2, 'roasts', ARRAY['fashion', 'humor', 'physical_appearance'], 'barkada', NULL, true),
+('Roast someone''s fashion sense in this group. Keep it friendly.', 'question', 2, 'roasts', ARRAY['fashion', 'humor', 'physical_appearance'], 'barkada', NULL, true),
 
 -- Intensity 3
 ('Who in this group has the most chaotic energy? Explain.', 'question', 3, 'roasts', ARRAY['friends', 'humor'], 'barkada', NULL, true),
-('Give a brutally honest Grab driver rating to the person across from you. Stars and review.', 'question', 3, 'roasts', ARRAY['friends', 'humor'], 'barkada', NULL, true),
+('Rate the person across from you like a Grab driver: stars and a short review.', 'question', 3, 'roasts', ARRAY['friends', 'humor'], 'barkada', NULL, true),
 ('Who here would survive the least time on a deserted island? Why?', 'question', 3, 'roasts', ARRAY['friends', 'humor'], 'barkada', NULL, true),
 
 -- Intensity 4
@@ -221,11 +221,11 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 ('Who here gives main character energy but is actually an extra?', 'question', 4, 'roasts', ARRAY['friends', 'humor'], 'spicy', NULL, true),
 
 -- Intensity 5
-('Give your most unhinged, no-filter roast of the person to your right. They can''t respond.', 'question', 5, 'roasts', ARRAY['friends', 'roasts'], 'chaos', NULL, true),
+('Roast the person to your right with no filter. They cannot answer back.', 'question', 5, 'roasts', ARRAY['friends', 'roasts'], 'chaos', NULL, true),
 ('Who in this group peaked in high school? Defend your answer.', 'question', 5, 'roasts', ARRAY['friends', 'roasts', 'honesty'], 'chaos', NULL, true),
 
 -- Action card
-('Do your best impression of someone in this group. Everyone else guesses who!', 'action', 3, 'roasts', ARRAY['acting', 'humor', 'friends'], 'barkada', NULL, true),
+('Do your best impression of someone in this group. Everyone else guesses who.', 'action', 3, 'roasts', ARRAY['acting', 'humor', 'friends'], 'barkada', NULL, true),
 
 -- ============================================================
 -- CATEGORY: deep_philosophical
@@ -249,10 +249,10 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 ('Who in your life do you owe an apology to? Will you ever give it?', 'question', 4, 'deep_philosophical', ARRAY['guilt', 'relationships', 'honesty'], 'spicy', NULL, true),
 
 -- Intensity 5
-('What part of you do you hide from everyone — even the people closest to you?', 'question', 5, 'deep_philosophical', ARRAY['secrets', 'vulnerability', 'identity'], 'chaos', NULL, true),
+('What part of you do you hide from everyone, even the people closest to you?', 'question', 5, 'deep_philosophical', ARRAY['secrets', 'vulnerability', 'identity'], 'chaos', NULL, true),
 
 -- Action card
-('Everyone closes their eyes. Say one thing you''ve never told this group out loud. No one opens their eyes until it''s done.', 'action', 4, 'deep_philosophical', ARRAY['vulnerability', 'trust', 'honesty'], 'spicy', NULL, true);
+('Everyone closes their eyes. Say one thing you have never told this group out loud. Nobody opens their eyes until you are done.', 'action', 4, 'deep_philosophical', ARRAY['vulnerability', 'trust', 'honesty'], 'spicy', NULL, true);
 
 -- ============================================================
 -- ADDITIONAL CARDS FOR COVERAGE
@@ -262,47 +262,47 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, deck_id, is_curated) VALUES
 
 -- hot_takes extras
-('Rice is not optional — it''s a human right. Agree or disagree?', 'question', 1, 'hot_takes', ARRAY['food', 'culture', 'opinions'], 'family', NULL, true),
+('Rice is not optional. It is a human right. Agree or disagree?', 'question', 1, 'hot_takes', ARRAY['food', 'culture', 'opinions'], 'family', NULL, true),
 ('Long-distance relationships never work. Change my mind.', 'question', 3, 'hot_takes', ARRAY['relationships', 'opinions'], 'barkada', NULL, true),
 
 -- relationships extras
-('What''s the most romantic thing someone has done for you — Pinoy style?', 'question', 1, 'relationships', ARRAY['love', 'romance', 'culture'], 'icebreaker', NULL, true),
-('Do you believe in "ligaw" (courtship) or is it outdated?', 'question', 2, 'relationships', ARRAY['dating', 'culture', 'opinions'], 'barkada', NULL, true),
+('What is the most romantic thing someone has done for you, Pinoy style?', 'question', 1, 'relationships', ARRAY['love', 'romance', 'culture'], 'icebreaker', NULL, true),
+('Do you believe in ligaw (courtship) or is it outdated?', 'question', 2, 'relationships', ARRAY['dating', 'culture', 'opinions'], 'barkada', NULL, true),
 
 -- memories extras
 ('What''s the scariest experience you had during a typhoon?', 'question', 2, 'memories', ARRAY['weather', 'childhood', 'culture'], 'barkada', NULL, true),
 ('What was your most memorable Christmas in the Philippines?', 'question', 1, 'memories', ARRAY['celebrations', 'family', 'culture'], 'family', NULL, true),
 
 -- confessions extras
-('What''s a chismis (gossip) you spread that you feel bad about?', 'question', 3, 'confessions', ARRAY['friends', 'guilt', 'honesty'], 'spicy', NULL, true),
+('What chismis (gossip) did you spread that you feel bad about?', 'question', 3, 'confessions', ARRAY['friends', 'guilt', 'honesty'], 'spicy', NULL, true),
 ('What rule in your bahay did you always break growing up?', 'question', 1, 'confessions', ARRAY['family', 'childhood', 'humor'], 'family', NULL, true),
 
 -- dares extras
-('Speak in a different Filipino dialect for the next 2 rounds.', 'question', 1, 'dares', ARRAY['language', 'culture', 'challenge'], 'icebreaker', NULL, true),
-('Let the group choose your next profile picture. You keep it for 24 hours.', 'question', 3, 'dares', ARRAY['social_media', 'trust'], 'spicy', NULL, true),
+('Speak in a different Filipino dialect for the next 2 rounds.', 'action', 1, 'dares', ARRAY['language', 'culture', 'challenge'], 'icebreaker', NULL, true),
+('Let the group choose your next profile picture. You keep it for 24 hours.', 'action', 3, 'dares', ARRAY['social_media', 'trust'], 'spicy', NULL, true),
 
 -- hypotheticals extras
-('If you could only eat one ulam forever, what is it?', 'question', 1, 'hypotheticals', ARRAY['food', 'culture', 'choices'], 'family', NULL, true),
+('What ulam does your family cook best, and who cooks it?', 'question', 1, 'hypotheticals', ARRAY['food', 'culture', 'choices'], 'family', NULL, true),
 ('If this barkada had a reality TV show, what would the title be?', 'question', 2, 'hypotheticals', ARRAY['friends', 'humor'], 'barkada', NULL, true),
 
 -- controversial extras
 ('Is it wrong to not give money to family if they always ask?', 'question', 3, 'controversial', ARRAY['family', 'money', 'culture'], 'barkada', NULL, true),
-('Should you stay friends with an ex? Or is that just playing with fire?', 'question', 2, 'controversial', ARRAY['dating', 'past_relationships', 'opinions'], 'barkada', NULL, true),
+('Should you stay friends with an ex, or is that playing with fire?', 'question', 2, 'controversial', ARRAY['dating', 'past_relationships', 'opinions'], 'barkada', NULL, true),
 
 -- roasts extras
-('Who in this group has the worst taste in music? Play their top Spotify track as proof.', 'question', 2, 'roasts', ARRAY['music', 'humor', 'friends'], 'barkada', NULL, true),
-('Rate everyone''s haggling skills from 1-10. Start with the worst.', 'question', 3, 'roasts', ARRAY['humor', 'culture', 'friends'], 'barkada', NULL, true),
+('Who in this group has the worst taste in music? Defend your answer.', 'question', 2, 'roasts', ARRAY['music', 'humor', 'friends'], 'barkada', NULL, true),
+('Rate how well each person here haggles at the market, from 1 to 10.', 'question', 3, 'roasts', ARRAY['humor', 'culture', 'friends'], 'barkada', NULL, true),
 
 -- deep_philosophical extras
 ('What Filipino value do you carry that shapes who you are?', 'question', 1, 'deep_philosophical', ARRAY['culture', 'identity', 'values'], 'family', NULL, true),
-('What does "success" actually mean to you — not your parents'' definition?', 'question', 3, 'deep_philosophical', ARRAY['purpose', 'family', 'career'], 'barkada', NULL, true),
+('What does "success" actually mean to you, not your parents'' definition?', 'question', 3, 'deep_philosophical', ARRAY['purpose', 'family', 'career'], 'barkada', NULL, true),
 
 -- More family-friendly cards across categories
 ('What''s the best Filipino street food and why?', 'question', 1, 'hot_takes', ARRAY['food', 'culture'], 'family', NULL, true),
 ('Would you rather have unlimited sinigang or unlimited lechon?', 'question', 1, 'hypotheticals', ARRAY['food', 'culture', 'choices'], 'family', NULL, true),
 ('What''s one tradition from your family that you''ll pass on?', 'question', 1, 'deep_philosophical', ARRAY['family', 'culture', 'traditions'], 'family', NULL, true),
 ('What''s the funniest baon (packed lunch) you ever brought to school?', 'question', 1, 'memories', ARRAY['food', 'school', 'childhood'], 'family', NULL, true),
-('What animal would each person in this group be?', 'question', 1, 'roasts', ARRAY['friends', 'humor'], 'icebreaker', NULL, true),
+('Pick an animal for each person in this group and say why.', 'question', 1, 'roasts', ARRAY['friends', 'humor'], 'icebreaker', NULL, true),
 
 -- More barkada-level cards
 ('Who in this group would you trust with your phone unlocked for 5 minutes?', 'question', 2, 'confessions', ARRAY['friends', 'trust'], 'barkada', NULL, true),
@@ -311,8 +311,8 @@ INSERT INTO cards (text, card_type, intensity, category, topics, audience_type, 
 ('Who in this group gives the best advice? Who gives the worst?', 'question', 2, 'roasts', ARRAY['friends', 'humor'], 'barkada', NULL, true),
 
 -- More spicy/chaos cards
-('Who here has the biggest gap between their online persona and real personality?', 'question', 4, 'roasts', ARRAY['social_media', 'friends', 'honesty'], 'spicy', NULL, true),
-('If someone offered you ₱1 million to never talk to one person in this room again, who goes?', 'question', 4, 'hypotheticals', ARRAY['money', 'friends', 'choices'], 'spicy', NULL, true),
-('What''s your biggest "almost" — something that almost happened but didn''t?', 'question', 3, 'confessions', ARRAY['regret', 'vulnerability'], 'spicy', NULL, true),
+('Who here has the biggest gap between their online self and their real self?', 'question', 4, 'roasts', ARRAY['social_media', 'friends', 'honesty'], 'spicy', NULL, true),
+('If someone paid you ₱1 million to never talk to one person in this room again, who would it be?', 'question', 4, 'hypotheticals', ARRAY['money', 'friends', 'choices'], 'spicy', NULL, true),
+('What is your biggest "almost", something that almost happened but did not?', 'question', 3, 'confessions', ARRAY['regret', 'vulnerability'], 'spicy', NULL, true),
 ('What conversation are you avoiding with someone in this room?', 'question', 5, 'confessions', ARRAY['friends', 'honesty', 'vulnerability'], 'chaos', NULL, true),
-('Rank this barkada by who you''d call first in an emergency. Be honest.', 'question', 4, 'roasts', ARRAY['friends', 'honesty', 'trust'], 'spicy', NULL, true);
+('Rank this barkada by who you would call first in an emergency. Be honest.', 'question', 4, 'roasts', ARRAY['friends', 'honesty', 'trust'], 'spicy', NULL, true);

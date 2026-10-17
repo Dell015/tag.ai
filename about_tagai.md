@@ -1398,3 +1398,11 @@ Cards are coloured by the deck they came from: Icebreaker blue, Family green, Li
 ### 23.30 The Adult deck gets bolder
 
 Players told us Adult felt like Spicy with an 18+ label, so Adult is now about sex. It has frank questions about experience, preferences and hookup stories, "never have I ever" cards, bold dares between adults who agreed to play, and Adult versions of the dice, coin, bottle, wheel, vote and timer cards. It stays non-graphic, with no nudity or acts between players, and every card can be skipped. Before buying it, the table confirms everyone is 18 or older and agrees to play. Spicy stays about heat and drama.
+
+### 23.31 Every card read and cleaned up
+
+Every card in the game was read through for things that were hard to follow. About 50 were rewritten: clearer wording, no "hot take or truth?" endings, no stray dashes or shouting. Eleven cards that told you to do something were filed as truths and are now dares. The tools got clearer wording too: one die is "the die", the vote cards say what the winner does, and the confusing "nobody drinks" rule became "whoever fails a card does a dare instead". The wheel now has its options written on the slices, split over two lines when long. All drink words adapt for tables that are not drinking.
+
+### 23.32 The Topic deck becomes a game
+
+Topics used to be one green card with a line of text. Now each topic is played. Statements ask the table to count down and show agree or disagree, then tap the split, and the smaller side gets 30 seconds to argue back. Would-you-rather topics do the same with A or B. Reflective questions get a one minute thinking timer, and story topics spin the bottle to pick who tells it. Every topic has a Go deeper button with a sharper follow-up. Each group of topics has its own colour, and at the end the screen shows the topic the table split on most and one everyone agreed on. The deck grew from 48 to 64 topics and there are still no player names.

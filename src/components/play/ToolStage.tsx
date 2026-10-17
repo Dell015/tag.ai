@@ -19,6 +19,10 @@ interface StageProps {
   prompt: string;
   dice?: 1 | 2; outcomes?: string[]; labels?: string[]; seconds?: number;
   nonDrinking: boolean;
+  /** Topic deck: the topic group's colour instead of the card type's. */
+  tint?: string;
+  /** Vote countdown: the word and the line shown when it hits zero. */
+  endWord?: string; endText?: string;
   onResult: (r: ToolResult) => void;
   onClose: () => void;
 }
@@ -179,6 +183,14 @@ function BottleStage({ onClose }: StageProps) {
 
 // ─── Wheel ───────────────────────────────────────────────────────────────────
 
+/** Splits a long wheel label into two lines at the space nearest the middle, so it fits its slice. */
+const wrap = (t: string): string[] => {
+  if (t.length <= 12 || !t.includes(' ')) return [t.slice(0, 22)];
+  let best = -1;
+  for (let i = 0; i < t.length; i++) if (t[i] === ' ' && (best < 0 || Math.abs(i - t.length / 2) < Math.abs(best - t.length / 2))) best = i;
+  return [t.slice(0, best), t.slice(best + 1)].map((x) => x.slice(0, 16));
+};
+
 const polar = (r: number, deg: number) => [150 + r * Math.sin((deg * Math.PI) / 180), 150 - r * Math.cos((deg * Math.PI) / 180)];
 
 function WheelStage({ labels = ['Truth', 'Dare'], nonDrinking, onResult, onClose }: StageProps) {
@@ -211,8 +223,10 @@ function WheelStage({ labels = ['Truth', 'Dare'], nonDrinking, onResult, onClose
               return (
                 <g key={i}>
                   <path d={`M150 150L${x0} ${y0}A138 138 0 0 1 ${x1} ${y1}Z`} fill={dark ? 'rgb(var(--accent))' : 'rgb(var(--on-accent))'} stroke="rgb(var(--on-accent))" strokeWidth="3" />
-                  <text transform={`rotate(${a0 + slice / 2 - 90} 150 150)`} x="128" y={fs / 3} textAnchor="end" fontSize={fs} fontWeight="800" fill={dark ? 'rgb(var(--on-accent))' : 'rgb(var(--accent))'}>{fillDrink(l, nonDrinking).slice(0, 18)}</text>
-                </g>
+                  <text transform={`rotate(${a0 + slice / 2 - 90} 150 150)`} textAnchor="end" fontSize={fs} fontWeight="800" fill={dark ? 'rgb(var(--on-accent))' : 'rgb(var(--accent))'}>
+                    {wrap(fillDrink(l, nonDrinking)).map((ln, k, all) => <tspan key={k} x="278" y={150 + fs / 3 + (k - (all.length - 1) / 2) * (fs + 1)}>{ln}</tspan>)}
+                  </text>
+                  </g>
               );
             })}
             <circle cx="150" cy="150" r="16" fill="rgb(var(--on-accent))" stroke="rgb(var(--accent))" strokeWidth="4" />
@@ -253,7 +267,7 @@ function TimerStage({ seconds = 30, onClose }: StageProps) {
 
 // ─── Vote ────────────────────────────────────────────────────────────────────
 
-function VoteStage({ seconds = 3, onClose }: StageProps) {
+function VoteStage({ seconds = 3, endWord, endText, onClose }: StageProps) {
   const [n, setN] = useState<number>(seconds);
   const [run, setRun] = useState(0);
   useEffect(() => {
@@ -265,8 +279,8 @@ function VoteStage({ seconds = 3, onClose }: StageProps) {
     <>
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <motion.p key={`${run}-${n}`} initial={{ scale: 2.2, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 16 }}
-          className="display text-[10rem] leading-none">{n > 0 ? n : 'Point!'}</motion.p>
-        {n <= 0 && <p className="mt-4 text-xl font-extrabold">Everyone points at once. Most fingers loses.</p>}
+          className="display text-[10rem] leading-none">{n > 0 ? n : endWord ?? 'Point!'}</motion.p>
+        {n <= 0 && <p className="mt-4 text-balance text-xl font-extrabold">{endText ?? 'Everyone points at once.'}</p>}
       </div>
       <Footer>{n <= 0 && <><Btn onClick={onClose}>Done</Btn><Btn ghost onClick={() => setRun((r) => r + 1)}>Count down again</Btn></>}</Footer>
     </>
@@ -282,7 +296,7 @@ export function ToolStage(props: StageProps) {
   if (!mounted) return null;
   const Body = { dice: DiceStage, coin: CoinStage, bottle: BottleStage, wheel: WheelStage, timer: TimerStage, vote: VoteStage }[props.kind];
   return createPortal(
-    <motion.div data-kind={props.kind} role="dialog" aria-modal="true" aria-label={KIND_META[props.kind].label}
+    <motion.div {...(props.tint ? { 'data-group': props.tint } : { 'data-kind': props.kind })} role="dialog" aria-modal="true" aria-label={KIND_META[props.kind].label}
       initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}
       onPointerDownCapture={(e) => e.stopPropagation()}
       className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-accent px-6 pb-6 pt-12 text-onaccent">

@@ -56,7 +56,7 @@ function pack(id: string, rows: P[], adult = false): QueuedCard[] {
 export const PACK_CARDS: Record<string, QueuedCard[]> = {
   'pack-videoke': pack('videoke', [
     ['What song do you secretly sing at the top of your lungs when alone?', 'question', 2, 'confessions'],
-    ['Sing the chorus of any song. Group votes if you drink.', 'action', 2, 'dares'],
+    ['Sing the chorus of any song. The group votes if you {drink}.', 'action', 2, 'dares'],
     ['Which ex would you dedicate a Sampaguita song to?', 'question', 3, 'relationships'],
     ['Duet with the person on your left. Pick the song together.', 'action', 3, 'dares'],
     ['Name the song that always makes you cry at 2 AM.', 'question', 4, 'memories'],
@@ -73,7 +73,7 @@ export const PACK_CARDS: Record<string, QueuedCard[]> = {
   'pack-office': pack('office', [
     ['Which coworker would survive the longest in a zombie apocalypse?', 'question', 1, 'hypotheticals'],
     ['What is the most useless meeting you have attended?', 'question', 1, 'hot_takes'],
-    ['Give your boss a nickname, out loud.', 'action', 2, 'dares'],
+    ['Make up a nickname for your boss and say it out loud.', 'action', 2, 'dares'],
     ['What small thing do you secretly judge people for at work?', 'question', 2, 'confessions'],
     ['Pitch your worst business idea in ten seconds.', 'action', 2, 'dares'],
     ['If HR read your search history today, what would they ask first?', 'question', 3, 'hypotheticals'],
@@ -98,7 +98,7 @@ export const PACK_CARDS: Record<string, QueuedCard[]> = {
     ['Eat the next bite of pulutan without using your hands.', 'action', 2, 'dares'],
     ['Hold a plank until the next person finishes their turn.', 'action', 3, 'dares'],
     ['Let the group choose a sticker to put on your forehead.', 'action', 2, 'dares'],
-    ['Say a tongue twister three times fast. Fail and you drink.', 'action', 1, 'dares'],
+    ['Say a tongue twister three times fast. Fail and you {drink}.', 'action', 1, 'dares'],
     ['Swap seats with someone. They pick who.', 'action', 2, 'dares'],
     ['Whisper your next sentence. Everyone else must copy you.', 'action', 2, 'dares'],
   ]),
@@ -112,8 +112,8 @@ export const PACK_CARDS: Record<string, QueuedCard[]> = {
   ], true),
   'pack-nodares': pack('nodares', [
     ['Give the group your best bedroom eyes for five seconds.', 'action', 3, 'dares'],
-    ['Say a flirty line to the next person who walks past. If no one walks past, say it to the group.', 'action', 4, 'dares'],
-    ['Let the group pick a person for you to slow dance with for ten seconds.', 'action', 4, 'dares'],
+    ['Say your best flirty line to the group. They rate it from 1 to 10.', 'action', 4, 'dares'],
+    ['Pick a player who agrees and slow dance with them for ten seconds.', 'action', 4, 'dares'],
     ['Reveal the last person you searched on social media, no scrolling.', 'action', 4, 'dares'],
     ['Do your most dramatic love confession to the nearest pillow or bottle.', 'action', 3, 'dares'],
     ['Swap seats with someone of your choice and stay there for the next three cards.', 'action', 3, 'dares'],
