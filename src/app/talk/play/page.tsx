@@ -8,7 +8,7 @@ import { useTalkStore } from '@/stores/talk-store';
 import { useWalletStore } from '@/stores/wallet-store';
 import { TALK_GROUPS } from '@/lib/data/talk-topics';
 import { TopicPanel } from '@/components/talk/TopicPanel';
-import { talkRecap } from '@/lib/game/talk';
+import { speakerFor, talkRecap } from '@/lib/game/talk';
 import { formatPot } from '@/lib/game/pot';
 
 export default function TalkPlayPage() {
@@ -26,7 +26,7 @@ export default function TalkPlayPage() {
   const done = t.index >= total;
   const topic = t.queue[t.index];
   const group = topic ? TALK_GROUPS.find((g) => g.id === topic.group)?.label : '';
-  const recap = talkRecap(t.results ?? {}, t.queue);
+  const recap = talkRecap(t.results ?? {}, t.queue, t.picks ?? {});
 
   const leave = (to: string) => {
     leaving.current = true;
@@ -47,6 +47,7 @@ export default function TalkPlayPage() {
           <h1 className="text-[3.2rem] leading-[0.95]">That is all of them.</h1>
           <p className="mt-4 text-xl text-muted">Go back if there is one you want to talk about more.</p>
           {recap.divided && <div className="mt-6 rounded-card border-2 border-line p-4"><p className="text-base font-bold text-muted">Most divided, {recap.divided.tally.a} to {recap.divided.tally.b}</p><p className="mt-1 text-xl font-extrabold leading-snug">{recap.divided.topic.text}</p></div>}
+          {recap.contrarian && <div className="mt-3 rounded-card border-2 border-line p-4"><p className="text-base font-bold text-muted">Most often on the other side</p><p className="mt-1 text-xl font-extrabold leading-snug">{recap.contrarian.name}, {recap.contrarian.times} times</p></div>}
           {recap.agreed && <div className="mt-3 rounded-card border-2 border-line p-4"><p className="text-base font-bold text-muted">Everyone agreed</p><p className="mt-1 text-xl font-extrabold leading-snug">{recap.agreed.topic.text}</p></div>}
         </main>
       ) : (
@@ -65,7 +66,7 @@ export default function TalkPlayPage() {
               <div className="flex min-h-0 flex-1 flex-col overflow-y-auto scrollbar-none">
                 <div className="my-auto py-3">
                   <p className="display" style={{ fontSize: topic.text.length > 90 ? '1.9rem' : topic.text.length > 60 ? '2.2rem' : '2.6rem', lineHeight: 1.02 }}>{topic.text}</p>
-                  <TopicPanel key={topic.id} topic={topic} />
+                  <TopicPanel key={topic.id} topic={topic} speaker={speakerFor(t.players ?? [], t.index)} />
                 </div>
               </div>
             </motion.div>

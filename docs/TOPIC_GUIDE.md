@@ -44,3 +44,7 @@ Colours live in `src/app/globals.css` (`data-group`). A topic saved before forma
 ## What the app remembers
 
 The counts the table taps are kept for the session (`results` in `talk-store.ts`). At the end the app shows the topic the table was most divided on and one everyone agreed on. Nothing is saved after the session ends and nothing is shared.
+
+## Player names
+
+On the setup screen the table can add up to 12 names (optional, remembered for next time). With two or more names, the app says who answers a think topic first and who tells a story, and the tally becomes one chip per player that cycles Agree, Disagree, blank. The verdict then names the players on the smaller side, and the end screen shows who was most often on the other side. With no names it works as before, with counters. The deck has 109 topics: keep new ones short, one idea each, and give every agree or A or B topic a real split.

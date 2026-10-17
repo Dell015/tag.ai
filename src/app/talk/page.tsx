@@ -9,7 +9,7 @@ import { useWalletStore } from '@/stores/wallet-store';
 import { useTalkStore } from '@/stores/talk-store';
 import { TALK_GROUPS, type TalkGroupId } from '@/lib/data/talk-topics';
 import { PRESET_TOPICS } from '@/lib/game/comfort-filters';
-import { TALK_MAX, TALK_MIN, TALK_PRICE, TALK_STEP, buildTalkQueue, talkCost, talkPool } from '@/lib/game/talk';
+import { MAX_NAME, MAX_PLAYERS, TALK_MAX, TALK_MIN, TALK_PRICE, TALK_STEP, buildTalkQueue, cleanNames, talkCost, talkPool } from '@/lib/game/talk';
 import { formatPot, formatPrice } from '@/lib/game/pot';
 
 export default function TalkSetupPage() {
@@ -17,11 +17,16 @@ export default function TalkSetupPage() {
   const { ready, profile } = useRequireProfile('/talk');
   const defaults = useSettingsStore((s) => s.skipTopics);
   const active = useTalkStore((s) => s.active);
+  const roster = useTalkStore((s) => s.roster ?? []);
+  const [names, setNames] = useState<string[] | null>(null);
+  const [who, setWho] = useState('');
   const [groups, setGroups] = useState<TalkGroupId[]>(TALK_GROUPS.map((g) => g.id));
   const [skip, setSkip] = useState<string[] | null>(null);
   const [word, setWord] = useState('');
   const [count, setCount] = useState(20);
 
+  const players = names ?? (roster.length ? roster : profile ? [profile.username] : []);
+  const addPlayer = () => { setNames(cleanNames([...players, who])); setWho(''); };
   const filters = skip ?? defaults.filter((t) => t !== '18+ Cards');
   const pool = useMemo(() => talkPool(groups, filters), [groups, filters]);
   const perGroup = useMemo(() => Object.fromEntries(TALK_GROUPS.map((g) => [g.id, talkPool([g.id], filters).length])), [filters]);
@@ -39,7 +44,7 @@ export default function TalkSetupPage() {
   const start = () => {
     const queue = buildTalkQueue(n, groups, filters);
     if (queue.length === 0 || !useWalletStore.getState().apply('pot', -talkCost(queue.length), 'Topic deck')) return;
-    useTalkStore.getState().start(queue);
+    useTalkStore.getState().start(queue, players.length >= 2 ? cleanNames(players) : []);
     router.push('/talk/play');
   };
 
@@ -52,7 +57,19 @@ export default function TalkSetupPage() {
       {active && <Link href="/talk/play" className="mb-5 block"><Button full variant="secondary">Resume your topics</Button></Link>}
       <p className="-mt-1 mb-6 text-lg text-muted">Things to talk about. No turns, no shots, no pot. Tap for the next topic and go back whenever you like.</p>
 
-      <h2 className="text-3xl">What to talk about</h2>
+      <h2 className="text-3xl">Who is playing</h2>
+      <p className="mb-3 mt-1 text-base text-muted">Optional. With two or more names the app says who goes first, records everyone&apos;s answer and shows who was on the other side most often.</p>
+      <div className="flex flex-wrap gap-2">
+        {players.map((n) => <Chip key={n} selected onClick={() => setNames(players.filter((x) => x !== n))}>{n}<Icon name="close" size={16} /></Chip>)}
+      </div>
+      {players.length < MAX_PLAYERS && (
+        <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); addPlayer(); }}>
+          <input value={who} onChange={(e) => setWho(e.target.value)} maxLength={MAX_NAME} placeholder="Add a name" aria-label="Player name" className={input} />
+          <Button type="submit" variant="secondary" disabled={!who.trim()}>Add</Button>
+        </form>
+      )}
+
+      <h2 className="mt-8 text-3xl">What to talk about</h2>
       <p className="mb-3 mt-1 text-base text-muted">Tap to leave a group out.</p>
       <div className="flex flex-wrap gap-2">
         {TALK_GROUPS.map((g) => <Chip key={g.id} selected={groups.includes(g.id)} onClick={() => toggleGroup(g.id)}>{g.label} {perGroup[g.id]}</Chip>)}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TALK_GROUPS, TALK_TOPICS, formatOf } from '@/lib/data/talk-topics';
-import { buildTalkQueue, isTalkFiltered, splitVerdict, talkCost, talkPool, talkRecap } from '../talk';
+import { buildTalkQueue, cleanNames, isTalkFiltered, minorityNames, speakerFor, splitVerdict, tallyOf, talkCost, talkPool, talkRecap } from '../talk';
 
 const all = TALK_GROUPS.map((g) => g.id);
 
@@ -79,4 +79,34 @@ describe('split verdict and recap', () => {
     expect(r.voted).toBe(3);
   });
   it('has nothing to report when nothing was counted', () => expect(talkRecap({}, TALK_TOPICS.slice(0, 3))).toEqual({ divided: undefined, agreed: undefined, voted: 0 }));
+});
+
+describe('player names', () => {
+  it('cleans names: trims, drops blanks and duplicates, caps the list and the length', () => {
+    expect(cleanNames(['  Mika ', 'mika', '', 'Jun'])).toEqual(['Mika', 'Jun']);
+    expect(cleanNames(Array.from({ length: 20 }, (_, i) => `P${i}`))).toHaveLength(12);
+    expect(cleanNames(['x'.repeat(40)])[0]).toHaveLength(16);
+  });
+  it('counts picks and finds the minority', () => {
+    const picks = { Mika: 'a', Jun: 'a', Ria: 'b' } as const;
+    expect(tallyOf({ ...picks })).toEqual({ a: 2, b: 1 });
+    expect(minorityNames({ ...picks })).toEqual(['Ria']);
+    expect(minorityNames({ Mika: 'a', Jun: 'b' })).toEqual([]);
+    expect(minorityNames({ Mika: 'a', Jun: 'a' })).toEqual([]);
+    expect(minorityNames(undefined)).toEqual([]);
+  });
+  it('passes the first answer around the table, and only with two or more names', () => {
+    expect(speakerFor(['A', 'B', 'C'], 0)).toBe('A');
+    expect(speakerFor(['A', 'B', 'C'], 4)).toBe('B');
+    expect(speakerFor(['A'], 0)).toBeUndefined();
+    expect(speakerFor([], 3)).toBeUndefined();
+  });
+  it('names who was on the other side most often, after at least two times', () => {
+    const q = TALK_TOPICS.slice(0, 3);
+    const picks = { [q[0].id]: { A: 'a', B: 'a', C: 'b' }, [q[1].id]: { A: 'a', B: 'b', C: 'b' }, [q[2].id]: { A: 'b', B: 'a', C: 'a' } } as never;
+    const r = talkRecap({}, q, picks);
+    expect(r.contrarian).toEqual({ name: 'A', times: 2 });
+    const again = { ...(picks as object), [q[2].id]: { A: 'a', B: 'a', C: 'b' } } as never;
+    expect(talkRecap({}, q, again).contrarian).toEqual({ name: 'C', times: 2 });
+  });
 });

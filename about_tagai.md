@@ -1405,4 +1405,8 @@ Every card in the game was read through for things that were hard to follow. Abo
 
 ### 23.32 The Topic deck becomes a game
 
-Topics used to be one green card with a line of text. Now each topic is played. Statements ask the table to count down and show agree or disagree, then tap the split, and the smaller side gets 30 seconds to argue back. Would-you-rather topics do the same with A or B. Reflective questions get a one minute thinking timer, and story topics spin the bottle to pick who tells it. Every topic has a Go deeper button with a sharper follow-up. Each group of topics has its own colour, and at the end the screen shows the topic the table split on most and one everyone agreed on. The deck grew from 48 to 64 topics and there are still no player names.
+Topics used to be one green card with a line of text. Now each topic is played. Statements ask the table to count down and show agree or disagree, then tap the split, and the smaller side gets 30 seconds to argue back. Would-you-rather topics do the same with A or B. Reflective questions get a one minute thinking timer, and story topics spin the bottle to pick who tells it. Every topic has a Go deeper button with a sharper follow-up. Each group of topics has its own colour, and at the end the screen shows the topic the table split on most and one everyone agreed on. The deck grew from 48 to 64 topics.
+
+### 23.33 The Topic deck knows who is playing
+
+Before a Topic game the table can type in names (up to 12). With names, the app says who answers a reflective question first and who tells a story, each player taps Agree or Disagree on their own chip, and the verdict names whoever was on the smaller side. The end screen adds the player who was most often against the table. Names are optional and the deck still works without them. The deck also grew to 109 topics.

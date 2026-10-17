@@ -36,6 +36,38 @@ export function buildTalkQueue(count: number, groups: TalkGroupId[], filters: st
 /** What the table said on one topic: how many on each side. */
 export interface TalkTally { a: number; b: number }
 
+/** One player's answer to a topic: the first option (agree or A) or the second. */
+export type TalkPick = 'a' | 'b';
+export const MAX_PLAYERS = 12;
+export const MAX_NAME = 16;
+
+/** Counts the picks of a topic into a tally. */
+export const tallyOf = (picks: Record<string, TalkPick> | undefined): TalkTally => {
+  const v = Object.values(picks ?? {});
+  return { a: v.filter((x) => x === 'a').length, b: v.filter((x) => x === 'b').length };
+};
+
+/** The players on the smaller side of a split, or none when the table is even or agreed. */
+export const minorityNames = (picks: Record<string, TalkPick> | undefined): string[] => {
+  const t = tallyOf(picks);
+  if (t.a === 0 || t.b === 0 || t.a === t.b) return [];
+  const small: TalkPick = t.a < t.b ? 'a' : 'b';
+  return Object.entries(picks ?? {}).filter(([, v]) => v === small).map(([n]) => n);
+};
+
+/** Cleans a name list: trimmed, no blanks, no duplicates (ignoring case), at most MAX_PLAYERS, each at most MAX_NAME long. */
+export function cleanNames(names: string[]): string[] {
+  const seen = new Set<string>(); const out: string[] = [];
+  for (const raw of names) {
+    const n = raw.trim().replace(/\s+/g, ' ').slice(0, MAX_NAME);
+    if (n && !seen.has(n.toLowerCase()) && out.length < MAX_PLAYERS) { seen.add(n.toLowerCase()); out.push(n); }
+  }
+  return out;
+}
+
+/** Who goes first on a topic: the roster in turn, so everyone gets their go. */
+export const speakerFor = (players: string[], index: number): string | undefined => (players.length >= 2 ? players[index % players.length] : undefined);
+
 /** One line about a tally, and whether a minority has something to argue. */
 export function splitVerdict(t: TalkTally, labelA: string, labelB: string): { text: string; minority: boolean } {
   const total = t.a + t.b;
@@ -47,10 +79,13 @@ export function splitVerdict(t: TalkTally, labelA: string, labelB: string): { te
 }
 
 /** The most divided and the most agreed topics of a session, for the recap. */
-export function talkRecap(results: Record<string, TalkTally>, queue: TalkTopic[]): { divided?: { topic: TalkTopic; tally: TalkTally }; agreed?: { topic: TalkTopic; tally: TalkTally }; voted: number } {
+export function talkRecap(results: Record<string, TalkTally>, queue: TalkTopic[], picks: Record<string, Record<string, TalkPick>> = {}): { divided?: { topic: TalkTopic; tally: TalkTally }; agreed?: { topic: TalkTopic; tally: TalkTally }; voted: number; contrarian?: { name: string; times: number } } {
   const seen = queue.map((topic) => ({ topic, tally: results[topic.id] })).filter((x): x is { topic: TalkTopic; tally: TalkTally } => !!x.tally && x.tally.a + x.tally.b >= 2);
   const spread = (x: { tally: TalkTally }) => Math.abs(x.tally.a - x.tally.b) / (x.tally.a + x.tally.b);
   const split = seen.filter((x) => x.tally.a > 0 && x.tally.b > 0).sort((p, q) => spread(p) - spread(q) || (q.tally.a + q.tally.b) - (p.tally.a + p.tally.b));
   const same = seen.filter((x) => (x.tally.a === 0 || x.tally.b === 0) && x.tally.a + x.tally.b >= 3).sort((p, q) => (q.tally.a + q.tally.b) - (p.tally.a + p.tally.b));
-  return { divided: split[0], agreed: same[0], voted: seen.length };
+  const times = new Map<string, number>();
+  for (const t of queue) for (const n of minorityNames(picks[t.id])) times.set(n, (times.get(n) ?? 0) + 1);
+  const top = Array.from(times.entries()).sort((p, q) => q[1] - p[1] || p[0].localeCompare(q[0]))[0];
+  return { divided: split[0], agreed: same[0], voted: seen.length, contrarian: top && top[1] >= 2 ? { name: top[0], times: top[1] } : undefined };
 }
