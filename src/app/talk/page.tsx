@@ -1,6 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { haptic } from '@/lib/haptics';
 import { useRouter } from 'next/navigation';
 import { Button, Chip, Icon, NumberStepper, RollNumber, Screen, Splash } from '@/components/ui';
 import { useRequireProfile } from '@/lib/use-profile';
@@ -57,10 +58,11 @@ export default function TalkSetupPage() {
       {active && <Link href="/talk/play" className="mb-5 block"><Button full variant="secondary">Resume your topics</Button></Link>}
       <p className="-mt-1 mb-6 text-lg text-muted">Things to talk about. No turns, no shots, no pot. Tap for the next topic and go back whenever you like.</p>
 
-      <h2 className="text-3xl">Who is playing</h2>
+      <div className="trim mb-4 h-3 rounded-full" aria-hidden />
+      <h2 className="sign text-3xl">Who is playing</h2>
       <p className="mb-3 mt-1 text-base text-muted">Optional. With two or more names the app says who goes first, records everyone&apos;s answer and shows who was on the other side most often.</p>
       <div className="flex flex-wrap gap-2">
-        {players.map((n) => <Chip key={n} selected onClick={() => setNames(players.filter((x) => x !== n))}>{n}<Icon name="close" size={16} /></Chip>)}
+        {players.map((n, i) => <Chip key={n} selected data-group={TALK_GROUPS[i % TALK_GROUPS.length].id} className="sign inline-flex items-center gap-2 !text-base" onClick={() => setNames(players.filter((x) => x !== n))}>{n}<Icon name="close" size={16} /></Chip>)}
       </div>
       {players.length < MAX_PLAYERS && (
         <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); addPlayer(); }}>
@@ -69,19 +71,31 @@ export default function TalkSetupPage() {
         </form>
       )}
 
-      <h2 className="mt-8 text-3xl">What to talk about</h2>
+      <h2 className="sign mt-8 text-3xl">What to talk about</h2>
       <p className="mb-3 mt-1 text-base text-muted">Tap to leave a group out.</p>
-      <div className="flex flex-wrap gap-2">
-        {TALK_GROUPS.map((g) => <Chip key={g.id} selected={groups.includes(g.id)} onClick={() => toggleGroup(g.id)}>{g.label} {perGroup[g.id]}</Chip>)}
+      <div className="grid grid-cols-2 gap-3">
+        {TALK_GROUPS.map((g) => {
+          const on = groups.includes(g.id);
+          return (
+            <button key={g.id} data-group={g.id} aria-pressed={on} onClick={() => { haptic('tap'); toggleGroup(g.id); }}
+              className={`relative flex min-h-[7rem] flex-col justify-between overflow-hidden rounded-2xl border-2 p-3 text-left transition-[transform,opacity] active:scale-95 ${on ? 'border-accent bg-accent text-onaccent' : 'border-accent/50 bg-transparent text-text opacity-60'}`}>
+              <span><span className="sign block text-lg leading-tight">{g.label}</span><span className="mt-1 block text-sm font-semibold leading-snug opacity-80">{g.hint}</span></span>
+              <span className="mt-2 flex items-center justify-between text-sm font-extrabold">
+                <span>{perGroup[g.id]} topics</span>
+                <span aria-hidden className={`grid h-6 w-6 place-items-center rounded-full border-2 ${on ? 'border-current' : 'border-accent/60'}`}>{on ? <Icon name="check" size={14} /> : null}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      <h2 className="mt-8 text-3xl">How many topics</h2>
+      <h2 className="sign mt-8 text-3xl">How many topics</h2>
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-base font-bold">{formatPrice(TALK_PRICE)} coins a topic<span className="block font-semibold text-muted">{pool.length} in the deck</span></p>
         <NumberStepper label="topics" value={n} min={Math.min(TALK_MIN, max)} max={max} step={TALK_STEP} onChange={setCount} />
       </div>
 
-      <h2 className="mt-8 text-3xl">Skip these topics</h2>
+      <h2 className="sign mt-8 text-3xl">Skip these topics</h2>
       <p className="mb-3 mt-1 text-base text-muted">Topics about these are left out. Nobody has to explain why.</p>
       <div className="flex flex-wrap gap-2">
         {PRESET_TOPICS.map((t) => <Chip key={t} selected={filters.includes(t)} onClick={() => toggleFilter(t)}>{t}</Chip>)}

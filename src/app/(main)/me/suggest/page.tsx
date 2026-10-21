@@ -5,7 +5,7 @@ import { useProfileStore } from '@/stores/profile-store';
 import { useSuggestionStore } from '@/stores/suggestion-store';
 import { KIND_META } from '@/lib/game/card-kinds';
 import { DECK_BY_ID } from '@/lib/game/decks';
-import { MAX_LEN, MAX_PER_DAY, SUGGEST_DECKS, SUGGEST_KINDS, WEEKLY_REWARD, nextWeekStart, prevWeekStart, validateSuggestion, weekKey, weekStart, weekWinner, weeklyRanking, type SuggestDeck, type SuggestKind } from '@/lib/game/suggestions';
+import { MAX_LEN, MAX_PER_DAY, SUGGEST_DECKS, SUGGEST_KINDS, nextWeekStart, prevWeekStart, validateSuggestion, weekStart, weekWinner, weeklyRanking, type SuggestDeck, type SuggestKind } from '@/lib/game/suggestions';
 import { haptic } from '@/lib/haptics';
 import { cn } from '@/lib/cn';
 
@@ -14,8 +14,7 @@ type Board = 'this' | 'last';
 export default function SuggestPage() {
   const profile = useProfileStore((s) => s.profile)!;
   const items = useSuggestionStore((s) => s.items);
-  const claimed = useSuggestionStore((s) => s.claimed);
-  const { add, toggleLike, claimLastWeek } = useSuggestionStore.getState();
+  const { add, toggleLike } = useSuggestionStore.getState();
   const [text, setText] = useState('');
   const [kind, setKind] = useState<SuggestKind>('truth');
   const [deck, setDeck] = useState<SuggestDeck>('barkada');
@@ -27,7 +26,6 @@ export default function SuggestPage() {
   const lastStart = prevWeekStart(now);
   const ranking = useMemo(() => weeklyRanking(items, board === 'this' ? thisStart : lastStart), [items, board, thisStart, lastStart]);
   const lastWinner = useMemo(() => weekWinner(items, lastStart), [items, lastStart]);
-  const canClaim = !!lastWinner && lastWinner.authorId === profile.id && !claimed.includes(weekKey(lastStart));
   const daysLeft = Math.max(1, Math.ceil((nextWeekStart(now) - now) / 86_400_000));
   const sorted = useMemo(() => [...items].sort((a, b) => b.likes.length - a.likes.length || b.createdAt - a.createdAt), [items]);
   const mine = items.filter((s) => s.authorId === profile.id).length;
@@ -42,15 +40,9 @@ export default function SuggestPage() {
 
   return (
     <Screen title="Suggest a card" back="/me">
-      <p className="text-lg text-muted">Write a card for the game. Friends like the good ones. The top contributor each week gets {WEEKLY_REWARD} coins.</p>
+      <p className="text-lg text-muted">Write a card for the game. Friends like the good ones. Each week the top contributors are ranked. There is no coin prize.</p>
       <p className="mt-2 flex items-center gap-2 text-base text-muted"><Badge tone="line">Sample data</Badge> Moderation and real payouts arrive with accounts.</p>
 
-      {canClaim && (
-        <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl bg-[#FFC72C] px-5 py-4 text-[#181310]">
-          <div><p className="display text-3xl leading-none">You won last week</p><p className="mt-1 text-base font-bold">{WEEKLY_REWARD} free coins</p></div>
-          <button onClick={() => { const n = claimLastWeek(profile.id); if (n) { haptic('success'); toast(`${n} coins added`, { tone: 'ok' }); } }} className="min-h-tap rounded-xl bg-[#181310] px-4 text-lg font-extrabold text-[#FFC72C]">Claim</button>
-        </div>
-      )}
 
       <section className="mt-6" aria-label="Write a card">
         <h2 className="mb-2 text-3xl">Your card</h2>
@@ -70,7 +62,7 @@ export default function SuggestPage() {
       <section className="mt-8" aria-label="Top contributors">
         <h2 className="mb-1 text-3xl">Top contributors</h2>
         <SegmentedControl<Board> label="Week" value={board} onChange={setBoard} options={[{ id: 'this', label: 'This week' }, { id: 'last', label: 'Last week' }]} />
-        <p className="mt-2 text-base text-muted">{board === 'this' ? `Ends in ${daysLeft} ${daysLeft === 1 ? 'day' : 'days'}. A card is 1 point, each like is 2.` : lastWinner ? `${lastWinner.name} won ${WEEKLY_REWARD} coins.` : 'Nobody won, no cards got likes.'}</p>
+        <p className="mt-2 text-base text-muted">{board === 'this' ? `Ends in ${daysLeft} ${daysLeft === 1 ? 'day' : 'days'}. A card is 1 point, each like is 2.` : lastWinner ? `${lastWinner.name} was top contributor.` : 'Nobody won, no cards got likes.'}</p>
         {ranking.length === 0 ? <p className="py-6 text-lg text-muted">No cards yet. Be the first.</p> : (
           <ol>
             {ranking.slice(0, 5).map((c, i) => (

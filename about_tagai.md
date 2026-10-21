@@ -1410,3 +1410,7 @@ Topics used to be one green card with a line of text. Now each topic is played. 
 ### 23.33 The Topic deck knows who is playing
 
 Before a Topic game the table can type in names (up to 12). With names, the app says who answers a reflective question first and who tells a story, each player taps Agree or Disagree on their own chip, and the verdict names whoever was on the smaller side. The end screen adds the player who was most often against the table. Names are optional and the deck still works without them. The deck also grew to 109 topics.
+
+### 23.34 Simpler prices, no weekly prize
+
+Card prices now come in four steps: 0.1 coin (Icebreaker, Family, Life), 0.2 (Deep, Barkada, Lovers), 0.3 (Spicy, Social media) and 0.5 (Adult, Chaos). A 20 card easy game costs 2 coins. Suggesting cards no longer pays coins; the weekly board still ranks contributors. Every suggested card will be checked by an admin before it can appear in a deck. The Topic deck setup screen now shows each group as its own colour tile with a short description, and each player name gets a colour.

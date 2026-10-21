@@ -10,8 +10,6 @@ export type SuggestKind = (typeof SUGGEST_KINDS)[number];
 export const SUGGEST_DECKS = ['icebreaker', 'family', 'life', 'deep', 'barkada', 'lovers', 'spicy', 'adult'] as const;
 export type SuggestDeck = (typeof SUGGEST_DECKS)[number];
 
-/** Coins the top contributor of a week receives. Placeholder amount, the owner decides. */
-export const WEEKLY_REWARD = 10;
 export const MIN_LEN = 15;
 export const MAX_LEN = 160;
 export const MAX_PER_DAY = 5;

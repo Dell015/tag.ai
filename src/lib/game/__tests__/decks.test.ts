@@ -9,9 +9,12 @@ const opts = { comfortFilters: [], trashedCardIds: [], playerCount: 4 };
 
 describe('deck prices', () => {
   const byPrice = [...DECKS].sort((a, b) => b.price - a.price);
-  it('Chaos is the most expensive and Social media the second', () => {
-    expect(byPrice[0].id).toBe('chaos');
-    expect(byPrice[1].id).toBe('social');
+  it('uses four simple tiers: 0.1, 0.2, 0.3 and 0.5', () => {
+    for (const d of DECKS) expect([0.1, 0.2, 0.3, 0.5]).toContain(d.price);
+  });
+  it('Chaos and Adult are the most expensive', () => {
+    expect(byPrice[0].price).toBe(0.5);
+    expect(DECKS.find((d) => d.id === 'chaos')!.price).toBe(byPrice[0].price);
   });
   it('every deck has a positive price', () => DECKS.forEach((d) => expect(d.price).toBeGreaterThan(0)));
 });
@@ -54,7 +57,7 @@ describe('basket maths', () => {
   });
   it('a card costs its deck price, a wild card is free', () => {
     expect(cardCost({ cardType: 'question', intensity: 5, deckId: 'icebreaker' })).toBe(0.1);
-    expect(cardCost({ cardType: 'question', intensity: 1, deckId: 'chaos' })).toBe(0.6);
+    expect(cardCost({ cardType: 'question', intensity: 1, deckId: 'chaos' })).toBe(0.5);
     expect(cardCost({ cardType: 'wild', intensity: 0, deckId: 'chaos' })).toBe(0);
   });
 });

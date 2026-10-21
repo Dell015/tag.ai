@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useSuggestionStore } from '../suggestion-store';
 import { useProfileStore } from '../profile-store';
 import { useWalletStore } from '../wallet-store';
-import { WEEKLY_REWARD, prevWeekStart } from '@/lib/game/suggestions';
+import { prevWeekStart } from '@/lib/game/suggestions';
 
 const NOW = new Date(2026, 9, 14, 12, 0).getTime();
 const last = prevWeekStart(NOW) + 3_600_000;
@@ -11,19 +11,12 @@ const card = (id: string, authorId: string, likes: string[]) => ({ id, text: `A 
 beforeEach(() => {
   useProfileStore.setState({ profile: { id: 'me', username: 'me', avatar: 'c1', coins: 5, createdAt: 0 } as never });
   useWalletStore.setState({ transactions: [] });
-  useSuggestionStore.setState({ items: [], claimed: [] });
+  useSuggestionStore.setState({ items: [] });
 });
 
-describe('weekly reward', () => {
-  it('pays the winner once', () => {
-    useSuggestionStore.setState({ items: [card('1', 'me', ['a', 'b']), card('2', 'x', ['a'])] });
-    expect(useSuggestionStore.getState().claimLastWeek('me', NOW)).toBe(WEEKLY_REWARD);
-    expect(useProfileStore.getState().profile!.coins).toBe(5 + WEEKLY_REWARD);
-    expect(useSuggestionStore.getState().claimLastWeek('me', NOW)).toBe(0);
-  });
-  it('pays nobody else', () => {
-    useSuggestionStore.setState({ items: [card('1', 'x', ['a', 'b']), card('2', 'me', [])] });
-    expect(useSuggestionStore.getState().claimLastWeek('me', NOW)).toBe(0);
+describe('no coin prize', () => {
+  it('has no claim action and leaves the wallet alone', () => {
+    expect('claimLastWeek' in useSuggestionStore.getState()).toBe(false);
     expect(useProfileStore.getState().profile!.coins).toBe(5);
   });
 });
