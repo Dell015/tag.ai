@@ -33,7 +33,22 @@ Goal: real accounts, coins nobody can edit, a shared card library, and suggestio
 
 Done when: two phones on different accounts see the same suggestions, an edited local balance does nothing, and you can approve a card from the admin screen.
 
-## Milestone 3: Payments (PayMongo)
+## Milestone 3: Public beta
+
+1. Real offline support (a service worker; today the app shows an offline banner but does not cache pages).
+2. Error monitoring (Sentry or similar) and basic privacy-friendly analytics so you can see where players quit.
+3. Backups on in Supabase, rate limits on sign in and suggestions.
+4. Final Terms and Privacy reviewed by a lawyer who knows Philippine rules (Data Privacy Act, online content, minors and alcohol, coins and e-money; see "Legal checks").
+5. Data deletion: a "Delete my account" button that really deletes.
+6. Content pass: review all Adult cards with the admin screen; keep the hard limits in `docs/CARD_GUIDE.md`.
+7. Your own domain, social preview image, a landing page that explains the game in one screen.
+8. Support channel (an email or Messenger page) written in the app.
+
+## Milestone 4: Launch and growth
+
+Content (Life and Deep decks, Social media deck, "Why?" cards, new card types), a weekly suggestions highlight, referral, B2B bar sessions, optional native app wrappers. Do these after real players tell you what they want.
+
+## Milestone 5: Payments (PayMongo), the very last step
 
 See "How you receive payments" below. Steps:
 
@@ -46,20 +61,7 @@ See "How you receive payments" below. Steps:
 
 Done when: you pay ₱20 with GCash on your own phone and 20 coins appear, and a refund removes them.
 
-## Milestone 4: Public beta
-
-1. Real offline support (a service worker; today the app shows an offline banner but does not cache pages).
-2. Error monitoring (Sentry or similar) and basic privacy-friendly analytics so you can see where players quit.
-3. Backups on in Supabase, rate limits on sign in and suggestions.
-4. Final Terms and Privacy reviewed by a lawyer who knows Philippine rules (Data Privacy Act, online content, minors and alcohol, coins and e-money; see "Legal checks").
-5. Data deletion: a "Delete my account" button that really deletes.
-6. Content pass: review all Adult cards with the admin screen; keep the hard limits in `docs/CARD_GUIDE.md`.
-7. Your own domain, social preview image, a landing page that explains the game in one screen.
-8. Support channel (an email or Messenger page) written in the app.
-
-## Milestone 5: Launch and growth
-
-Content (Life and Deep decks, Social media deck, "Why?" cards, new card types), a weekly suggestions highlight, referral, B2B bar sessions, optional native app wrappers. Do these after real players tell you what they want.
+Owner decision 2026-10-22: payments are built at the very end, when everything else is complete. Until then coins are free (welcome gift and hand-inserted test top ups).
 
 ## How you receive payments
 

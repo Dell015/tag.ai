@@ -28,6 +28,9 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# kiro agent config (may contain access tokens)
+.kiro/agents/default.json
+
 # vercel
 .vercel
 

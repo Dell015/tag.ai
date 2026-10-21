@@ -13,12 +13,10 @@
 --   * Money is numeric(10,2).
 -- ============================================================
 
-begin;
-
 -- Helpers that must not be exposed through the API live in "private".
 create schema if not exists private;
 revoke all on schema private from public;
-grant usage on schema private to anon, authenticated;
+grant usage on schema private to authenticated;
 
 -- ------------------------------------------------------------
 -- Admins
@@ -41,7 +39,7 @@ $$;
 -- ------------------------------------------------------------
 create table public.profiles (
   id                 uuid primary key references auth.users (id) on delete cascade,
-  username           text check (username = btrim(username) and char_length(username) between 2 and 16),
+  username           text check (username ~ '^[A-Za-z0-9_]{2,16}$'),
   avatar             text not null default 'c0' check (avatar ~ '^c[0-9]$'),
   coins              numeric(10,2) not null default 0 check (coins >= 0),
   is_adult_confirmed boolean not null default false,
@@ -114,7 +112,7 @@ declare
   av    text := new.raw_user_meta_data ->> 'avatar';
 begin
   if uname is not null and (
-       char_length(uname) not between 2 and 16
+       uname !~ '^[A-Za-z0-9_]{2,16}$'
        or exists (select 1 from public.profiles p where lower(p.username) = lower(uname))
      ) then
     uname := null;
@@ -243,7 +241,8 @@ create table public.suggestions (
   id            uuid primary key default gen_random_uuid(),
   author_id     uuid not null default auth.uid() references public.profiles (id) on delete cascade,
   text          text not null check (char_length(text) between 15 and 160),
-  kind          text not null check (kind in ('truth', 'dare', 'dice', 'coin', 'bottle', 'wheel', 'rule')),
+  -- Only truth and dare for now: tool cards (dice, coin, wheel, bottle, rule) need outcomes data a suggestion cannot carry.
+  kind          text not null check (kind in ('truth', 'dare')),
   deck_id       text not null references public.decks (id) check (deck_id not in ('social', 'chaos')),
   status        text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   reviewer_id   uuid references public.profiles (id) on delete set null,
@@ -310,8 +309,8 @@ begin
     raise exception 'This card uses a word we do not allow.' using errcode = 'P0001';
   end if;
 
-  -- 7 or more digits in a row, allowing spaces, dots, dashes, brackets and a leading +.
-  if new.text ~ '\+?\d([\s.()-]*\d){6,}' then
+  -- 9 or more digits in a row, allowing spaces, dots, dashes, brackets and a leading +.
+  if new.text ~ '\+?\d([\s.()-]*\d){8,}' then
     raise exception 'Cards cannot contain phone numbers.' using errcode = 'P0001';
   end if;
 
@@ -573,6 +572,50 @@ begin
 end;
 $$;
 
+
+-- Sets the signed in player's name and colour. The name is 2 to 16 letters, numbers or underscore, unique ignoring case.
+create or replace function public.complete_profile(username text, avatar text)
+returns void
+language plpgsql security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  u   text := btrim(username);
+begin
+  if uid is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+  if u is null or u !~ '^[A-Za-z0-9_]{2,16}$' then
+    raise exception 'Name must be 2 to 16 letters, numbers or underscores' using errcode = '22023';
+  end if;
+  if avatar is null or avatar !~ '^c[0-9]$' then
+    raise exception 'Pick one of the colours' using errcode = '22023';
+  end if;
+  if exists (select 1 from public.profiles p where lower(p.username) = lower(u) and p.id <> uid) then
+    raise exception 'That name is taken' using errcode = '23505';
+  end if;
+  update public.profiles p set username = u, avatar = complete_profile.avatar where p.id = uid;
+  if not found then
+    raise exception 'No profile for this user' using errcode = 'P0002';
+  end if;
+end;
+$$;
+
+-- The player confirms they are 18 or older. The column is not directly writable.
+create or replace function public.confirm_adult()
+returns void
+language plpgsql security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Not signed in' using errcode = '42501';
+  end if;
+  update public.profiles p set is_adult_confirmed = true where p.id = auth.uid();
+end;
+$$;
+
 -- Admin: approve a suggestion and copy it into cards (source 'suggestion', status 'approved').
 -- Intensity and category are not part of a suggestion; defaults come from the deck, the admin can override.
 create or replace function public.approve_suggestion(id uuid, intensity smallint default null, category text default null)
@@ -683,13 +726,15 @@ create policy admins_select on public.admins for select to authenticated
 
 -- profiles: own row only; coins and created_at are not writable (column privileges).
 grant select on public.profiles to authenticated;
-grant update (username, avatar, is_adult_confirmed, settings) on public.profiles to authenticated;
+-- Name, colour and the 18+ flag change only through complete_profile and confirm_adult; settings directly.
+grant update (settings) on public.profiles to authenticated;
 create policy profiles_select on public.profiles for select to authenticated
   using (id = (select auth.uid()) or (select public.is_admin()));
 create policy profiles_update_own on public.profiles for update to authenticated
   using (id = (select auth.uid())) with check (id = (select auth.uid()));
 
-grant select on public.public_profiles to anon, authenticated;
+-- Signed in users only: anonymous visitors cannot list player names.
+grant select on public.public_profiles to authenticated;
 
 -- transactions: read own rows only. Nobody inserts from the app.
 grant select on public.transactions to authenticated;
@@ -814,12 +859,16 @@ grant execute on function public.buy_shop_item(text)                         to 
 grant execute on function public.equip_item(text, boolean)                   to authenticated;
 grant execute on function public.approve_suggestion(uuid, smallint, text)    to authenticated;
 grant execute on function public.reject_suggestion(uuid, text)               to authenticated;
+grant execute on function public.complete_profile(text, text)                to authenticated;
+grant execute on function public.confirm_adult()                             to authenticated;
 grant execute on function public.retire_cards(text[])                        to authenticated;
 -- Needed by the public_profiles view (security_invoker) and by RLS/trigger helpers.
-grant execute on function private.list_public_profiles()                     to anon, authenticated;
+grant execute on function private.list_public_profiles()                     to authenticated;
 grant execute on function private.norm_text(text)                            to authenticated;
 
 -- Future functions in public are not executable by default.
 alter default privileges in schema public revoke execute on functions from public, anon, authenticated;
+-- Future tables and sequences in public start closed too, so a new table is never open by accident.
+alter default privileges in schema public revoke all on tables from anon, authenticated;
+alter default privileges in schema public revoke all on sequences from anon, authenticated;
 
-commit;
