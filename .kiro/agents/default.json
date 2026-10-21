@@ -1,0 +1,27 @@
+{
+  "name": "default",
+  "description": "Default CLI agent with Supabase MCP server for the tag.ai database work.",
+  "tools": [
+    "read",
+    "write",
+    "shell",
+    "grep",
+    "glob",
+    "code",
+    "@supabase"
+  ],
+  "allowedTools": [
+    "read",
+    "grep",
+    "glob"
+  ],
+  "mcpServers": {
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=acoiufjazugecoikegmy&features=database,debugging,development,docs",
+      "oauth": {
+        "redirectUri": "http://127.0.0.1:7788/oauth/callback"
+      },
+      "timeout": 120000
+    }
+  }
+}
