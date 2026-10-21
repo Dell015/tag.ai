@@ -4,6 +4,10 @@ Audience: whoever builds the Supabase database (Kiro or Claude). The frontend is
 
 Do **not** run `supabase/migrations/001_initial_schema.sql` as it is. It predates decks, the coin pot, the shop and suggestions. Replace it with the migrations below.
 
+## Scope: database only
+
+The builder touches `supabase/**` and adds a short "Built" note at the bottom of this file. **Nothing in `src/`, `public/`, config files or the other docs may be changed.** If something outside seems to need a change, write it down in the "Built" note instead.
+
 ## Ground rules
 
 1. Postgres on Supabase. Every table in `public` has **row-level security (RLS) on**. No exceptions.

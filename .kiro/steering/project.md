@@ -11,3 +11,16 @@ Rules:
 - Keep `src/lib/game/*` pure and tested. Do not change its behavior without updating tests.
 - UI must follow the "drunk-proof UX rules" in CLAUDE.md §7 (huge tap targets, large text, button alternatives to gestures, undo, minimal reading).
 - Finish every task with `npm run lint`, `npm test` and `npm run build` passing, and update CLAUDE.md §2/§3/§11.
+
+## Database task: hard limits (2026-10-22)
+
+While doing the Stage B database task, you may create or edit ONLY these paths:
+- `supabase/**` (migrations, seed, config)
+- `docs/DATABASE_SPEC.md` (only to add a short "Built" section at the bottom saying what you created)
+
+You must NOT create, edit, move or delete anything else. In particular, never touch:
+- `src/**` (all pages, components, stores, hooks, lib, types, styles), `public/**`
+- `package.json`, `package-lock.json`, `next.config.*`, `tailwind.config.*`, `tsconfig.json`, `.env*`
+- `CLAUDE.md`, `about_tagai.md`, any other file in `docs/`
+
+If the task seems to need a change outside the allowed paths (for example regenerated types in `src/types/supabase.ts`), do not make it. Write it as a note at the bottom of `docs/DATABASE_SPEC.md` and let the owner decide.
