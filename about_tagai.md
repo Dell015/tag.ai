@@ -1414,3 +1414,7 @@ Before a Topic game the table can type in names (up to 12). With names, the app 
 ### 23.34 Simpler prices, no weekly prize
 
 Card prices now come in four steps: 0.1 coin (Icebreaker, Family, Life), 0.2 (Deep, Barkada, Lovers), 0.3 (Spicy, Social media) and 0.5 (Adult, Chaos). A 20 card easy game costs 2 coins. Suggesting cards no longer pays coins; the weekly board still ranks contributors. Every suggested card will be checked by an admin before it can appear in a deck. The Topic deck setup screen now shows each group as its own colour tile with a short description, and each player name gets a colour.
+
+### 23.35 The database is next
+
+The app still keeps everything on the phone, so friends cannot yet see each other's cards, likes or coins. The next stage is a real database. The plan is written in `docs/DATABASE_SPEC.md`: accounts with email sign in, coins that only the server can change, a card table, suggested cards that wait for admin approval before they reach a deck, and reports from players. The owner will review before it goes live.
