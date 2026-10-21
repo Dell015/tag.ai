@@ -308,6 +308,8 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 
 ## 11. Changelog / session log
 
+- **2026-10-22 (QA, prices, roadmap)** — Four deck price tiers (D36), weekly reward removed, colourful Topic setup, database spec for Kiro (D37, `docs/DATABASE_SPEC.md`), QA pass (`docs/QA_2026-10-22.md`: 7 fixes, must-fix list incl. Next.js security upgrade) and `docs/ROADMAP.md` (milestones to friends alpha, accounts, payments with PayMongo, public beta). 242 tests pass, lint clean, build OK.
+
 - **2026-10-16 (full-screen tools, suggestions)** — Tools animate on their own screen, bottle is random and players decide who, Freeze and Dance Off and dance cards removed, Double or Nothing added, suggest-a-card page with likes and weekly top contributor reward. Tests pass, lint clean.
 
 - **2026-10-16 (heat order, tool-made cards)** — Cards now come easy to hard as the heat meter fills and fully random at max heat, heat is paced by game length, 17 penalty/rule cards where the dice, coin, wheel or bottle decide, rule cards that make their rule on the spot, Lucky Roll wild card, bottle on Call Out and Voice Note. 210 tests pass, lint clean, build OK.

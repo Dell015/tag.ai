@@ -5,7 +5,7 @@ import { Screen } from '@/components/ui';
 import { cn } from '@/lib/cn';
 
 const STEPS = [
-  ['Host a game', 'Tap Host a game on the home screen and add your friends by name. They do not need the app.'],
+  ['Host a game', 'Tap Drinking game on the home screen and add your friends by name. They do not need the app.'],
   ['Pick a deck', 'Choose a deck, how many cards, the topics to skip and how many coins go in the pot.'],
   ['Pass the phone', 'The phone shows whose turn it is. Tap the card to reveal it, then answer or take the dare.'],
   ['Next or skip', 'Tap Next, or swipe the card, when it is played. Skip gives the same player a new card. Every card shows what happens if you fail or refuse it.'],

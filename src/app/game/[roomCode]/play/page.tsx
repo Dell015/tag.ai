@@ -188,7 +188,7 @@ export default function PlayPage() {
         <div className="flex flex-wrap justify-between gap-x-3 text-sm font-bold text-muted [&>*]:whitespace-nowrap">
           <span>Card {Math.min(g.cardsPlayed + 1, g.cardCountTarget)} of {g.cardCountTarget}</span>
           {st.showRules && <span>{ruleLine(room.config.drinkRuleTemplate, room.config.nonDrinkingMode)}</span>}
-          {g.potStart > 0 && <button onClick={() => setTopUp(true)} aria-label="Pot, tap to top up" className={cn('font-extrabold underline decoration-2 underline-offset-4', isLow(g.pot, g.potStart) ? 'text-danger' : 'text-text')}>Pot <RollNumber value={g.pot} format={formatPot} /></button>}
+          {g.potStart > 0 && <button onClick={() => setTopUp(true)} aria-label="Pot, tap to top up" className={cn('inline-flex min-h-tap items-center px-1 font-extrabold underline decoration-2 underline-offset-4', isLow(g.pot, g.potStart) ? 'text-danger' : 'text-text')}>Pot <RollNumber value={g.pot} format={formatPot} /></button>}
         </div>
         {g.activeRule && (
           <p role="status" className="flex items-center gap-2 rounded-lg bg-[rgb(190_222_58)] px-3 py-2 text-base font-extrabold text-[rgb(24_19_16)]">

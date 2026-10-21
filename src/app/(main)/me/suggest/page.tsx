@@ -55,7 +55,7 @@ export default function SuggestPage() {
           placeholder={kind === 'dice' || kind === 'coin' || kind === 'bottle' || kind === 'wheel' ? 'Roll the die. Your number is how many...' : kind === 'rule' ? 'Everyone speaks only in questions until the next wild card.' : 'What is the pettiest thing you did this year?'}
           className={cn('w-full resize-none rounded-xl border-2 bg-transparent p-4 text-lg placeholder:text-muted/50 focus:border-accent', error ? 'border-danger' : 'border-line')} />
         <p className={cn('mt-1.5 text-base', error ? 'font-bold text-danger' : 'text-muted')}>{error ?? `Say it plainly, like "take a shot". ${MAX_PER_DAY} cards a day. ${deck === 'adult' ? 'Adult cards stay 18+.' : ''}`}</p>
-        <button onClick={submit} className="mt-3 min-h-cta w-full rounded-xl bg-accent px-5 text-xl font-extrabold text-onaccent active:translate-y-px">Send card</button>
+        <button onClick={submit} className="mt-3 h-cta w-full rounded-xl bg-accent px-5 text-xl font-extrabold text-onaccent active:translate-y-px">Send card</button>
         {mine > 0 && <p className="mt-2 text-base text-muted">You have sent {mine} {mine === 1 ? 'card' : 'cards'}.</p>}
       </section>
 

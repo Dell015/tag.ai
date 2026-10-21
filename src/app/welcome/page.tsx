@@ -24,7 +24,7 @@ function WelcomeInner() {
 
   if (step === 0) {
     return (
-      <div className="flex min-h-dvh flex-col px-5 safe-top safe-bottom">
+      <div className="flex min-h-dvh flex-col overflow-x-clip px-5 safe-top safe-bottom">
         <Logo className="text-3xl" />
         <DeckFan className="mt-6" />
         <h1 className="mt-8 text-[3rem] leading-[0.95]">

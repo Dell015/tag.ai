@@ -52,6 +52,8 @@ RLS: a user can **read** their own rows only. Nobody inserts from the app. There
 
 ### RPC functions (security definer, called by the app)
 - `spend_coins(kind text, amount numeric, note text) returns numeric`: debits, fails with a clear error when the balance is too low, returns the new balance.
+- `complete_profile(username text, avatar text) returns void`: sets the username (2 to 16 characters, letters, numbers and underscore, unique, case-insensitive) and avatar for the signed in user. The trigger creates the profile with a temporary username like `player_ab12cd`; the app calls this at onboarding.
+- `confirm_adult() returns void`: sets `is_adult_confirmed = true` for the signed in user (the column is not directly writable).
 - `refund_coins(amount numeric, note text) returns numeric`: used when unused cards or topics are returned at the end of a game. Cap: a refund can never exceed what the same user spent in the last 24 hours on `pot` rows.
 - `buy_shop_item(item_id text) returns void`: debits the price from `shop_items`, inserts into `owned_items`.
 - `top_up` is **not** an RPC. Real coin purchases (GCash, cards) will be added by a payment webhook running on the server in a later stage. For now `topup` rows are inserted by hand during testing only.
@@ -147,33 +149,3 @@ Game sessions, rooms, realtime broadcast and the leaderboard stay on the mock la
 4. A profile without `is_adult_confirmed` gets zero cards where `adult = true`.
 5. `spend_coins` with more than the balance fails and changes nothing.
 6. Two phones calling `spend_coins` at the same moment cannot take the balance below zero (use `select ... for update` or a single `update ... where coins >= amount`).
-
-
-## Built (2026-10-22, Kiro)
-
-Status: **written and tested locally, not yet applied to the Supabase project** (project ref `acoiufjazugecoikegmy`). Waiting for owner approval and a way to run SQL (access token or SQL editor).
-
-Files (all under `supabase/`):
-- `migrations/002_stage_b_core.sql`: the schema in this spec. 15 tables with RLS on, `private` schema for helpers, column privileges on `profiles`, ledger trigger that applies every `transactions` row to `profiles.coins` (check `coins >= 0`), `on_auth_user_created` trigger (profile + 10 coin `welcome` row), RPCs `spend_coins`, `refund_coins`, `buy_shop_item`, `equip_item`, `is_admin`, `approve_suggestion`, `reject_suggestion`, `retire_cards`, suggestion insert checks (5 per 24 h, blocklist, phone, link, duplicate), views `public_profiles` and `weekly_contributors` (both `security_invoker`).
-- `seed/002_stage_b_seed.sql`: generated, rerunnable. 10 decks, 353 cards (130 curated, `card-048` retired, 79 tool, 123 adult, 20 adult tool), 109 talk topics, 21 shop items. Ids unchanged.
-- `scripts/generate-seed.mjs`: rebuilds the seed from `src/lib/data/*` and `seed/cards.sql`. Run `node supabase/scripts/generate-seed.mjs`.
-- `tests/spec_checks.sql` (checks 2 to 5 plus extras, cleans up its test users) and `tests/spec_check_6_concurrency.sql` (two parallel calls).
-
-Run order: migration, seed, `tests/spec_checks.sql`, then check 6 and the security advisor (check 1). Do not run `001_initial_schema.sql`.
-
-Local dry run (PGlite with stubbed `auth`): migration and seed OK, all checks 2 to 5 and extras pass. Checks 1 and 6 need the live project.
-
-Choices not spelled out above:
-- `cards.extra jsonb` holds tool data (`tool`, `outcomes`, `rule`, `penalty`, `people`) so tool cards stay playable.
-- `saved_cards`, `trashed_cards`, `card_reports` keep `card_id` as text without a foreign key, because pack, wild and custom card ids are not in `cards`.
-- Only Adult cards have `deck_id = 'adult'`. Other decks still choose cards by the rules in `src/lib/game/decks.ts`.
-- `approve_suggestion(id, intensity?, category?)` defaults intensity and category from the deck. Likes are only allowed on approved suggestions.
-- Usernames are unique case-insensitively and may be null until chosen.
-- Refund cap: total refunds in the last 24 h cannot exceed `pot` spending in the last 24 h. `spend_coins` accepts kinds `pot`, `shop`, `purchase`.
-- Hand-inserted `topup` rows update the balance through the ledger trigger.
-
-Notes for the owner (outside the allowed paths, not done):
-- After applying, regenerate `src/types/supabase.ts` from the live schema.
-- First admin: `insert into public.admins (user_id) select id from auth.users where email = 'ADMIN_EMAIL';` after that account signs in once.
-- `CLAUDE.md` §2, §3 and §11 should record this slice (the database steering rules block editing it during this task).
-- `blocked_words` starts empty.
