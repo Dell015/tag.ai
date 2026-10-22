@@ -1,4 +1,6 @@
 'use client';
+import { useAccountStore } from '@/stores/account-store';
+import { signOutServer } from '@/lib/supabase/account';
 import { useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { Button, Chip, ConfirmSheet, ListRow, Screen, SegmentedControl, TextField, Toggle, toast } from '@/components/ui';
@@ -40,6 +42,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const s = useSettingsStore();
   const signOut = useProfileStore((p) => p.signOut);
+  const connected = useAccountStore((a) => a.status === 'signedIn');
   const trashedCount = useProfileStore((p) => p.trashedCardIds.length);
   const resetGame = useGameStore((g) => g.resetGame);
   const [word, setWord] = useState('');
@@ -153,7 +156,7 @@ export default function SettingsPage() {
       <Group title="Data and about">
         <ListRow label="Export my data" hint="Downloads a JSON file." onClick={exportData} />
         <ListRow label="Clear game in progress" danger onClick={() => setAsk('game')} />
-        <ListRow label="Reset profile" danger onClick={() => setAsk('profile')} />
+        <ListRow label={connected ? 'Sign out' : 'Reset profile'} danger onClick={() => setAsk('profile')} />
         <ListRow label="Clear all local data" danger onClick={() => setAsk('all')} />
         {s.hiddenUnlocked && <ToggleRow k="testPurchases" label="Test purchases" hint="Developer. Lets you add test coins in the Shop." />}
         <ListRow label="Terms" href="/legal/terms" />
@@ -164,7 +167,7 @@ export default function SettingsPage() {
       </Group>
 
       <ConfirmSheet open={ask === 'game'} title="Clear the game in progress?" body="The current game on this phone ends and cannot be resumed." confirmLabel="Clear game" danger onConfirm={() => { const left = useGameStore.getState().settlePot(); if (left > 0) useWalletStore.getState().apply('refund', left, 'Unused pot returned'); resetGame(); toast('Game cleared', {}); }} onClose={() => setAsk(null)} />
-      <ConfirmSheet open={ask === 'profile'} title="Reset your profile?" body="Your name, coins, saved and trashed cards on this phone are removed." confirmLabel="Reset profile" danger onConfirm={() => { useWalletStore.getState().clear(); signOut(); router.replace('/welcome'); }} onClose={() => setAsk(null)} />
+      <ConfirmSheet open={ask === 'profile'} title={connected ? 'Sign out?' : 'Reset your profile?'} body={connected ? 'Your coins and saved cards stay in your account. Sign in again with your email to get them back.' : 'Your name, coins, saved and trashed cards on this phone are removed.'} confirmLabel={connected ? 'Sign out' : 'Reset profile'} danger onConfirm={() => { if (connected) { void signOutServer().then(() => router.replace('/welcome')); return; } useWalletStore.getState().clear(); signOut(); router.replace('/welcome'); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'all'} title="Clear all local data?" body="Everything tag.ai stored on this phone is erased, including settings." confirmLabel="Clear everything" danger onConfirm={wipe} onClose={() => setAsk(null)} />
     </Screen>
   );

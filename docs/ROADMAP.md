@@ -23,6 +23,8 @@ Done when: five friends played a full game and you collected their feedback.
 
 ## Milestone 2: Database and accounts
 
+Status 2026-10-22: database built (`supabase/BUILD_LOG.md`), email sign in, coins, shop, saved and trashed cards connected. Still to do: dashboard email setup (`docs/AUTH_SETUP.md`), cards and topics read from the database, suggestions and likes, settings mirror, admin screen, real two-phone test.
+
 Goal: real accounts, coins nobody can edit, a shared card library, and suggestions you can review.
 
 1. Kiro builds the database from `docs/DATABASE_SPEC.md` (only touches `supabase/`). You review the SQL and run the six checks at the bottom of the spec.

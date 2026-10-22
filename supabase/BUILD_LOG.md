@@ -9,6 +9,7 @@ Built 2026-10-22 by Claude through the Supabase connector, in project **tag.ai**
 | 002b_functions | same file (part 2) | spend_coins, refund_coins, buy_shop_item, equip_item, complete_profile, confirm_adult, approve_suggestion, reject_suggestion, retire_cards |
 | 002c_rls_and_grants | same file (part 3) | RLS on every table, column grants, function privileges |
 | 002d_indexes_and_shop_policy | `migrations/003_indexes_and_shop_policy.sql` | FK indexes, shop policy without is_admin for signed-out users |
+| 004_card_decks | `migrations/004_card_decks.sql` | `card_decks` link table (a card can be in several decks), filled with the app's deck rules (664 links), `approve_suggestion` adds the new card to its deck |
 
 Data (run through the SQL tool from `seed/002_stage_b_seed.sql`, plus a starter `blocked_words` list of 17 words): 10 decks, 353 cards (143 adult, 1 retired), 109 topics, 21 shop items. Counts checked after loading.
 
@@ -23,7 +24,10 @@ Security: no errors. Warnings are the app functions that signed-in users are mea
 
 ## Open
 - Two fake test users (`check-a@example.test`, `check-b@example.test`) remain until `manual/delete_test_users.sql` is run.
-- Admin row: `manual/insert_admin.sql` after the owner signs in once.
+- Admin row: done for randelserafica1505@gmail.com (2026-10-22).
 - Auth settings in the dashboard (email provider, redirect URLs) are not set yet.
 - The two real accounts that existed before got profiles and the 10 coin welcome row by hand.
 - Payments are the last milestone (owner 2026-10-22).
+
+## App connection
+See CLAUDE.md D39 and `docs/AUTH_SETUP.md`. Dashboard email template and SMTP are still to do.

@@ -146,6 +146,7 @@ Numbered so they can be referenced in commits.
 | D36 | **Simple prices, no weekly reward, livelier Topic setup (2026-10-22).** Deck prices use four tiers per card: 0.1 (Icebreaker, Family, Life), 0.2 (Deep, Barkada, Lovers), 0.3 (Spicy, Social media), 0.5 (Adult, Chaos). 20 cards of an easy deck cost 2 coins. Suggestions earn no coins. Every suggested card will be reviewed by an admin before it reaches a deck (admin tool planned, also used to review Adult cards). Topic setup uses colour tiles per group. | Owner 2026-10-22. |
 | D37 | **Stage B starts with the database (2026-10-22).** Owner wants the database built (possibly by Kiro, the Supabase connector in claude.ai points at a different account than the project URL the owner gave). Spec is `docs/DATABASE_SPEC.md`: profiles, server-owned coin ledger with RPC functions, decks and cards with status (pending, approved, retired), suggestions that need admin approval, reports, shop, admin role. First sign in is email (default, owner can change), admin email to be filled in. `001_initial_schema.sql` is outdated. Supabase URL and public key are in the owner's `.env.local` (not committed). | Owner 2026-10-22. |
 | D38 | **Database built (2026-10-22).** Built by Claude in Supabase project `tag.ai` (ref mqdwmrokvtvtexaecqdv) after Kiro could not connect. Kiro's draft plus fixes, 13 of 13 checks pass, see `supabase/BUILD_LOG.md`. The app must use this project's URL and key in `.env.local` (replaces the acoiufj project). **Payments come last, after everything else is finished and tested** (owner 2026-10-22). | Owner 2026-10-22. |
+| D39 | **App connected to the database, first slice (2026-10-22).** Email code sign in on the welcome screen (`/welcome`), account loaded into the local stores by `AuthSync` (server wins), coins spent and refunded only through the RPC functions (local change is optimistic and undone if the server refuses), shop buys through `buy_shop_item`, saved and trashed cards written to the server. Test purchases and any local coin credit are off when signed in (payments come last). Without the two env vars the app still runs on the local mock. Old local profiles are not imported (reset). Cards, topics, suggestions, settings and the admin screen are still local, next slices. Cards belong to decks through `card_decks` (a card can be in several decks). Dashboard steps: `docs/AUTH_SETUP.md`. | Owner 2026-10-22. |
 
 Open / unknown (owner can't remember — decide when it comes up, then record it above):
 - Whether phone-OTP login is still wanted (docs said email/Google/phone; code has email + Google only).
@@ -308,6 +309,8 @@ Owner has **~1000 Kiro credits left (expiring)** and wants to use them fully, th
 ---
 
 ## 11. Changelog / session log
+
+- **2026-10-22 (app connected, slice 1)** — Email code sign in, account sync, server-side coins and shop, saved and trashed cards, `card_decks` table, admin row for the owner, `docs/AUTH_SETUP.md`, `docs/CARD_IDEAS.md`. 253 tests pass, lint clean, build OK with and without env. Not tested with a real email yet (needs the dashboard steps).
 
 - **2026-10-22 (database built)** — Schema, security rules, 353 cards, 109 topics, 21 shop items and checks are live in the tag.ai Supabase project (D38). Payments moved to the very end.
 

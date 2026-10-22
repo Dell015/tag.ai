@@ -7,6 +7,7 @@ import { SettingsApplier } from "@/components/ui/SettingsApplier";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ToastHost } from "@/components/ui/Toast";
 import { MotionProvider } from "@/components/ui/MotionProvider";
+import { AuthSync } from "@/components/AuthSync";
 
 export const metadata: Metadata = {
   title: "tag.ai, the barkada drinking game",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className="antialiased">
         <StoreHydrator />
+        <AuthSync />
         <SettingsApplier />
         <MotionProvider><div className="mx-auto min-h-dvh w-full max-w-md">{children}</div></MotionProvider>
         <OfflineBanner />

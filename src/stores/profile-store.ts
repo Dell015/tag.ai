@@ -6,6 +6,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { safeStorage } from '@/lib/storage';
+import { isConnected } from '@/stores/account-store';
+import { setCardMark } from '@/lib/supabase/account';
 
 export const WELCOME_COINS = 10;
 
@@ -66,12 +68,23 @@ export const useProfileStore = create<ProfileState>()(
         if (profile) set({ profile: { ...profile, ...patch } });
       },
 
-      saveCard: (id) =>
-        set((s) => (s.savedCardIds.includes(id) ? s : { savedCardIds: [...s.savedCardIds, id] })),
-      unsaveCard: (id) => set((s) => ({ savedCardIds: s.savedCardIds.filter((c) => c !== id) })),
-      trashCard: (id) =>
-        set((s) => (s.trashedCardIds.includes(id) ? s : { trashedCardIds: [...s.trashedCardIds, id] })),
-      untrashCard: (id) => set((s) => ({ trashedCardIds: s.trashedCardIds.filter((c) => c !== id) })),
+      // When signed in, saved and trashed cards are also written to the server (own rows only).
+      saveCard: (id) => {
+        set((s) => (s.savedCardIds.includes(id) ? s : { savedCardIds: [...s.savedCardIds, id] }));
+        if (isConnected()) void setCardMark('saved_cards', id, true);
+      },
+      unsaveCard: (id) => {
+        set((s) => ({ savedCardIds: s.savedCardIds.filter((c) => c !== id) }));
+        if (isConnected()) void setCardMark('saved_cards', id, false);
+      },
+      trashCard: (id) => {
+        set((s) => (s.trashedCardIds.includes(id) ? s : { trashedCardIds: [...s.trashedCardIds, id] }));
+        if (isConnected()) void setCardMark('trashed_cards', id, true);
+      },
+      untrashCard: (id) => {
+        set((s) => ({ trashedCardIds: s.trashedCardIds.filter((c) => c !== id) }));
+        if (isConnected()) void setCardMark('trashed_cards', id, false);
+      },
       markHintsSeen: () => set({ hasSeenHints: true }),
       signOut: () => set({ profile: null, savedCardIds: [], trashedCardIds: [], hasSeenHints: false }),
     }),
