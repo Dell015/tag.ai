@@ -3,7 +3,7 @@
  * Every card costs 1 coin. Wild cards are free.
  */
 import { GAME_MODES, blendModes } from '@/lib/game/game-modes';
-import { basketCost, basketCards, sumBaskets, type Basket } from '@/lib/game/decks';
+import { deckOf, basketCost, basketCards, sumBaskets, type Basket } from '@/lib/game/decks';
 import type { GameMode } from '@/types/game';
 
 export const MIN_POT = 10;
@@ -13,9 +13,10 @@ export const LOW_POT_RATIO = 0.2;
 
 interface CostCard { cardType: 'question' | 'action' | 'wild'; intensity: number; deckId?: string }
 
-/** Coins one card uses from the pot: a flat 1, wild cards are free. */
+/** Coins one card uses from the pot: 1 (2 for Chaos), wild cards are free. */
 export function cardCost(card: CostCard): number {
-  return card.cardType === 'wild' ? 0 : 1;
+  if (card.cardType === 'wild') return 0;
+  return (card.deckId && deckOf(card.deckId)?.price) || 1;
 }
 
 /** Average cost of one card in a deck, from its intensity mix. */

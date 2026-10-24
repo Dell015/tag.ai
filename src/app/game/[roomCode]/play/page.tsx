@@ -101,17 +101,20 @@ export default function PlayPage() {
     if (ended && room && room.status === 'active') rooms.update(code, (r) => ({ ...r, status: 'ended' }));
   }, [ended, room, code]);
 
+  const moreDeck = room ? Object.entries(roomBasket(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] : undefined;
+  const moreCost = MORE_CARDS * (moreDeck ? DECK_BY_ID[moreDeck as DeckId]?.price ?? 1 : 1);
   /** Pay as you go: 10 more cards of the same stack for 10 coins, then the game carries on. */
   const buyMore = () => {
     if (!room) return;
     const deck = Object.entries(roomBasket(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] as DeckId | undefined;
-    if (!deck || wallet < MORE_CARDS) return;
+    if (!deck || wallet < moreCost) return;
     const seen = [...g.cardQueue, ...g.bufferCards].map((c) => c.id);
     const built = buildBasketQueue({ basket: { [deck]: MORE_CARDS }, comfortFilters: room.config.comfortFilters, trashedCardIds: [...useProfileStore.getState().trashedCardIds, ...seen], playerCount: g.turnRotation.players.length, fitPlayers: true }, buildLibrary());
     const n = built.cards.filter((c) => c.cardType !== 'wild').length;
+    const price = built.cards.filter((c) => c.cardType !== 'wild').reduce((a, c) => a + cardCost(c), 0);
     if (n === 0) { toast('No new cards left in this stack. Try another stack.', {}); return; }
-    if (!applyCoins('pot', -n, `${n} more cards`)) { toast('Not enough coins', {}); return; }
-    g.topUpPot(n);
+    if (!applyCoins('pot', -price, `${n} more cards`)) { toast('Not enough coins', {}); return; }
+    g.topUpPot(price);
     g.extendQueue(built.cards, built.buffer);
     settled.current = false;
     rooms.update(code, (r) => ({ ...r, status: 'active' }));
@@ -134,7 +137,7 @@ export default function PlayPage() {
     return (
       <Recap
         potStart={g.potStart} potRefunded={g.potRefunded}
-        more={{ cards: MORE_CARDS, wallet, onBuy: buyMore }}
+        more={{ cards: MORE_CARDS, cost: moreCost, wallet, onBuy: buyMore }}
         saved={hearted.map((id) => g.cardQueue.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c)}
         mode={g.gameMode} deckName={basketNames(roomBasket(room).basket)} played={g.cardsPlayed} skipped={g.skippedCount} hearted={g.heartedCount} peak={g.peakHeat}
         onHome={() => { g.resetGame(); router.replace('/'); }}

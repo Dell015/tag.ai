@@ -120,7 +120,7 @@ export default function SetupPage() {
 
       {key === 'basket' && (
         <>
-          <p className="-mt-2 mb-5 text-base text-muted">Pick a stack, then how long you want to play. Every card is 1 coin. Wild cards are free and come on top.</p>
+          <p className="-mt-2 mb-5 text-base text-muted">Pick a stack, then how long you want to play. Every card is 1 coin, Chaos is 2. Wild cards are free and come on top.</p>
           <SegmentedControl<SessionLength> label="Session length" value={session} onChange={(v) => pick(deckId, v)}
             options={[{ id: 'short', label: `Short, ${SESSIONS.short} cards` }, { id: 'long', label: `Long, ${SESSIONS.long} cards` }]} />
 
@@ -141,7 +141,7 @@ export default function SetupPage() {
                           <span className="min-w-0 flex-1">
                             <span className="sign block text-[1.15rem] leading-tight">{d.name}</span>
                             <span className="block text-base text-muted">{d.blurb}</span>
-                            <span className="mt-1 block text-base font-semibold text-muted">{d.ready ? `${pools[id]} cards in the stack` : 'Coming soon'}</span>
+                            <span className="mt-1 block text-base font-semibold text-muted">{d.ready ? `${pools[id]} cards${d.price !== 1 ? `, ${d.price} coins a card` : ''}` : 'Coming soon'}</span>
                           </span>
                           {on && <Icon name="check" />}
                         </button>
@@ -163,7 +163,7 @@ export default function SetupPage() {
           </div>
 
           <p className="mt-6 border-t-2 border-line pt-4 text-2xl font-extrabold">{cards} cards for <RollNumber value={total} format={formatPot} /> coins{cards > 0 ? `, ${formatDuration(cards)}` : ''}.</p>
-          <p className="mt-2 text-base text-muted">You pay for the table. Friends can pay you back in cash, P1 a coin. When the cards run out you can get {MORE_CARDS} more for {MORE_CARDS} coins.</p>
+          <p className="mt-2 text-base text-muted">You pay for the table. Friends can pay you back in cash, P1 a coin. When the cards run out you can get {MORE_CARDS} more cards.</p>
 
           <p className="mt-5 text-lg">You have <b>{formatPot(wallet)} coins</b>.</p>
           {total > wallet && (
