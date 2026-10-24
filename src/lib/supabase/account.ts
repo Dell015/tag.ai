@@ -250,6 +250,14 @@ export async function adminRetire(ids: string[]): Promise<Result<number>> {
   return error ? { ok: false, error: msg(error) } : { ok: true, data: data as number };
 }
 
+/** Gives coins to a player by username (admins only; the database refuses anyone else). Returns their new balance. */
+export async function adminGiveCoins(username: string, amount: number, note: string): Promise<Result<number>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_give_coins', { target_username: username, amount, note: note || null });
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: Number(data) };
+}
+
 export async function adminWords(): Promise<Result<string[]>> {
   const sb = getBrowserClient();
   if (!sb) return noClient;

@@ -6,14 +6,14 @@ import { useAccountStore } from '@/stores/account-store';
 import { useHydrated } from '@/lib/hydration';
 import { refreshContent } from '@/lib/content-sync';
 import {
-  adminAddWord, adminApprove, adminPending, adminReject, adminRemoveWord, adminRetire, adminSearchCards, adminWords,
+  adminAddWord, adminApprove, adminGiveCoins, adminPending, adminReject, adminRemoveWord, adminRetire, adminSearchCards, adminWords,
   type AdminCard, type PendingSuggestion,
 } from '@/lib/supabase/account';
 import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
 import { DECK_BY_ID, type DeckId } from '@/lib/game/decks';
 import type { CardCategory } from '@/types/game';
 
-type Tab = 'queue' | 'cards' | 'words';
+type Tab = 'queue' | 'cards' | 'words' | 'coins';
 
 const CATEGORIES: { id: CardCategory; label: string }[] = [
   { id: 'hot_takes', label: 'Hot takes' }, { id: 'hypotheticals', label: 'Hypotheticals' }, { id: 'memories', label: 'Memories' },
@@ -129,6 +129,37 @@ function Cards() {
   );
 }
 
+function Coins() {
+  const [username, setUsername] = useState('');
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+  const [ask, setAsk] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const n = Number(amount);
+  const valid = username.trim().length >= 2 && Number.isInteger(n) && n >= 1 && n <= 10000;
+  const give = async () => {
+    setBusy(true);
+    const r = await adminGiveCoins(username.trim(), n, note.trim());
+    setBusy(false);
+    setAsk(false);
+    if (!r.ok) { toast(r.error ?? 'Could not give coins.', { tone: 'warn' }); return; }
+    toast(`Gave ${n} coins to ${username.trim()}. They now have ${r.data}.`, { tone: 'ok' });
+    setAmount(''); setNote('');
+  };
+  return (
+    <div>
+      <p className="text-base text-muted">For beta testing, before payments exist. The coins are added to the player&apos;s ledger as a top up.</p>
+      <form className="mt-3 space-y-3" onSubmit={(e) => { e.preventDefault(); if (valid) setAsk(true); }}>
+        <TextField label="Username" value={username} maxLength={16} onChange={(e) => setUsername(e.target.value)} />
+        <TextField label="Coins" inputMode="numeric" value={amount} maxLength={5} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))} />
+        <TextField label="Note (optional)" value={note} maxLength={80} onChange={(e) => setNote(e.target.value)} />
+        <Button full type="submit" disabled={!valid || busy}>Give coins</Button>
+      </form>
+      <ConfirmSheet open={ask} title={`Give ${n} coins?`} body={`${username.trim()} will get ${n} coins. This cannot be taken back from here.`} confirmLabel="Give coins" onConfirm={() => void give()} onClose={() => setAsk(false)} />
+    </div>
+  );
+}
+
 function Words() {
   const [words, setWords] = useState<string[] | null>(null);
   const [word, setWord] = useState('');
@@ -181,9 +212,9 @@ export default function AdminPage() {
     <Screen title="Admin" back="/me">
       <p className="text-lg text-muted">Only admins see this screen. Changes go live for everyone.</p>
       <div className="mt-4">
-        <SegmentedControl<Tab> label="Admin section" value={tab} onChange={setTab} options={[{ id: 'queue', label: 'Suggestions' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Blocked words' }]} />
+        <SegmentedControl<Tab> label="Admin section" value={tab} onChange={setTab} options={[{ id: 'queue', label: 'Suggestions' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Blocked words' }, { id: 'coins', label: 'Coins' }]} />
       </div>
-      <div className="mt-4">{tab === 'queue' ? <Queue /> : tab === 'cards' ? <Cards /> : <Words />}</div>
+      <div className="mt-4">{tab === 'queue' ? <Queue /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : <Words />}</div>
     </Screen>
   );
 }
