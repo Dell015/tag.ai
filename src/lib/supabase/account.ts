@@ -5,6 +5,7 @@
 import { getBrowserClient } from '@/lib/supabase/browser';
 import type { QueuedCard } from '@/lib/game/escalation-engine';
 import type { TalkTopic } from '@/lib/data/talk-topics';
+import type { Remote } from '@/lib/data/remote-content';
 
 export interface Result<T = unknown> { ok: boolean; error?: string; data?: T }
 
@@ -157,36 +158,42 @@ export async function saveSettings(settings: Record<string, unknown>, userId: st
 
 interface CardRow {
   id: string; text: string; kind: string; card_type: 'question' | 'action' | 'wild'; intensity: number; category: string;
-  topics: string[] | null; adult: boolean; wild_type: string | null; extra: Record<string, unknown> | null;
+  topics: string[] | null; adult: boolean; wild_type: string | null; extra: Record<string, unknown> | null; pack_id: string | null;
 }
 interface TopicRow { id: string; group: string; format: string | null; text: string; deeper: string | null; a: string | null; b: string | null; topics: string[] | null }
 
-export interface RemoteContent { cards: QueuedCard[]; topics: TalkTopic[] }
+export type RemoteContent = Remote;
 
 /** Cards and talk topics the database says are approved. Row-level security hides retired cards and, until 18+ is confirmed, adult ones. */
 export async function loadContent(): Promise<Result<RemoteContent>> {
   const sb = getBrowserClient();
   if (!sb) return noClient;
   const [c, t] = await Promise.all([
-    sb.from('cards').select('id,text,kind,card_type,intensity,category,topics,adult,wild_type,extra').eq('status', 'approved').order('id').limit(2000),
+    sb.from('cards').select('id,text,kind,card_type,intensity,category,topics,adult,wild_type,extra,pack_id').eq('status', 'approved').order('id').limit(2000),
     sb.from('talk_topics').select('id,group,format,text,deeper,a,b,topics').eq('status', 'approved').order('id').limit(2000),
   ]);
   if (c.error) return { ok: false, error: msg(c.error) };
   if (t.error) return { ok: false, error: msg(t.error) };
-  const cards = ((c.data ?? []) as unknown as CardRow[]).map((r): QueuedCard => ({
-    ...(r.extra ?? {}),
-    id: r.id, text: r.text, cardType: r.card_type, intensity: r.intensity, category: r.category as QueuedCard['category'],
-    topics: r.topics ?? [], kind: r.kind as QueuedCard['kind'],
-    ...(r.adult ? { adult: true } : {}),
-    ...(r.wild_type ? { wildCardType: r.wild_type as QueuedCard['wildCardType'] } : {}),
-  }));
+  const cards: QueuedCard[] = [];
+  const packs: Record<string, QueuedCard[]> = {};
+  for (const r of (c.data ?? []) as unknown as CardRow[]) {
+    const card: QueuedCard = {
+      ...(r.extra ?? {}),
+      id: r.id, text: r.text, cardType: r.card_type, intensity: r.intensity, category: r.category as QueuedCard['category'],
+      topics: r.topics ?? [], kind: r.kind as QueuedCard['kind'],
+      ...(r.adult ? { adult: true } : {}),
+      ...(r.wild_type ? { wildCardType: r.wild_type as QueuedCard['wildCardType'] } : {}),
+    };
+    if (r.pack_id) (packs[r.pack_id] ??= []).push(card);
+    else cards.push(card);
+  }
   const topics = ((t.data ?? []) as unknown as TopicRow[]).map((r): TalkTopic => ({
     id: r.id, group: r.group as TalkTopic['group'], text: r.text, topics: r.topics ?? [],
     ...(r.format ? { format: r.format as TalkTopic['format'] } : {}),
     ...(r.deeper ? { deeper: r.deeper } : {}),
     ...(r.a ? { a: r.a } : {}), ...(r.b ? { b: r.b } : {}),
   }));
-  return { ok: true, data: { cards, topics } };
+  return { ok: true, data: { cards, topics, packs } };
 }
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
@@ -261,5 +268,58 @@ export async function adminRemoveWord(word: string): Promise<Result> {
   const sb = getBrowserClient();
   if (!sb) return noClient;
   const { error } = await sb.from('blocked_words').delete().eq('word', word);
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+// ─── Stacks ──────────────────────────────────────────────────────────────────
+
+export interface StackData { id: string; name: string; cardIds: string[]; updatedAt: number }
+
+export async function loadStacks(): Promise<Result<StackData[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const [s, c] = await Promise.all([
+    sb.from('stacks').select('id,name,created_at').order('created_at', { ascending: false }).limit(50),
+    sb.from('stack_cards').select('stack_id,card_id').order('added_at').limit(5000),
+  ]);
+  if (s.error) return { ok: false, error: msg(s.error) };
+  if (c.error) return { ok: false, error: msg(c.error) };
+  const byStack = new Map<string, string[]>();
+  for (const r of (c.data ?? []) as { stack_id: string; card_id: string }[]) byStack.set(r.stack_id, [...(byStack.get(r.stack_id) ?? []), r.card_id]);
+  return { ok: true, data: ((s.data ?? []) as { id: string; name: string; created_at: string }[]).map((r) => ({ id: r.id, name: r.name, cardIds: byStack.get(r.id) ?? [], updatedAt: Date.parse(r.created_at) })) };
+}
+
+export async function createStackRemote(name: string): Promise<Result<string>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.from('stacks').insert({ name }).select('id').single();
+  return error || !data ? { ok: false, error: msg(error) } : { ok: true, data: (data as { id: string }).id };
+}
+
+export async function renameStackRemote(id: string, name: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.from('stacks').update({ name }).eq('id', id);
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export async function deleteStackRemote(id: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.from('stacks').delete().eq('id', id);
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export async function addStackCardsRemote(id: string, cardIds: string[]): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.from('stack_cards').upsert(cardIds.map((card_id) => ({ stack_id: id, card_id })), { onConflict: 'stack_id,card_id', ignoreDuplicates: true });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export async function removeStackCardRemote(id: string, cardId: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.from('stack_cards').delete().eq('stack_id', id).eq('card_id', cardId);
   return error ? { ok: false, error: msg(error) } : { ok: true };
 }

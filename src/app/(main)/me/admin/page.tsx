@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Badge, Button, Chip, ConfirmSheet, EmptyState, Screen, SegmentedControl, TextField, toast } from '@/components/ui';
 import { useAccountStore } from '@/stores/account-store';
 import { useHydrated } from '@/lib/hydration';
-import { refreshContent } from '@/components/AuthSync';
+import { refreshContent } from '@/lib/content-sync';
 import {
   adminAddWord, adminApprove, adminPending, adminReject, adminRemoveWord, adminRetire, adminSearchCards, adminWords,
   type AdminCard, type PendingSuggestion,

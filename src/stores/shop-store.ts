@@ -10,6 +10,7 @@ import { useWalletStore } from '@/stores/wallet-store';
 import { isConnected } from '@/stores/account-store';
 import { rpcBuyItem, rpcEquip } from '@/lib/supabase/account';
 import { toast } from '@/stores/toast-store';
+import { refreshContent } from '@/lib/content-sync';
 
 type Slot = 'frame' | 'back' | 'theme';
 
@@ -38,7 +39,8 @@ export const useShopStore = create<ShopState>()(
         set({ owned: [...get().owned, itemId] });
         if (remote) {
           void rpcBuyItem(itemId).then((res) => {
-            if (res.ok) return;
+            // A bought pack's cards arrive from the database now.
+            if (res.ok) { if (item.kind === 'pack') void refreshContent(true); return; }
             // The server said no: undo the purchase here.
             set({ owned: get().owned.filter((x) => x !== itemId) });
             const e = { ...get().equipped };
