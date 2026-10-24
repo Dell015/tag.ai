@@ -7,8 +7,9 @@ import { MIN_POT, formatPot, isPotValid } from '@/lib/game/pot';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
 import { rooms, type RoomConfig } from '@/lib/data/rooms';
-import { allAgreed, startGame } from '@/lib/data/start-game';
-import { DECKS, DECK_GROUPS, DECK_BY_ID, MORE_CARDS, SESSIONS, basketCards, basketCost, basketHasAdult, basketNames, deckPool, type Basket, type DeckId, type SessionLength } from '@/lib/game/decks';
+import { MIN_OWN_CARDS, allAgreed, roomPlan, startGame } from '@/lib/data/start-game';
+import { availableSources, sourceHasAdult } from '@/lib/data/game-source';
+import { DECKS, DECK_GROUPS, DECK_BY_ID, MORE_CARDS, SESSIONS, basketHasAdult, deckPool, type Basket, type DeckId, type SessionLength } from '@/lib/game/decks';
 import { PRESET_TOPICS } from '@/lib/game/comfort-filters';
 import { formatDuration, DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 import { useProfileStore } from '@/stores/profile-store';
@@ -85,18 +86,25 @@ export default function SetupPage() {
   const basket: Basket = cfg.basket ?? {};
   const deckId = (Object.keys(basket) as DeckId[]).find((id) => (basket[id] ?? 0) > 0);
   const session: SessionLength = cfg.session ?? 'short';
+  const source = cfg.source;
+  const sources = availableSources();
   const pick = (id: DeckId | undefined, length: SessionLength) => {
     if (!id) { set({ session: length, potStyle: 'solo' }); return; }
-    set({ session: length, potStyle: 'solo', basket: { [id]: Math.min(SESSIONS[length], pools[id]) }, playerBaskets: {} });
+    set({ session: length, potStyle: 'solo', source: undefined, basket: { [id]: Math.min(SESSIONS[length], pools[id]) }, playerBaskets: {} });
   };
-  const cards = basketCards(basket);
-  const total = basketCost(basket);
+  const pickSource = (src: (typeof sources)[number] | undefined, length: SessionLength) => {
+    if (!src) return;
+    set({ session: length, potStyle: 'solo', source: { kind: src.kind, id: src.id, name: src.name }, basket: {}, playerBaskets: {} });
+  };
+  const plan = roomPlan(room);
+  const cards = plan.cards;
+  const total = plan.coins;
   const wallet = profile.coins;
-  const potOk = isPotValid(total) && wallet + 1e-9 >= total;
-  const adultBlocked = basketHasAdult(basket) && !adultOk;
-  const accentDeck = DECKS.find((d) => (basket[d.id] ?? 0) > 0);
+  const potOk = (source ? cards >= MIN_OWN_CARDS : isPotValid(total)) && wallet + 1e-9 >= total;
+  const adultBlocked = (source ? sourceHasAdult(source) : basketHasAdult(basket)) && !adultOk;
+  const accentDeck = source ? undefined : DECKS.find((d) => (basket[d.id] ?? 0) > 0);
   const blocked = key === 'basket'
-    ? (!deckId ? 'Pick a stack' : total < MIN_POT ? `Pick at least ${MIN_POT} cards` : total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
+    ? (source ? (cards < MIN_OWN_CARDS ? `This stack needs ${MIN_OWN_CARDS} cards` : null) : !deckId ? 'Pick a stack' : total < MIN_POT ? `Pick at least ${MIN_POT} cards` : total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
     : null;
 
   const footer = view < TOTAL ? (
@@ -121,8 +129,41 @@ export default function SetupPage() {
       {key === 'basket' && (
         <>
           <p className="-mt-2 mb-5 text-base text-muted">Pick a stack, then how long you want to play. Every card is 1 coin, Chaos is 2. Wild cards are free and come on top.</p>
-          <SegmentedControl<SessionLength> label="Session length" value={session} onChange={(v) => pick(deckId, v)}
+          <SegmentedControl<SessionLength> label="Session length" value={session} onChange={(v) => (source ? pickSource(sources.find((x) => x.id === source.id && x.kind === source.kind), v) : pick(deckId, v))}
             options={[{ id: 'short', label: `Short, ${SESSIONS.short} cards` }, { id: 'long', label: `Long, ${SESSIONS.long} cards` }]} />
+
+          {sources.length > 0 && (
+            <section className="mt-6">
+              <h3 className="text-3xl">Your cards</h3>
+              <p className="mb-1 mt-1 text-base text-muted">Play your own stacks, liked cards or packs you own.</p>
+              <ul>
+                {sources.map((x) => {
+                  const on = source?.kind === x.kind && source.id === x.id;
+                  return (
+                    <li key={`${x.kind}-${x.id}`} className="border-b-2 border-line/60 py-3">
+                      <button role="radio" aria-checked={on} onClick={() => { haptic('tap'); pickSource(x, session); }}
+                        className={cn('flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors', on ? 'border-accent bg-accent/10' : 'border-transparent')}>
+                        <span className="min-w-0 flex-1">
+                          <span className="sign block text-[1.15rem] leading-tight">{x.name}</span>
+                          <span className="block text-base font-semibold text-muted">{x.count} cards{x.kind === 'pack' ? ', shop pack' : x.kind === 'stack' ? ', your stack' : ''}</span>
+                        </span>
+                        {on && <Icon name="check" />}
+                      </button>
+                      {on && sourceHasAdult(x) && (
+                        <button role="switch" aria-checked={adultOk} onClick={() => setAdultOk(!adultOk)}
+                          className="mt-3 flex min-h-[3.5rem] w-full items-center justify-between gap-3 rounded-xl border-2 border-line px-4 text-left">
+                          <span className="text-base font-bold">Everyone at the table is 18 or older and agrees to play. Any card can be skipped.</span>
+                          <span className={cn('h-8 w-14 shrink-0 rounded-full p-1 transition-colors', adultOk ? 'bg-accent' : 'bg-raised')}>
+                            <span className={cn('block h-6 w-6 rounded-full bg-text transition-transform', adultOk && 'translate-x-6 bg-onaccent')} />
+                          </span>
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
 
           <div className="mt-6 space-y-7">
             {DECK_GROUPS.map((g) => (
@@ -132,7 +173,7 @@ export default function SetupPage() {
                 <ul>
                   {g.ids.map((id) => {
                     const d = DECK_BY_ID[id];
-                    const on = deckId === id;
+                    const on = !source && deckId === id;
                     return (
                       <li key={id} className="border-b-2 border-line/60 py-3">
                         <button disabled={!d.ready} role="radio" aria-checked={on} onClick={() => { haptic('tap'); pick(id, session); }}
@@ -221,7 +262,7 @@ export default function SetupPage() {
       {key === 'house' && (
         <>
           <section data-mode={accentDeck?.mode} className="rounded-card bg-accent p-5 text-onaccent">
-            <div className="display text-5xl">{cards ? basketNames(basket) : 'No cards bought'}</div>
+            <div className="display text-5xl">{cards ? plan.label : 'No cards bought'}</div>
             <div className="mt-1 text-lg font-bold">{cards} cards, {formatDuration(cards)}</div>
           </section>
           <ul className="mt-5 space-y-2 text-lg">

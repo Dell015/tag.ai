@@ -426,6 +426,24 @@ export function buildBasketQueue(config: BasketQueueConfig, library: QueuedCard[
   return { cards: queue, buffer: shuffle(buffer), modes, asked: basketCards(config.basket), target: queue.length };
 }
 
+/**
+ * Builds a queue from one fixed pool of cards (a player's stack, liked cards or an owned pack):
+ * `count` cards, no card twice, then free wild cards. Cards cost the flat 1 coin.
+ */
+export function buildPoolQueue(config: { pool: QueuedCard[]; count: number; mode?: GameMode; comfortFilters: string[]; trashedCardIds: string[]; playerCount: number; fitPlayers?: boolean }): BasketQueue {
+  const mode = config.mode ?? 'barkada';
+  const built = buildCardQueue(
+    { gameMode: mode, cardCountTarget: config.count, comfortFilters: config.comfortFilters, trashedCardIds: config.trashedCardIds, playerCount: config.playerCount, fitPlayers: config.fitPlayers, noWild: true },
+    config.pool,
+  );
+  const mix = blendModes([mode]);
+  const base = spreadOut(built.cards);
+  const wildCount = base.length === 0 ? 0 : Math.max(1, Math.floor(base.length / mix.wildCardFrequency.base));
+  const wilds = Array.from({ length: wildCount }, () => generateWildCard());
+  const queue = insertWildCards(base, wilds, mix.wildCardFrequency.base, mix.wildCardFrequency.variance);
+  return { cards: queue, buffer: shuffle(built.buffer), modes: [mode], asked: config.count, target: queue.length };
+}
+
 /** The game mode that rules heat for a basket: Family only when it is the only deck. */
 export function modeForBasket(basket: Basket): GameMode {
   const ids = Object.entries(basket).filter(([, n]) => (n ?? 0) > 0).map(([id]) => id);

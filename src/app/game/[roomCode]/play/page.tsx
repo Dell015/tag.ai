@@ -19,8 +19,8 @@ import { rooms } from '@/lib/data/rooms';
 import { ruleLine } from '@/lib/game/setup-options';
 import { haptic } from '@/lib/haptics';
 import { play as playSound } from '@/lib/sound';
-import { DECK_BY_ID, MORE_CARDS, basketNames, type DeckId } from '@/lib/game/decks';
-import { buildBasketQueue } from '@/lib/game/card-queue-builder';
+import { DECK_BY_ID, MORE_CARDS, type DeckId } from '@/lib/game/decks';
+import { buildBasketQueue, buildPoolQueue } from '@/lib/game/card-queue-builder';
 import { buildLibrary } from '@/lib/data/start-game';
 import { useToastStore } from '@/stores/toast-store';
 import { useSettingsStore } from '@/stores/settings-store';
@@ -28,7 +28,8 @@ import { ConfirmSheet, RollNumber, Sheet } from '@/components/ui';
 import { TopUpSheet } from '@/components/play/TopUpSheet';
 import { ToolsSheet } from '@/components/play/ToolsSheet';
 import { cardCost } from '@/lib/game/pot';
-import { roomBasket } from '@/lib/data/start-game';
+import { roomPlan } from '@/lib/data/start-game';
+import { sourceCards } from '@/lib/data/game-source';
 import { withPlayer } from '@/lib/data/rooms';
 import { FOCUS_RULES } from '@/lib/game/mid-game';
 import { formatPot, isLow } from '@/lib/game/pot';
@@ -98,18 +99,20 @@ export default function PlayPage() {
     if (ended && room && room.status === 'active') rooms.update(code, (r) => ({ ...r, status: 'ended' }));
   }, [ended, room, code]);
 
-  const moreDeck = room ? Object.entries(roomBasket(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] : undefined;
+  const moreDeck = room && !room.config.source ? Object.entries(roomPlan(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] : undefined;
   const moreCost = MORE_CARDS * (moreDeck ? DECK_BY_ID[moreDeck as DeckId]?.price ?? 1 : 1);
   /** Pay as you go: 10 more cards of the same stack for 10 coins, then the game carries on. */
   const buyMore = () => {
     if (!room) return;
-    const deck = Object.entries(roomBasket(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] as DeckId | undefined;
-    if (!deck || wallet < moreCost) return;
+    const src = room.config.source;
+    const deck = Object.entries(roomPlan(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] as DeckId | undefined;
+    if ((!deck && !src) || wallet < moreCost) return;
     const seen = [...g.cardQueue, ...g.bufferCards].map((c) => c.id);
-    const built = buildBasketQueue({ basket: { [deck]: MORE_CARDS }, comfortFilters: room.config.comfortFilters, trashedCardIds: [...useProfileStore.getState().trashedCardIds, ...seen], playerCount: g.turnRotation.players.length, fitPlayers: true }, buildLibrary());
+    const opts = { comfortFilters: room.config.comfortFilters, trashedCardIds: [...useProfileStore.getState().trashedCardIds, ...seen], playerCount: g.turnRotation.players.length, fitPlayers: true };
+    const built = src ? buildPoolQueue({ pool: sourceCards(src), count: MORE_CARDS, ...opts }) : buildBasketQueue({ basket: { [deck as DeckId]: MORE_CARDS }, ...opts }, buildLibrary());
     const n = built.cards.filter((c) => c.cardType !== 'wild').length;
     const price = built.cards.filter((c) => c.cardType !== 'wild').reduce((a, c) => a + cardCost(c), 0);
-    if (n === 0) { toast('No new cards left in this stack. Try another stack.', {}); return; }
+    if (n === 0) { toast('No new cards left in this stack. Start again with another stack.', {}); return; }
     if (!applyCoins('pot', -price, `${n} more cards`)) { toast('Not enough coins', {}); return; }
     g.topUpPot(price);
     g.extendQueue(built.cards, built.buffer);
@@ -136,7 +139,7 @@ export default function PlayPage() {
         potStart={g.potStart} potRefunded={g.potRefunded}
         more={{ cards: MORE_CARDS, cost: moreCost, wallet, onBuy: buyMore }}
         saved={hearted.map((id) => g.cardQueue.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c)}
-        mode={g.gameMode} deckName={basketNames(roomBasket(room).basket)} played={g.cardsPlayed} skipped={g.skippedCount} hearted={g.heartedCount} peak={g.peakHeat}
+        mode={g.gameMode} deckName={roomPlan(room).label} played={g.cardsPlayed} skipped={g.skippedCount} hearted={g.heartedCount} peak={g.peakHeat}
         onHome={() => { g.resetGame(); router.replace('/'); }}
         onAgain={() => {
           g.resetGame();
