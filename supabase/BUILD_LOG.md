@@ -31,3 +31,5 @@ Security: no errors. Warnings are the app functions that signed-in users are mea
 
 ## App connection
 See CLAUDE.md D39 and `docs/AUTH_SETUP.md`. Dashboard email template and SMTP are still to do.
+
+Cards and topics are read from the database after sign in (CLAUDE.md D40). Real email sign in works (Resend SMTP, code template).

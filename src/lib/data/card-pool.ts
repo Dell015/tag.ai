@@ -3,11 +3,14 @@ import { ADULT_CARDS } from '@/lib/data/adult-cards';
 import { TOOL_CARDS, ADULT_TOOL_CARDS } from '@/lib/data/tool-cards';
 import { PACK_CARDS, SHOP_ITEMS } from '@/lib/data/shop-catalogue';
 import type { QueuedCard } from '@/lib/game/escalation-engine';
+import { getRemoteContent } from '@/lib/data/remote-content';
 
 /** Single place that decides which cards exist for a player, so 18+ content can never leak when it is off. */
 export const adultPackIds = new Set(SHOP_ITEMS.filter((i) => i.adult).map((i) => i.id));
 
 export function libraryCards(adult: boolean): QueuedCard[] {
+  const remote = getRemoteContent();
+  if (remote) return adult ? remote.cards : remote.cards.filter((c) => !c.adult);
   return adult ? [...CURATED_CARDS, ...TOOL_CARDS, ...ADULT_CARDS, ...ADULT_TOOL_CARDS] : [...CURATED_CARDS, ...TOOL_CARDS];
 }
 

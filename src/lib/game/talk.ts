@@ -3,6 +3,7 @@
  * then tap through them (and can go back). Pure functions, no state.
  */
 import { TALK_TOPICS, type TalkGroupId, type TalkTopic } from '@/lib/data/talk-topics';
+import { getRemoteContent } from '@/lib/data/remote-content';
 import { expandComfortFilters, isCardFiltered } from '@/lib/game/comfort-filters';
 
 /** Coins one topic costs. */
@@ -18,12 +19,12 @@ export const isTalkFiltered = (t: TalkTopic, filters: string[]): boolean =>
   isCardFiltered({ text: t.text, topics: t.topics ?? [] }, expandComfortFilters(filters));
 
 /** Topics available for the chosen groups and filters. */
-export function talkPool(groups: TalkGroupId[], filters: string[], all: TalkTopic[] = TALK_TOPICS): TalkTopic[] {
+export function talkPool(groups: TalkGroupId[], filters: string[], all: TalkTopic[] = getRemoteContent()?.topics ?? TALK_TOPICS): TalkTopic[] {
   return all.filter((t) => groups.includes(t.group) && !isTalkFiltered(t, filters));
 }
 
 /** A shuffled queue of `count` topics. Mixes groups evenly by dealing round robin from shuffled groups. */
-export function buildTalkQueue(count: number, groups: TalkGroupId[], filters: string[], random: () => number = Math.random, all: TalkTopic[] = TALK_TOPICS): TalkTopic[] {
+export function buildTalkQueue(count: number, groups: TalkGroupId[], filters: string[], random: () => number = Math.random, all: TalkTopic[] = getRemoteContent()?.topics ?? TALK_TOPICS): TalkTopic[] {
   const shuffle = <T,>(arr: T[]): T[] => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const buckets = shuffle(groups).map((g) => shuffle(talkPool([g], filters, all)));
   const out: TalkTopic[] = [];

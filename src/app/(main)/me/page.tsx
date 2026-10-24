@@ -3,12 +3,14 @@ import { Avatar, AvatarPicker, CoinAmount, CoinStack, ListRow, Screen, toast } f
 import { useProfileStore } from '@/stores/profile-store';
 import { useState } from 'react';
 import { useShopStore } from '@/stores/shop-store';
+import { useAccountStore } from '@/stores/account-store';
 import { itemById } from '@/lib/data/shop-catalogue';
 
 export default function MePage() {
   const profile = useProfileStore((s) => s.profile)!;
   const update = useProfileStore((s) => s.updateProfile);
   const saved = useProfileStore((s) => s.savedCardIds.length);
+  const isAdmin = useAccountStore((a) => a.isAdmin);
   const frameId = useShopStore((st) => st.equipped.frame);
   const [name, setName] = useState(profile.username);
   const [editing, setEditing] = useState(false);
@@ -47,6 +49,7 @@ export default function MePage() {
         <ListRow icon="up" tone="orange" label="Leaderboard" hint="Sample data until accounts launch" href="/me/leaderboard" />
         <ListRow icon="users" tone="blue" label="Invite friends" hint="You and a friend each get 5 coins" href="/me/referral" />
         <ListRow icon="sliders" tone="green" label="Settings" hint="Game defaults, playing, display" href="/me/settings" />
+        {isAdmin && <ListRow icon="sliders" tone="red" label="Admin" hint="Suggestions, cards, blocked words" href="/me/admin" />}
         <ListRow icon="info" tone="red" label="Help" hint="How to play and FAQ" href="/help" />
       </nav>
     </Screen>

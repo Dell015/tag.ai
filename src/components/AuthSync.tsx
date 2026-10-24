@@ -2,7 +2,8 @@
 import { useEffect } from 'react';
 import { supabaseConfigured } from '@/lib/supabase/config';
 import { getBrowserClient } from '@/lib/supabase/browser';
-import { loadAccount, type AccountData } from '@/lib/supabase/account';
+import { loadAccount, loadContent, type AccountData } from '@/lib/supabase/account';
+import { setRemoteContent } from '@/lib/data/remote-content';
 import { useAccountStore } from '@/stores/account-store';
 import { useProfileStore } from '@/stores/profile-store';
 import { useWalletStore, type TxKind } from '@/stores/wallet-store';
@@ -45,7 +46,16 @@ export function applyAccount(data: AccountData | null) {
 /** Reloads the account from the server. Safe to call anywhere. */
 export async function refreshAccount(): Promise<void> {
   if (!supabaseConfigured) return;
-  applyAccount(await loadAccount());
+  const data = await loadAccount();
+  applyAccount(data);
+  await refreshContent(!!data);
+}
+
+/** Loads the cards and topics from the database after sign in. Too few rows means something is wrong, so the bundled copies stay. */
+export async function refreshContent(signedIn: boolean): Promise<void> {
+  if (!signedIn) { setRemoteContent(null); return; }
+  const res = await loadContent();
+  if (res.ok && res.data && res.data.cards.length >= 50 && res.data.topics.length >= 20) setRemoteContent(res.data);
 }
 
 /** Keeps the local stores in step with the Supabase session. Renders nothing. */

@@ -3,6 +3,8 @@
  * player's session and the public key; row-level security and the RPC functions decide what is allowed.
  */
 import { getBrowserClient } from '@/lib/supabase/browser';
+import type { QueuedCard } from '@/lib/game/escalation-engine';
+import type { TalkTopic } from '@/lib/data/talk-topics';
 
 export interface Result<T = unknown> { ok: boolean; error?: string; data?: T }
 
@@ -148,5 +150,116 @@ export async function saveSettings(settings: Record<string, unknown>, userId: st
   const sb = getBrowserClient();
   if (!sb) return noClient;
   const { error } = await sb.from('profiles').update({ settings }).eq('id', userId);
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+// ─── Cards and topics ────────────────────────────────────────────────────────
+
+interface CardRow {
+  id: string; text: string; kind: string; card_type: 'question' | 'action' | 'wild'; intensity: number; category: string;
+  topics: string[] | null; adult: boolean; wild_type: string | null; extra: Record<string, unknown> | null;
+}
+interface TopicRow { id: string; group: string; format: string | null; text: string; deeper: string | null; a: string | null; b: string | null; topics: string[] | null }
+
+export interface RemoteContent { cards: QueuedCard[]; topics: TalkTopic[] }
+
+/** Cards and talk topics the database says are approved. Row-level security hides retired cards and, until 18+ is confirmed, adult ones. */
+export async function loadContent(): Promise<Result<RemoteContent>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const [c, t] = await Promise.all([
+    sb.from('cards').select('id,text,kind,card_type,intensity,category,topics,adult,wild_type,extra').eq('status', 'approved').order('id').limit(2000),
+    sb.from('talk_topics').select('id,group,format,text,deeper,a,b,topics').eq('status', 'approved').order('id').limit(2000),
+  ]);
+  if (c.error) return { ok: false, error: msg(c.error) };
+  if (t.error) return { ok: false, error: msg(t.error) };
+  const cards = ((c.data ?? []) as unknown as CardRow[]).map((r): QueuedCard => ({
+    ...(r.extra ?? {}),
+    id: r.id, text: r.text, cardType: r.card_type, intensity: r.intensity, category: r.category as QueuedCard['category'],
+    topics: r.topics ?? [], kind: r.kind as QueuedCard['kind'],
+    ...(r.adult ? { adult: true } : {}),
+    ...(r.wild_type ? { wildCardType: r.wild_type as QueuedCard['wildCardType'] } : {}),
+  }));
+  const topics = ((t.data ?? []) as unknown as TopicRow[]).map((r): TalkTopic => ({
+    id: r.id, group: r.group as TalkTopic['group'], text: r.text, topics: r.topics ?? [],
+    ...(r.format ? { format: r.format as TalkTopic['format'] } : {}),
+    ...(r.deeper ? { deeper: r.deeper } : {}),
+    ...(r.a ? { a: r.a } : {}), ...(r.b ? { b: r.b } : {}),
+  }));
+  return { ok: true, data: { cards, topics } };
+}
+
+// ─── Admin ───────────────────────────────────────────────────────────────────
+// These only work for admins: row-level security and the RPC functions refuse everyone else.
+
+export interface PendingSuggestion { id: string; text: string; kind: string; deckId: string; authorName: string; createdAt: number }
+export interface AdminCard { id: string; text: string; kind: string; deckId: string | null; adult: boolean; status: string; source: string }
+
+export async function adminPending(): Promise<Result<PendingSuggestion[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.from('suggestions').select('id,text,kind,deck_id,author_id,created_at').eq('status', 'pending').order('created_at').limit(100);
+  if (error) return { ok: false, error: msg(error) };
+  const rows = (data ?? []) as { id: string; text: string; kind: string; deck_id: string; author_id: string; created_at: string }[];
+  const ids = Array.from(new Set(rows.map((r) => r.author_id)));
+  const names = new Map<string, string>();
+  if (ids.length) {
+    const p = await sb.from('public_profiles').select('id,username').in('id', ids);
+    for (const r of (p.data ?? []) as { id: string; username: string | null }[]) names.set(r.id, r.username ?? 'Someone');
+  }
+  return { ok: true, data: rows.map((r) => ({ id: r.id, text: r.text, kind: r.kind, deckId: r.deck_id, authorName: names.get(r.author_id) ?? 'Someone', createdAt: Date.parse(r.created_at) })) };
+}
+
+export async function adminApprove(id: string, intensity?: number, category?: string): Promise<Result<string>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('approve_suggestion', { id, intensity: intensity ?? null, category: category ?? null });
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: data as string };
+}
+
+export async function adminReject(id: string, reason: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('reject_suggestion', { id, reason: reason.trim() || null });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+/** Finds cards by words in their text (approved and retired), newest first. */
+export async function adminSearchCards(query: string): Promise<Result<AdminCard[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const q = query.trim().replace(/[%_,()]/g, ' ').slice(0, 60);
+  let req = sb.from('cards').select('id,text,kind,deck_id,adult,status,source').order('created_at', { ascending: false }).limit(30);
+  if (q) req = req.ilike('text', `%${q}%`);
+  const { data, error } = await req;
+  if (error) return { ok: false, error: msg(error) };
+  return { ok: true, data: ((data ?? []) as { id: string; text: string; kind: string; deck_id: string | null; adult: boolean; status: string; source: string }[]).map((r) => ({ id: r.id, text: r.text, kind: r.kind, deckId: r.deck_id, adult: r.adult, status: r.status, source: r.source })) };
+}
+
+export async function adminRetire(ids: string[]): Promise<Result<number>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('retire_cards', { card_ids: ids });
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: data as number };
+}
+
+export async function adminWords(): Promise<Result<string[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.from('blocked_words').select('word').order('word');
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: ((data ?? []) as { word: string }[]).map((r) => r.word) };
+}
+
+export async function adminAddWord(word: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.from('blocked_words').upsert({ word: word.trim().toLowerCase() }, { onConflict: 'word' });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export async function adminRemoveWord(word: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.from('blocked_words').delete().eq('word', word);
   return error ? { ok: false, error: msg(error) } : { ok: true };
 }
