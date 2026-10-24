@@ -27,13 +27,11 @@ import { useSettingsStore } from '@/stores/settings-store';
 import { ConfirmSheet, RollNumber, Sheet } from '@/components/ui';
 import { TopUpSheet } from '@/components/play/TopUpSheet';
 import { ToolsSheet } from '@/components/play/ToolsSheet';
-import { autoPool } from '@/lib/data/card-pool';
 import { cardCost } from '@/lib/game/pot';
 import { roomBasket } from '@/lib/data/start-game';
-import { useShopStore } from '@/stores/shop-store';
 import { withPlayer } from '@/lib/data/rooms';
 import { FOCUS_RULES } from '@/lib/game/mid-game';
-import { HEAT_UP_COST, formatPot, isLow } from '@/lib/game/pot';
+import { formatPot, isLow } from '@/lib/game/pot';
 import { useWalletStore } from '@/stores/wallet-store';
 import { cn } from '@/lib/cn';
 import { fillDrink } from '@/lib/game/card-kinds';
@@ -63,7 +61,6 @@ export default function PlayPage() {
   const [trashAsk, setTrashAsk] = useState(false);
   const [topUp, setTopUp] = useState(false);
   const [tools, setTools] = useState(false);
-  const ownedPacks = useShopStore((x) => x.owned);
   const [empty, setEmpty] = useState(false);
   const wallet = useProfileStore((p) => p.profile?.coins ?? 0);
   const applyCoins = useWalletStore((w) => w.apply);
@@ -256,20 +253,12 @@ export default function PlayPage() {
 
       <PauseSheet
         open={pause} onClose={() => setPause(false)} room={room}
-        players={g.turnRotation.players} heat={g.heatLevel} pot={g.pot} onTopUp={() => { setPause(false); setTopUp(true); }}
+        players={g.turnRotation.players} pot={g.pot} onTopUp={() => { setPause(false); setTopUp(true); }}
         onTools={() => { setPause(false); setTools(true); }}
-        mood={g.cardQueue[g.currentCardIndex]?.deckId as DeckId | undefined}
-        onMood={(m) => { g.changeMood(m, autoPool(ownedPacks, true), { comfortFilters: room.config.comfortFilters, trashedCardIds: useProfileStore.getState().trashedCardIds }); toast(`Switched to ${DECK_BY_ID[m].name}`, { tone: 'ok' }); }}
         onFocus={(k) => { const n = g.focusNext(k); toast(n > 0 ? `${FOCUS_RULES[k as 'deep' | 'dares'].label}` : 'No matching cards left', {}); }}
         onAddPlayer={(name) => { const id = `guest-${Math.random().toString(36).slice(2, 10)}`; const av = `c${(g.turnRotation.players.length + 2) % 10}`; g.addPlayerToTurns({ id, name, avatarUrl: av }); rooms.update(code, (r) => withPlayer(r, { id, userId: id, displayName: name, avatarUrl: av, isGuest: true })); }}
         onMove={g.movePlayer}
         onReport={() => { if (card) { try { const k = 'tagai-reports'; const l = JSON.parse(window.localStorage.getItem(k) ?? '[]'); l.push({ id: card.id, at: Date.now() }); window.localStorage.setItem(k, JSON.stringify(l)); } catch { /* ignore */ } toast('Thanks. We will look at this card.', { tone: 'ok' }); } }}
-        onHeat={(d) => {
-          if (d > 0) {
-            if (!g.spendPot(HEAT_UP_COST)) { toast('Not enough coins in the pot. Top up first.', {}); setPause(false); setTopUp(true); return; }
-          }
-          g.adjustHeat(d);
-        }}
         onRemovePlayer={(id) => { g.removePlayerFromTurns(id); rooms.update(code, (r) => ({ ...r, players: r.players.filter((p) => p.userId !== id) })); }}
         onEnd={() => { setPause(false); g.endGame(); }}
       />
@@ -285,7 +274,7 @@ export default function PlayPage() {
           <Button full variant="danger" onClick={() => { setEmpty(false); g.endGame(); }}>End game</Button>
         </div>
       </Sheet>
-      <ConfirmSheet open={trashAsk} title="Trash this card?" body="It will not come back in your games. You can restore it in Settings." confirmLabel="Trash card" danger onConfirm={() => resolve('trash')} onClose={() => setTrashAsk(false)} />
+      <ConfirmSheet open={trashAsk} title="Trash this card?" body="You will not see this card again. All your trashed cards are stored in Settings, where you can undo it." confirmLabel="Trash card" danger onConfirm={() => resolve('trash')} onClose={() => setTrashAsk(false)} />
       <span className="sr-only">Next up: {next.name}</span>
     </div>
   );

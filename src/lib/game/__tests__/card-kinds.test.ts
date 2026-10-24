@@ -152,8 +152,8 @@ import { heatPace } from '@/lib/game/escalation-engine';
 
 describe('heat pace', () => {
   it('uses full steps for short games and slows long ones', () => {
-    expect(heatPace(20)).toBe(1);
-    expect(heatPace(10)).toBe(1);
+    expect(heatPace(20)).toBeCloseTo(1, 1);
+    expect(heatPace(10)).toBe(2);
     expect(heatPace(90)).toBeLessThan(0.3);
     expect(heatPace(500)).toBe(0.15);
   });

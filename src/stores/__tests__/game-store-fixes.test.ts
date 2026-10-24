@@ -39,7 +39,7 @@ describe('game store fixes', () => {
   });
 
   it('skip lowers heat, counts as played, and 3 in a row drop a full level', () => {
-    useGameStore.setState({ heatLevel: 3.0 });
+    useGameStore.setState({ heatLevel: 3.0, cardCountTarget: 20 });
     useGameStore.getState().skipCard();
     expect(useGameStore.getState().heatLevel).toBeCloseTo(2.8);
     expect(useGameStore.getState().cardsPlayed).toBe(1);

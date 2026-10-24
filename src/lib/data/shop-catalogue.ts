@@ -19,9 +19,6 @@ export const COIN_PACKAGES: CoinPackage[] = [
 ];
 
 export const SHOP_ITEMS: ShopItem[] = [
-  { id: 'tool-dice', kind: 'tool', name: 'Dice', price: 12, description: 'Roll one or two dice. Big result, shake to roll.' },
-  { id: 'tool-bottle', kind: 'tool', name: 'Spin the bottle', price: 12, description: 'A spinner that picks a player from the table.' },
-  { id: 'tool-wheel', kind: 'tool', name: 'Wheel', price: 15, description: 'A spinner with your own labels, made for dares.' },
 
   { id: 'pack-videoke', kind: 'pack', name: 'Videoke night', price: 25, description: 'Sing-or-drink dares and music confessions.' },
   { id: 'pack-outing', kind: 'pack', name: 'Outing edition', price: 25, description: 'Beach, road trip and overnight cards.' },

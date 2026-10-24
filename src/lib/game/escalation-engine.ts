@@ -75,10 +75,10 @@ const FAMILY_MODE_MAX_HEAT = 2.0;
  * Heat is always clamped between 1.0 and 5.0.
  */
 /**
- * How fast heat moves for a game of this length. Short games use the full steps; longer ones
+ * How fast heat moves for a game of this length. Short games (10 cards) move twice as fast; longer ones
  * are slowed so the meter fills about two thirds of the way through, not in the first 12 cards.
  */
-export const heatPace = (cardCountTarget: number): number => Math.max(0.15, Math.min(1, 20.5 / Math.max(1, cardCountTarget)));
+export const heatPace = (cardCountTarget: number): number => Math.max(0.15, Math.min(2, 20.5 / Math.max(1, cardCountTarget)));
 
 export function calculateHeat(input: EscalationInput): EscalationOutput {
   const { currentHeat, event, consecutiveSkips, gameMode, pace = 1 } = input;

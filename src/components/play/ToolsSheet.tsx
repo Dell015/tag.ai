@@ -1,19 +1,17 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { Button, Sheet } from '@/components/ui';
 import { haptic } from '@/lib/haptics';
-import { useShopStore } from '@/stores/shop-store';
 import { cn } from '@/lib/cn';
 
 type Tool = 'menu' | 'timer' | 'coin' | 'dice' | 'bottle' | 'wheel';
 
-const TOOLS: { id: Exclude<Tool, 'menu'>; name: string; blurb: string; shop?: string }[] = [
+const TOOLS: { id: Exclude<Tool, 'menu'>; name: string; blurb: string }[] = [
   { id: 'timer', name: 'Timer', blurb: 'Count down any time' },
   { id: 'coin', name: 'Coin flip', blurb: 'Heads or tails' },
-  { id: 'dice', name: 'Dice', blurb: 'Roll one or two', shop: 'tool-dice' },
-  { id: 'bottle', name: 'Spin the bottle', blurb: 'Picks a player', shop: 'tool-bottle' },
-  { id: 'wheel', name: 'Wheel', blurb: 'Your own labels', shop: 'tool-wheel' },
+  { id: 'dice', name: 'Dice', blurb: 'Roll one or two' },
+  { id: 'bottle', name: 'Spin the bottle', blurb: 'Picks a player' },
+  { id: 'wheel', name: 'Wheel', blurb: 'Your own labels' },
 ];
 
 export function useCountdown(seconds: number) {
@@ -133,9 +131,8 @@ function SpinTool({ labels, title, editable }: { labels: string[]; title: string
   );
 }
 
-/** Pause-menu tools. Timer and Coin flip are free; the rest come from the Shop. */
+/** Pause-menu tools. All tools are free. */
 export function ToolsSheet({ open, onClose, players }: { open: boolean; onClose: () => void; players: string[] }) {
-  const owned = useShopStore((s) => s.owned);
   const [tool, setTool] = useState<Tool>('menu');
   const close = () => { setTool('menu'); onClose(); };
   const current = TOOLS.find((t) => t.id === tool);
@@ -143,24 +140,14 @@ export function ToolsSheet({ open, onClose, players }: { open: boolean; onClose:
     <Sheet open={open} onClose={close} title={current ? current.name : 'Tools'}>
       {tool === 'menu' ? (
         <ul>
-          {TOOLS.map((t) => {
-            const locked = !!t.shop && !owned.includes(t.shop);
-            return (
-              <li key={t.id}>
-                {locked ? (
-                  <Link href="/shop?tab=tools" className="flex min-h-[4.25rem] items-center justify-between gap-3 border-b-2 border-line/60 py-3 opacity-80">
-                    <span><span className="block text-xl font-bold">{t.name}</span><span className="text-base text-muted">{t.blurb}</span></span>
-                    <span className="text-base font-extrabold text-accent">Get in Shop</span>
-                  </Link>
-                ) : (
-                  <button onClick={() => setTool(t.id)} className="flex min-h-[4.25rem] w-full items-center justify-between gap-3 border-b-2 border-line/60 py-3 text-left">
-                    <span><span className="block text-xl font-bold">{t.name}</span><span className="text-base text-muted">{t.blurb}</span></span>
-                    <span className="text-base font-extrabold text-accent">Open</span>
-                  </button>
-                )}
-              </li>
-            );
-          })}
+          {TOOLS.map((t) => (
+            <li key={t.id}>
+              <button onClick={() => setTool(t.id)} className="flex min-h-[4.25rem] w-full items-center justify-between gap-3 border-b-2 border-line/60 py-3 text-left">
+                <span><span className="block text-xl font-bold">{t.name}</span><span className="text-base text-muted">{t.blurb}</span></span>
+                <span className="text-base font-extrabold text-accent">Open</span>
+              </button>
+            </li>
+          ))}
         </ul>
       ) : (
         <>
