@@ -12,7 +12,7 @@ export interface DeckDef {
   id: DeckId;
   name: string;
   blurb: string;
-  /** Coins one card of this deck uses from the pot. Wild cards are always free. */
+  /** Coins one card uses from the pot. Every deck costs the same: 1 coin a card. Wild cards are always free. */
   price: number;
   /** Base game mode: sets how likely each heat level is, entry heat and wild card gap. Its colour is the deck colour. */
   mode: GameMode;
@@ -31,25 +31,25 @@ const inCats = (c: QueuedCard, cats: string[]) => cats.includes(c.category);
 const RISKY = ['sexual_content', 'past_relationships', 'death', 'trauma', 'mental_health', 'politics', 'religion'];
 
 export const DECKS: DeckDef[] = [
-  { id: 'icebreaker', name: 'Icebreaker', blurb: 'Light questions for people who just met', price: 0.1, mode: 'icebreaker', ready: true,
+  { id: 'icebreaker', name: 'Icebreaker', blurb: 'Light questions for people who just met', price: 1, mode: 'icebreaker', ready: true,
     has: (c) => real(c) && c.intensity <= 3 && inCats(c, ['hot_takes', 'hypotheticals', 'memories', 'dares']) },
-  { id: 'family', name: 'Family', blurb: 'Clean and safe for all ages', price: 0.1, mode: 'family', ready: true,
+  { id: 'family', name: 'Family', blurb: 'Clean and safe for all ages', price: 1, mode: 'family', ready: true,
     has: (c) => real(c) && c.intensity <= 2 && !c.topics.some((t) => RISKY.includes(t)) && !inCats(c, ['roasts', 'confessions', 'relationships']) },
-  { id: 'life', name: 'Life', blurb: 'Work, money, dreams and growing up', price: 0.1, mode: 'icebreaker', ready: true,
+  { id: 'life', name: 'Life', blurb: 'Work, money, dreams and growing up', price: 1, mode: 'icebreaker', ready: true,
     has: (c) => real(c) && c.intensity <= 4 && inCats(c, ['memories', 'hypotheticals', 'deep_philosophical']) },
-  { id: 'deep', name: 'Deep', blurb: 'Honest, slow questions about what matters', price: 0.2, mode: 'lovers', ready: true,
+  { id: 'deep', name: 'Deep', blurb: 'Honest, slow questions about what matters', price: 1, mode: 'lovers', ready: true,
     has: (c) => real(c) && c.intensity >= 2 && inCats(c, ['deep_philosophical', 'confessions', 'memories']) },
-  { id: 'barkada', name: 'Barkada', blurb: 'Banter, roasts and dares for the squad', price: 0.2, mode: 'barkada', ready: true,
+  { id: 'barkada', name: 'Barkada', blurb: 'Banter, roasts and dares for the squad', price: 1, mode: 'barkada', ready: true,
     has: (c) => real(c) && c.intensity >= 2 && inCats(c, ['roasts', 'hot_takes', 'dares', 'controversial', 'confessions']) },
-  { id: 'lovers', name: 'Lovers', blurb: 'Love, trust and what you never said', price: 0.2, mode: 'lovers', ready: true,
+  { id: 'lovers', name: 'Lovers', blurb: 'Love, trust and what you never said', price: 1, mode: 'lovers', ready: true,
     has: (c) => real(c) && c.intensity >= 2 && inCats(c, ['relationships', 'confessions', 'memories']) },
-  { id: 'spicy', name: 'Spicy', blurb: 'High heat from the first card', price: 0.3, mode: 'spicy', ready: true,
+  { id: 'spicy', name: 'Spicy', blurb: 'High heat from the first card', price: 1, mode: 'spicy', ready: true,
     has: (c) => real(c) && c.intensity >= 3 },
-  { id: 'adult', name: 'Adult', blurb: 'Flirty to frank, for adults only', price: 0.5, mode: 'spicy', ready: true, adult: true,
+  { id: 'adult', name: 'Adult', blurb: 'Flirty to frank, for adults only', price: 1, mode: 'spicy', ready: true, adult: true,
     has: (c) => c.cardType !== 'wild' && !!c.adult },
-  { id: 'social', name: 'Social media', blurb: 'The juiciest stories and debates from the internet', price: 0.3, mode: 'spicy', ready: false,
+  { id: 'social', name: 'Social media', blurb: 'The juiciest stories and debates from the internet', price: 1, mode: 'spicy', ready: false,
     has: () => false },
-  { id: 'chaos', name: 'Chaos', blurb: 'Everything shuffled together, 18+ cards included', price: 0.5, mode: 'chaos', ready: true, includesAdult: true,
+  { id: 'chaos', name: 'Chaos', blurb: 'Everything shuffled together, 18+ cards included', price: 1, mode: 'chaos', ready: true, includesAdult: true,
     has: (c) => c.cardType !== 'wild' },
 ];
 
@@ -63,6 +63,12 @@ export const DECK_GROUPS: { label: string; hint: string; ids: DeckId[] }[] = [
 
 export const DECK_BY_ID: Record<DeckId, DeckDef> = Object.fromEntries(DECKS.map((d) => [d.id, d])) as Record<DeckId, DeckDef>;
 export const deckOf = (id: string): DeckDef | undefined => DECK_BY_ID[id as DeckId];
+
+/** A session is a deck played for a set number of cards: Short or Long. */
+export const SESSIONS = { short: 10, long: 30 } as const;
+export type SessionLength = keyof typeof SESSIONS;
+/** Cards offered when the table runs out and wants to keep going (10 coins). */
+export const MORE_CARDS = 10;
 
 export type Basket = Partial<Record<DeckId, number>>;
 

@@ -106,6 +106,8 @@ export interface GameState {
   changeMood: (deck: DeckId, library: QueuedCard[], opts: { comfortFilters: string[]; trashedCardIds: string[] }) => void;
   addPlayerToTurns: (p: { id: string; name: string; avatarUrl: string }) => void;
   movePlayer: (id: string, dir: -1 | 1) => void;
+  /** Adds more cards after the last one (pay as you go) and carries on playing. */
+  extendQueue: (cards: QueuedCard[], buffer: QueuedCard[]) => void;
   /** Sets the pot at game start. */
   fundPot: (coins: number) => void;
   /** Adds coins mid-game. */
@@ -269,6 +271,15 @@ export const useGameStore = create<GameState>()(
       addPlayerToTurns: (p) => set((s) => ({ turnRotation: addToTurns(s.turnRotation, p) })),
       movePlayer: (id, dir) => set((s) => ({ turnRotation: movePlayerInTurns(s.turnRotation, id, dir) })),
 
+      extendQueue: (cards, buffer) => set((s) => ({
+        cardQueue: [...s.cardQueue, ...cards],
+        bufferCards: buffer,
+        cardCountTarget: s.cardCountTarget + cards.length,
+        sessionPhase: 'play',
+        currentCardState: 'face_down',
+        showPassPrompt: false,
+        undoSnapshot: null,
+      })),
       fundPot: (coins) => set({ pot: coins, potStart: coins, potRefunded: 0 }),
       topUpPot: (coins) => set((s) => ({ pot: round3(s.pot + coins), potStart: round3(s.potStart + coins) })),
       spendPot: (coins) => {

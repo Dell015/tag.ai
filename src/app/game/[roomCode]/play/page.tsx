@@ -19,14 +19,16 @@ import { rooms } from '@/lib/data/rooms';
 import { ruleLine } from '@/lib/game/setup-options';
 import { haptic } from '@/lib/haptics';
 import { play as playSound } from '@/lib/sound';
-import { DECK_BY_ID, basketNames, type DeckId } from '@/lib/game/decks';
+import { DECK_BY_ID, MORE_CARDS, basketNames, type DeckId } from '@/lib/game/decks';
+import { buildBasketQueue } from '@/lib/game/card-queue-builder';
+import { buildLibrary } from '@/lib/data/start-game';
 import { useToastStore } from '@/stores/toast-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { ConfirmSheet, RollNumber, Sheet } from '@/components/ui';
 import { TopUpSheet } from '@/components/play/TopUpSheet';
 import { ToolsSheet } from '@/components/play/ToolsSheet';
 import { autoPool } from '@/lib/data/card-pool';
-import { owedForBasket, returnShares, cardCost } from '@/lib/game/pot';
+import { cardCost } from '@/lib/game/pot';
 import { roomBasket } from '@/lib/data/start-game';
 import { useShopStore } from '@/stores/shop-store';
 import { withPlayer } from '@/lib/data/rooms';
@@ -80,10 +82,11 @@ export default function PlayPage() {
   // Pot: low warning, empty pause, refund at the end.
   useEffect(() => {
     if (g.potStart <= 0 || ended) return;
-    if (g.pot <= 0.0005 && g.cardQueue.length > 0) setEmpty(true);
+    const costLeft = g.cardQueue.slice(g.currentCardIndex).reduce((a, c) => a + cardCost(c), 0);
+    if (g.cardQueue.length > 0 && g.pot + 1e-6 < costLeft && g.pot <= 0.0005) setEmpty(true);
     else if (isLow(g.pot, g.potStart) && !lowShown.current) { lowShown.current = true; toast('Pot is running low. Top up from the pause menu.', {}); }
     else if (!isLow(g.pot, g.potStart)) lowShown.current = false;
-  }, [g.pot, g.potStart, g.cardQueue.length, ended]);
+  }, [g.pot, g.potStart, g.cardQueue, g.currentCardIndex, ended]);
 
   useEffect(() => {
     if (ended && !settled.current && g.pot > 0) {
@@ -97,6 +100,22 @@ export default function PlayPage() {
   useEffect(() => {
     if (ended && room && room.status === 'active') rooms.update(code, (r) => ({ ...r, status: 'ended' }));
   }, [ended, room, code]);
+
+  /** Pay as you go: 10 more cards of the same stack for 10 coins, then the game carries on. */
+  const buyMore = () => {
+    if (!room) return;
+    const deck = Object.entries(roomBasket(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] as DeckId | undefined;
+    if (!deck || wallet < MORE_CARDS) return;
+    const seen = [...g.cardQueue, ...g.bufferCards].map((c) => c.id);
+    const built = buildBasketQueue({ basket: { [deck]: MORE_CARDS }, comfortFilters: room.config.comfortFilters, trashedCardIds: [...useProfileStore.getState().trashedCardIds, ...seen], playerCount: g.turnRotation.players.length, fitPlayers: true }, buildLibrary());
+    const n = built.cards.filter((c) => c.cardType !== 'wild').length;
+    if (n === 0) { toast('No new cards left in this stack. Try another stack.', {}); return; }
+    if (!applyCoins('pot', -n, `${n} more cards`)) { toast('Not enough coins', {}); return; }
+    g.topUpPot(n);
+    g.extendQueue(built.cards, built.buffer);
+    settled.current = false;
+    rooms.update(code, (r) => ({ ...r, status: 'active' }));
+  };
 
   if (!ready || !profile || status === 'loading') return <Splash />;
 
@@ -115,7 +134,7 @@ export default function PlayPage() {
     return (
       <Recap
         potStart={g.potStart} potRefunded={g.potRefunded}
-        returns={returnShares(owedForBasket(room.config.potStyle ?? 'solo', roomBasket(room).coins, room.players, room.hostId, room.config.playerBaskets ?? {}), g.potStart, g.potRefunded).map((r) => ({ name: room.players.find((p) => p.userId === r.userId)?.displayName ?? '', pesos: r.pesos }))}
+        more={{ cards: MORE_CARDS, wallet, onBuy: buyMore }}
         saved={hearted.map((id) => g.cardQueue.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c)}
         mode={g.gameMode} deckName={basketNames(roomBasket(room).basket)} played={g.cardsPlayed} skipped={g.skippedCount} hearted={g.heartedCount} peak={g.peakHeat}
         onHome={() => { g.resetGame(); router.replace('/'); }}

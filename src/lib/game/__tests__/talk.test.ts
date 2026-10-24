@@ -18,7 +18,7 @@ describe('topic deck content', () => {
 });
 
 describe('topic deck logic', () => {
-  it('costs by quantity', () => expect(talkCost(20)).toBeCloseTo(2, 5));
+  it('costs by quantity', () => expect(talkCost(20)).toBe(20));
   it('filters by tag and by custom word', () => {
     const rel = TALK_TOPICS.find((t) => t.topics?.includes('religion'))!;
     expect(isTalkFiltered(rel, ['Religion'])).toBe(true);

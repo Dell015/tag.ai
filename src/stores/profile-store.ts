@@ -9,7 +9,7 @@ import { safeStorage } from '@/lib/storage';
 import { isConnected } from '@/stores/account-store';
 import { setCardMark } from '@/lib/supabase/account';
 
-export const WELCOME_COINS = 10;
+export const WELCOME_COINS = 30;
 
 export interface Profile {
   id: string;

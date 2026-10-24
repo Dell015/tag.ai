@@ -9,8 +9,8 @@ import { renderShareImage, shareImage } from '@/lib/share-image';
 import type { QueuedCard } from '@/lib/game/escalation-engine';
 import type { GameMode } from '@/types/game';
 
-export function Recap({ mode, deckName, played, skipped, hearted, peak, potStart, potRefunded, returns = [], saved, onAgain, onHome }: {
-  mode: GameMode; deckName: string; played: number; skipped: number; hearted: number; peak: number; potStart: number; potRefunded: number; returns?: { name: string; pesos: number }[]; saved: QueuedCard[]; onAgain: () => void; onHome: () => void;
+export function Recap({ mode, deckName, played, skipped, hearted, peak, potStart, potRefunded, more, saved, onAgain, onHome }: {
+  mode: GameMode; deckName: string; played: number; skipped: number; hearted: number; peak: number; potStart: number; potRefunded: number; more?: { cards: number; wallet: number; onBuy: () => void }; saved: QueuedCard[]; onAgain: () => void; onHome: () => void;
 }) {
   useEffect(() => { try { window.localStorage.setItem('tagai-games-finished', '1'); } catch { /* ignore */ } }, []);
   const stats = [
@@ -47,7 +47,6 @@ export function Recap({ mode, deckName, played, skipped, hearted, peak, potStart
       {potStart > 0 && (
         <div className="mt-3 border-t-2 border-line pt-3">
         <p className="text-lg">Pot: <b>{formatPot(Math.max(0, potStart - potRefunded))}</b> of {formatPot(potStart)} coins used.{potRefunded > 0 && <> <b>{formatPot(potRefunded)}</b> returned to your wallet.</>}</p>
-        {returns.length > 0 && <p className="mt-1 text-lg">Hand back in cash: {returns.map((r) => `${r.name} P${formatPot(r.pesos)}`).join(', ')}.</p>}
         </div>
       )}
 
@@ -67,7 +66,10 @@ export function Recap({ mode, deckName, played, skipped, hearted, peak, potStart
 
       <p className="mt-8 text-muted">Get home safe.</p>
       <div className="mt-auto space-y-3 pt-8">
-        <Button size="lg" full onClick={onAgain}>Play again</Button>
+        {more && (more.wallet >= more.cards
+          ? <Button size="lg" full onClick={more.onBuy}>Keep going: {more.cards} more cards for {more.cards} coins</Button>
+          : <p className="text-center text-lg text-muted">Want {more.cards} more cards? You need {more.cards} coins, you have {formatPot(more.wallet)}.</p>)}
+        <Button size="lg" full variant={more && more.wallet >= more.cards ? 'secondary' : 'primary'} onClick={onAgain}>Play again</Button>
         <div className="grid grid-cols-2 gap-3">
           <Button variant="secondary" onClick={share}>Share recap</Button>
           <Button variant="secondary" onClick={onHome}>Back home</Button>

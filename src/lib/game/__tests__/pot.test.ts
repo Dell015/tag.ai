@@ -2,13 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { cardCost, averageCardCost, estimateCards, suggestedPot, potTotal, isPotValid, isLow, formatPot, round3, MIN_POT } from '../pot';
 
 describe('cardCost', () => {
-  it('maps intensity and type to the plan table', () => {
-    expect(cardCost({ cardType: 'question', intensity: 1 })).toBeCloseTo(1 / 15);
-    expect(cardCost({ cardType: 'question', intensity: 2 })).toBeCloseTo(0.1);
-    expect(cardCost({ cardType: 'question', intensity: 3 })).toBeCloseTo(0.1);
-    expect(cardCost({ cardType: 'question', intensity: 4 })).toBeCloseTo(1 / 6);
-    expect(cardCost({ cardType: 'question', intensity: 5 })).toBeCloseTo(0.25);
-    expect(cardCost({ cardType: 'action', intensity: 3 })).toBeCloseTo(0.2);
+  it('every real card costs 1 coin', () => {
+    for (const intensity of [1, 2, 3, 4, 5]) expect(cardCost({ cardType: 'question', intensity })).toBe(1);
+    expect(cardCost({ cardType: 'action', intensity: 3 })).toBe(1);
   });
   it('wild cards are free', () => {
     expect(cardCost({ cardType: 'wild', intensity: 5 })).toBe(0);
@@ -16,15 +12,8 @@ describe('cardCost', () => {
 });
 
 describe('estimates', () => {
-  it('average cost sits between casual and deep', () => {
-    for (const m of ['icebreaker', 'barkada', 'lovers', 'spicy', 'chaos', 'family'] as const) {
-      const a = averageCardCost(m);
-      expect(a).toBeGreaterThan(1 / 15 - 1e-9);
-      expect(a).toBeLessThan(0.25 + 1e-9);
-    }
-  });
-  it('spicy decks cost more than icebreaker decks', () => {
-    expect(averageCardCost('spicy')).toBeGreaterThan(averageCardCost('icebreaker'));
+  it('every deck averages 1 coin a card', () => {
+    for (const m of ['icebreaker', 'barkada', 'lovers', 'spicy', 'chaos', 'family'] as const) expect(averageCardCost(m)).toBe(1);
   });
   it('estimate and suggestion agree', () => {
     const need = suggestedPot(20, 'barkada');
@@ -38,9 +27,9 @@ describe('pot rules', () => {
     expect(potTotal('solo', 6, 4)).toBe(6);
     expect(potTotal('split', 2, 4)).toBe(8);
   });
-  it('minimum is 3', () => {
-    expect(isPotValid(2)).toBe(false);
-    expect(isPotValid(3)).toBe(true);
+  it('minimum is 10', () => {
+    expect(isPotValid(9)).toBe(false);
+    expect(isPotValid(10)).toBe(true);
   });
   it('low at 20 percent', () => {
     expect(isLow(1.2, 6)).toBe(true);

@@ -31,8 +31,7 @@ describe('pot in the game store', () => {
     useGameStore.getState().flipCard();
     useGameStore.getState().dismissCard();
     const used = before - useGameStore.getState().pot;
-    expect(used).toBeGreaterThan(0);
-    if (card.cardType === 'question' && card.intensity >= 2 && card.intensity <= 3) expect(used).toBeCloseTo(0.1, 5);
+        expect(used).toBe(card.cardType === 'wild' ? 0 : 1);
   });
 
   it('undo gives the card cost back', () => {
@@ -60,5 +59,20 @@ describe('pot in the game store', () => {
     expect(useGameStore.getState().settlePot()).toBe(5);
     expect(useGameStore.getState().settlePot()).toBe(0);
     expect(useGameStore.getState().potRefunded).toBe(5);
+  });
+});
+
+describe('pay as you go', () => {
+  it('extendQueue adds cards, raises the target and resumes play', () => {
+    const g = useGameStore.getState();
+    const extra = g.cardQueue.slice(0, 2).map((c, i) => ({ ...c, id: `more-${i}` }));
+    useGameStore.setState({ sessionPhase: 'end' });
+    const target = g.cardCountTarget;
+    const len = g.cardQueue.length;
+    useGameStore.getState().extendQueue(extra, []);
+    const s = useGameStore.getState();
+    expect(s.sessionPhase).toBe('play');
+    expect(s.cardCountTarget).toBe(target + 2);
+    expect(s.cardQueue.length).toBe(len + 2);
   });
 });

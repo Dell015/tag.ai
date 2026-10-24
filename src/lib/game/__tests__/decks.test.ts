@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DECKS, DECK_BY_ID, basketHasAdult, basketCards, basketCost, basketNames, deckPool, sumBaskets } from '../decks';
+import { DECKS, DECK_BY_ID, basketHasAdult, basketCards, basketCost, basketNames, deckPool, sumBaskets, SESSIONS, MORE_CARDS } from '../decks';
 import { buildBasketQueue, modeForBasket } from '../card-queue-builder';
 import { cardCost, gameBasket, owedForBasket } from '../pot';
 import { autoPool } from '@/lib/data/card-pool';
@@ -8,15 +8,11 @@ const library = autoPool([], true);
 const opts = { comfortFilters: [], trashedCardIds: [], playerCount: 4 };
 
 describe('deck prices', () => {
-  const byPrice = [...DECKS].sort((a, b) => b.price - a.price);
-  it('uses four simple tiers: 0.1, 0.2, 0.3 and 0.5', () => {
-    for (const d of DECKS) expect([0.1, 0.2, 0.3, 0.5]).toContain(d.price);
+  it('every deck costs 1 coin a card', () => DECKS.forEach((d) => expect(d.price).toBe(1)));
+  it('a short session is 10 cards and a long one is 30', () => {
+    expect(SESSIONS).toEqual({ short: 10, long: 30 });
+    expect(MORE_CARDS).toBe(10);
   });
-  it('Chaos and Adult are the most expensive', () => {
-    expect(byPrice[0].price).toBe(0.5);
-    expect(DECKS.find((d) => d.id === 'chaos')!.price).toBe(byPrice[0].price);
-  });
-  it('every deck has a positive price', () => DECKS.forEach((d) => expect(d.price).toBeGreaterThan(0)));
 });
 
 describe('deck pools', () => {
@@ -38,7 +34,7 @@ describe('deck pools', () => {
 
 describe('basket maths', () => {
   it('prices a basket per deck', () => {
-    expect(basketCost({ icebreaker: 20, barkada: 10 })).toBeCloseTo(20 * 0.1 + 10 * 0.2, 5);
+    expect(basketCost({ icebreaker: 20, barkada: 10 })).toBe(30);
     expect(basketCards({ icebreaker: 20, barkada: 10 })).toBe(30);
   });
   it('adds baskets and names the biggest deck first', () => {
@@ -53,11 +49,11 @@ describe('basket maths', () => {
     const players = [{ userId: 'h' }, { userId: 'a' }, { userId: 'b' }];
     expect(owedForBasket('solo', 6, players, 'h')).toEqual([]);
     expect(owedForBasket('split', 6, players, 'h')).toEqual([{ userId: 'a', pesos: 2 }, { userId: 'b', pesos: 2 }]);
-    expect(owedForBasket('chipin', 0, players, 'h', { a: { barkada: 10 }, b: { spicy: 10 } })).toEqual([{ userId: 'a', pesos: 2 }, { userId: 'b', pesos: 3 }]);
+    expect(owedForBasket('chipin', 0, players, 'h', { a: { barkada: 10 }, b: { spicy: 10 } })).toEqual([{ userId: 'a', pesos: 10 }, { userId: 'b', pesos: 10 }]);
   });
   it('a card costs its deck price, a wild card is free', () => {
-    expect(cardCost({ cardType: 'question', intensity: 5, deckId: 'icebreaker' })).toBe(0.1);
-    expect(cardCost({ cardType: 'question', intensity: 1, deckId: 'chaos' })).toBe(0.5);
+    expect(cardCost({ cardType: 'question', intensity: 5, deckId: 'icebreaker' })).toBe(1);
+    expect(cardCost({ cardType: 'question', intensity: 1, deckId: 'chaos' })).toBe(1);
     expect(cardCost({ cardType: 'wild', intensity: 0, deckId: 'chaos' })).toBe(0);
   });
 });

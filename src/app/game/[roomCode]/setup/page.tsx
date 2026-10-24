@@ -2,13 +2,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Avatar, Button, Chip, Icon, NumberStepper, RollNumber, Screen, SegmentedControl, Splash, Stepper } from '@/components/ui';
-import { MIN_POT, formatPot, formatPrice, isPotValid, gameBasket, owedForBasket, type PotStyle } from '@/lib/game/pot';
+import { Avatar, Button, Chip, Icon, RollNumber, Screen, SegmentedControl, Splash, Stepper } from '@/components/ui';
+import { MIN_POT, formatPot, isPotValid } from '@/lib/game/pot';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
 import { rooms, type RoomConfig } from '@/lib/data/rooms';
 import { allAgreed, startGame } from '@/lib/data/start-game';
-import { DECKS, DECK_GROUPS, DECK_BY_ID, basketCards, basketCost, basketHasAdult, basketNames, deckPool, type Basket, type DeckId } from '@/lib/game/decks';
+import { DECKS, DECK_GROUPS, DECK_BY_ID, MORE_CARDS, SESSIONS, basketCards, basketCost, basketHasAdult, basketNames, deckPool, type Basket, type DeckId, type SessionLength } from '@/lib/game/decks';
 import { PRESET_TOPICS } from '@/lib/game/comfort-filters';
 import { formatDuration, DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 import { useProfileStore } from '@/stores/profile-store';
@@ -50,7 +50,6 @@ export default function SetupPage() {
   const [step, setStep] = useState(1);
   const [word, setWord] = useState('');
   const [rule, setRule] = useState('');
-  const [who, setWho] = useState<string | null>(null);
   const [adultOk, setAdultOk] = useState(false);
   const starting = useRef(false);
   const library = useMemo(() => buildLibrary(), []);
@@ -83,24 +82,21 @@ export default function SetupPage() {
   const addRule = () => { const r = rule.trim(); if (r && cfg.customDrinkRules.length < MAX_CUSTOM_RULES) set({ customDrinkRules: [...cfg.customDrinkRules, r] }); setRule(''); };
   const start = () => { starting.current = true; if (startGame(room, trashed)) router.push(`/game/${code}/play`); else starting.current = false; };
 
-  const style: PotStyle = cfg.potStyle ?? 'solo';
-  const editing = style === 'chipin' ? (who ?? room.hostId) : null;
-  const current: Basket = style === 'chipin' ? (cfg.playerBaskets?.[editing ?? ''] ?? {}) : (cfg.basket ?? {});
-  const setCount = (id: DeckId, n: number) => {
-    if (style === 'chipin' && editing) set({ playerBaskets: { ...(cfg.playerBaskets ?? {}), [editing]: { ...current, [id]: n } } });
-    else set({ basket: { ...current, [id]: n } });
+  const basket: Basket = cfg.basket ?? {};
+  const deckId = (Object.keys(basket) as DeckId[]).find((id) => (basket[id] ?? 0) > 0);
+  const session: SessionLength = cfg.session ?? 'short';
+  const pick = (id: DeckId | undefined, length: SessionLength) => {
+    if (!id) { set({ session: length, potStyle: 'solo' }); return; }
+    set({ session: length, potStyle: 'solo', basket: { [id]: Math.min(SESSIONS[length], pools[id]) }, playerBaskets: {} });
   };
-  const basket = gameBasket(style, cfg.basket, cfg.playerBaskets);
   const cards = basketCards(basket);
   const total = basketCost(basket);
-  const owed = owedForBasket(style, total, room.players, room.hostId, cfg.playerBaskets ?? {});
-  const nameOf = (id: string) => room.players.find((p) => p.userId === id)?.displayName ?? '';
   const wallet = profile.coins;
   const potOk = isPotValid(total) && wallet + 1e-9 >= total;
   const adultBlocked = basketHasAdult(basket) && !adultOk;
   const accentDeck = DECKS.find((d) => (basket[d.id] ?? 0) > 0);
   const blocked = key === 'basket'
-    ? (total < MIN_POT ? `Buy at least ${MIN_POT} coins of cards` : total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
+    ? (!deckId ? 'Pick a stack' : total < MIN_POT ? `Pick at least ${MIN_POT} cards` : total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
     : null;
 
   const footer = view < TOTAL ? (
@@ -124,22 +120,9 @@ export default function SetupPage() {
 
       {key === 'basket' && (
         <>
-          <p className="-mt-2 mb-5 text-base text-muted">Choose how many cards to buy from each deck. Each deck has its own price. Wild cards are free and come on top.</p>
-          <SegmentedControl<PotStyle> label="Who pays" value={style} onChange={(v) => set({ potStyle: v })}
-            options={[{ id: 'solo', label: 'I pay it all' }, { id: 'split', label: 'Split it' }, { id: 'chipin', label: 'Each buys' }]} />
-
-          {style === 'chipin' && (
-            <div className="mt-4">
-              <p className="mb-2 text-base text-muted">Pick a player, then set what they buy. You collect the cash.</p>
-              <div className="flex flex-wrap gap-2">
-                {room.players.map((p) => (
-                  <Chip key={p.userId} selected={editing === p.userId} onClick={() => setWho(p.userId)}>
-                    {p.displayName} {formatPot(basketCost(cfg.playerBaskets?.[p.userId] ?? {}))}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-          )}
+          <p className="-mt-2 mb-5 text-base text-muted">Pick a stack, then how long you want to play. Every card is 1 coin. Wild cards are free and come on top.</p>
+          <SegmentedControl<SessionLength> label="Session length" value={session} onChange={(v) => pick(deckId, v)}
+            options={[{ id: 'short', label: `Short, ${SESSIONS.short} cards` }, { id: 'long', label: `Long, ${SESSIONS.long} cards` }]} />
 
           <div className="mt-6 space-y-7">
             {DECK_GROUPS.map((g) => (
@@ -149,23 +132,20 @@ export default function SetupPage() {
                 <ul>
                   {g.ids.map((id) => {
                     const d = DECK_BY_ID[id];
-                    const n = current[id] ?? 0;
+                    const on = deckId === id;
                     return (
-                      <li key={id} className="border-b-2 border-line/60 py-4">
-                        <div className="flex items-start gap-3">
+                      <li key={id} className="border-b-2 border-line/60 py-3">
+                        <button disabled={!d.ready} role="radio" aria-checked={on} onClick={() => { haptic('tap'); pick(id, session); }}
+                          className={cn('flex w-full items-start gap-3 rounded-xl border-2 p-3 text-left transition-colors', on ? 'border-accent bg-accent/10' : 'border-transparent', !d.ready && 'opacity-50')}>
                           <span aria-hidden style={{ ...tileStyle(id), transform: `rotate(${(id.length % 3 - 1) * 4}deg)` }} className="sign mt-0.5 flex h-[3.4rem] w-11 shrink-0 items-end justify-end rounded-md border-[3px] p-1 text-xl leading-none">{id === 'adult' ? '18+' : '?'}</span>
-                          <div className="min-w-0 flex-1">
-                            <p className="sign text-[1.15rem] leading-tight">{d.name}</p>
-                            <p className="text-base text-muted">{d.blurb}</p>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center justify-between gap-3">
-                          <p className="text-base font-bold">
-                            {d.ready ? <>{formatPrice(d.price)} coins a card<span className="block font-semibold text-muted">{pools[id]} cards in the deck</span></> : <span className="text-muted">Coming soon</span>}
-                          </p>
-                          {d.ready && <NumberStepper label={`${d.name} cards`} value={n} min={0} max={Math.min(pools[id], 100)} step={5} onChange={(v) => setCount(id, v)} />}
-                        </div>
-                        {(d.adult || d.includesAdult) && n > 0 && (
+                          <span className="min-w-0 flex-1">
+                            <span className="sign block text-[1.15rem] leading-tight">{d.name}</span>
+                            <span className="block text-base text-muted">{d.blurb}</span>
+                            <span className="mt-1 block text-base font-semibold text-muted">{d.ready ? `${pools[id]} cards in the stack` : 'Coming soon'}</span>
+                          </span>
+                          {on && <Icon name="check" />}
+                        </button>
+                        {(d.adult || d.includesAdult) && on && (
                           <button role="switch" aria-checked={adultOk} onClick={() => setAdultOk(!adultOk)}
                             className="mt-3 flex min-h-[3.5rem] w-full items-center justify-between gap-3 rounded-xl border-2 border-line px-4 text-left">
                             <span className="text-base font-bold">Everyone at the table is 18 or older and agrees to play. Any card can be skipped.</span>
@@ -183,14 +163,7 @@ export default function SetupPage() {
           </div>
 
           <p className="mt-6 border-t-2 border-line pt-4 text-2xl font-extrabold">{cards} cards for <RollNumber value={total} format={formatPot} /> coins{cards > 0 ? `, ${formatDuration(cards)}` : ''}.</p>
-
-          {owed.length > 0 && (
-            <div className="mt-5 rounded-card border-2 border-line p-4">
-              <p className="text-lg font-extrabold">Collect in cash</p>
-              <p className="mb-2 text-base text-muted">1 coin is P1. Your wallet pays the whole pot, so friends settle with you.</p>
-              <ul>{owed.map((o) => <li key={o.userId} className="flex justify-between py-1 text-lg"><span>{nameOf(o.userId)}</span><b>owes you P{formatPot(o.pesos)}</b></li>)}</ul>
-            </div>
-          )}
+          <p className="mt-2 text-base text-muted">You pay for the table. Friends can pay you back in cash, P1 a coin. When the cards run out you can get {MORE_CARDS} more for {MORE_CARDS} coins.</p>
 
           <p className="mt-5 text-lg">You have <b>{formatPot(wallet)} coins</b>.</p>
           {total > wallet && (

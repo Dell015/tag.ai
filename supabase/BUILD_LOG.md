@@ -37,3 +37,5 @@ Cards and topics are read from the database after sign in (CLAUDE.md D40). Real 
 005_stacks applied 2026-10-25: stacks and stack_cards with row-level security and limits. Checked with two users: own stacks only, other users cannot read or add, adult cards refused until 18+ is confirmed, blank names refused.
 
 006_pack_cards applied 2026-10-25: cards.pack_id, 48 pack cards, cards_select shows pack cards only to owners and admins. Checked with two users: owner-less player sees 0 pack cards, admin sees 48.
+
+007_welcome_30 applied 2026-10-25: welcome gift trigger now gives 30 coins.

@@ -7,7 +7,7 @@ import { getRemoteContent } from '@/lib/data/remote-content';
 import { expandComfortFilters, isCardFiltered } from '@/lib/game/comfort-filters';
 
 /** Coins one topic costs. */
-export const TALK_PRICE = 0.1;
+export const TALK_PRICE = 1;
 export const TALK_MIN = 10;
 export const TALK_MAX = 100;
 export const TALK_STEP = 5;

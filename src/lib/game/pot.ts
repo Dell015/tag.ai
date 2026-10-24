@@ -1,30 +1,21 @@
 /**
  * Coin pot maths (docs/FRONTEND_PLAN.md section 6.2). Pure functions, no state.
- * Cost per card = 1 / questions-per-coin. Wild cards are free.
+ * Every card costs 1 coin. Wild cards are free.
  */
 import { GAME_MODES, blendModes } from '@/lib/game/game-modes';
-import { deckOf, basketCost, basketCards, sumBaskets, type Basket } from '@/lib/game/decks';
+import { basketCost, basketCards, sumBaskets, type Basket } from '@/lib/game/decks';
 import type { GameMode } from '@/types/game';
 
-export const MIN_POT = 3;
+export const MIN_POT = 10;
 export const MAX_POT = 200;
 export const HEAT_UP_COST = 2;
 export const LOW_POT_RATIO = 0.2;
 
 interface CostCard { cardType: 'question' | 'action' | 'wild'; intensity: number; deckId?: string }
 
-const PER_COIN = { casual: 15, standard: 10, spicy: 6, deep: 4, dare: 5 } as const;
-
-/** Coins one card uses from the pot. */
+/** Coins one card uses from the pot: a flat 1, wild cards are free. */
 export function cardCost(card: CostCard): number {
-  if (card.cardType === 'wild') return 0;
-  const deck = card.deckId ? deckOf(card.deckId) : undefined;
-  if (deck) return deck.price;
-  if (card.cardType === 'action') return 1 / PER_COIN.dare;
-  if (card.intensity <= 1) return 1 / PER_COIN.casual;
-  if (card.intensity <= 3) return 1 / PER_COIN.standard;
-  if (card.intensity === 4) return 1 / PER_COIN.spicy;
-  return 1 / PER_COIN.deep;
+  return card.cardType === 'wild' ? 0 : 1;
 }
 
 /** Average cost of one card in a deck, from its intensity mix. */

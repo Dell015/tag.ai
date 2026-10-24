@@ -25,6 +25,8 @@ export interface RoomConfig {
   potStyle: 'solo' | 'split' | 'chipin';
   /** Chip in: coins (pesos) each player puts in, by user id. Collected in cash by the host. */
   shares?: Record<string, number>;
+  /** Short (10 cards) or Long (30 cards). The basket holds the deck and the count. */
+  session?: 'short' | 'long';
   /** Cards bought per deck, shared by everyone (I pay it all, or split it). */
   basket?: Basket;
   /** Chip in: what each player buys for themselves, by user id. */
