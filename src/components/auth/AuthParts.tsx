@@ -6,8 +6,8 @@ import { Icon } from '@/components/ui';
 import { avatarColor } from '@/components/ui/Avatar';
 
 /** One screen of the sign up flow: back button, progress, title, then the content. */
-export function AuthShell({ step, total = 3, onBack, title, subtitle, children }: {
-  step: number; total?: number; onBack?: () => void; title: string; subtitle?: ReactNode; children: ReactNode;
+export function AuthShell({ step, total = 3, progress = true, onBack, title, subtitle, children }: {
+  step: number; total?: number; progress?: boolean; onBack?: () => void; title: string; subtitle?: ReactNode; children: ReactNode;
 }) {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-6 safe-top safe-bottom">
@@ -15,7 +15,7 @@ export function AuthShell({ step, total = 3, onBack, title, subtitle, children }
         {onBack ? (
           <button type="button" onClick={onBack} aria-label="Back" className="flex h-tap w-tap shrink-0 items-center justify-center rounded-xl border-2 border-line"><Icon name="back" /></button>
         ) : <span className="h-tap w-tap shrink-0" />}
-        <div className="flex flex-1 items-end justify-end gap-2 pr-1" role="progressbar" aria-label={`Step ${step} of ${total}`} aria-valuemin={1} aria-valuemax={total} aria-valuenow={step}>
+        {progress && <div className="flex flex-1 items-end justify-end gap-2 pr-1" role="progressbar" aria-label={`Step ${step} of ${total}`} aria-valuemin={1} aria-valuemax={total} aria-valuenow={step}>
           {Array.from({ length: total }, (_, i) => {
             const done = i < step - 1, here = i === step - 1;
             return (
@@ -28,7 +28,7 @@ export function AuthShell({ step, total = 3, onBack, title, subtitle, children }
               </span>
             );
           })}
-        </div>
+        </div>}
       </div>
       <div key={title} className="auth-in flex flex-1 flex-col">
         <h1 className="mt-6 text-5xl leading-[0.95]">{title}</h1>

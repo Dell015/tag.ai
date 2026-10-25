@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Logo, AvatarPicker, DeckFan, Icon, SegmentedControl, Splash } from '@/components/ui';
+import { Button, Logo, AvatarPicker, DeckFan, Icon, Splash } from '@/components/ui';
 import { AuthField, AuthShell, Divider, ErrorNote, GoogleButton, PlayerCard } from '@/components/auth/AuthParts';
 import { emailLooksValid, suggestEmailFix } from '@/lib/email-hint';
 import { useProfileStore, WELCOME_COINS } from '@/stores/profile-store';
@@ -166,16 +166,12 @@ function WelcomeInner() {
     };
     return (
       <AuthShell
-        step={2} onBack={() => { setError(''); setStep(adultOk ? 1 : 0); }}
+        step={2} progress={creating} onBack={() => { setError(''); setStep(adultOk ? 1 : 0); }}
         title={creating ? 'Make your account' : 'Welcome back'}
         subtitle={creating ? <span className="inline-flex items-center gap-2"><span style={{ animationDelay: '250ms' }} className="seat-pop flex h-8 w-8 items-center justify-center rounded-full bg-accent text-onaccent"><Icon name="coin" size={18} /></span>You start with {WELCOME_COINS} free coins.</span> : 'Sign in to get your coins and stacks back.'}
       >
-        <div className="mt-6">
-          <SegmentedControl label="Account" value={creating ? 'new' : 'old'} onChange={(v) => { setCreating(v === 'new'); setError(''); setEmailErr(null); setPwErr(null); }}
-            options={[{ id: 'new', label: 'Create account' }, { id: 'old', label: 'Sign in' }]} />
-        </div>
         {googleEnabled && (
-          <div className="mt-5">
+          <div className="mt-6">
             <GoogleButton disabled={busy} onClick={async () => {
               setError('');
               try { if (adultOk) sessionStorage.setItem('tagai-adult-ok', '1'); } catch { /* private mode */ }
@@ -185,7 +181,7 @@ function WelcomeInner() {
             <Divider>or use your email</Divider>
           </div>
         )}
-        <form className={`${googleEnabled ? '' : 'mt-5 '}flex flex-1 flex-col`} noValidate onSubmit={(e) => { e.preventDefault(); void submit(); }}>
+        <form className={`${googleEnabled ? '' : 'mt-6 '}flex flex-1 flex-col`} noValidate onSubmit={(e) => { e.preventDefault(); void submit(); }}>
           <div className="space-y-4">
             <AuthField
               label="Email" type="email" inputMode="email" autoComplete="email" value={email} placeholder="you@email.com" error={emailErr}
@@ -201,7 +197,8 @@ function WelcomeInner() {
           {error && <ErrorNote>{error}</ErrorNote>}
           <div className="mt-auto pt-8">
             <Button size="lg" full type="submit" disabled={busy || !email.trim() || !password}>{busy ? 'One moment' : creating ? 'Create account' : 'Sign in'}</Button>
-            <p className="mt-3 text-center text-sm text-muted">By continuing you accept the <Link href="/legal/terms" className="underline">Terms</Link> and <Link href="/legal/privacy" className="underline">Privacy</Link> notes.</p>
+            <button type="button" disabled={busy} onClick={() => { setCreating(!creating); setError(''); setEmailErr(null); setPwErr(null); }} className="mx-auto mt-3 block py-2 text-base font-bold text-muted underline">{creating ? 'Already have an account? Sign in' : 'New here? Make an account'}</button>
+            {creating && <p className="text-center text-sm text-muted">By continuing you accept the <Link href="/legal/terms" className="underline">Terms</Link> and <Link href="/legal/privacy" className="underline">Privacy</Link> notes.</p>}
             {codeLoginEnabled && <button type="button" className="mx-auto mt-2 block py-2 text-base font-bold text-muted underline" onClick={() => { setError(''); setStep(4); }}>Email me a code instead</button>}
           </div>
         </form>
