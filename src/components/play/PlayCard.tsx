@@ -111,7 +111,7 @@ export function PlayCard({ card, revealed, onReveal, onDone, onRule, nonDrinking
         ) : (
           <CardBody watch={card.id}>
             <p className="display text-balance" style={{ lineHeight: 1.02, fontSize: `calc(${(meta.tool || card.tool?.via) ? Math.min(sizeFor(text.length), 2.6) : sizeFor(text.length)}rem * var(--card-scale, 1))` }}>{text}</p>
-            {(meta.tool || card.tool?.via) && <CardToolView key={card.id} kind={card.tool?.via ?? kind} tool={card.tool} outcomes={card.outcomes} prompt={text} nonDrinking={nonDrinking} onResult={kind === 'rule' ? (t) => onRule(t.replace(/^(Heads|Tails): /, '')) : undefined} />}
+            {(meta.tool || card.tool?.via) && <CardToolView key={card.id} deck={card.deckId} kind={card.tool?.via ?? kind} tool={card.tool} outcomes={card.outcomes} prompt={text} nonDrinking={nonDrinking} onResult={kind === 'rule' ? (t) => onRule(t.replace(/^(Heads|Tails): /, '')) : undefined} />}
             {kind === 'rule' && <p className="mt-4 text-lg font-extrabold">Stays on until the next wild card.</p>}
             {kind === 'dare' && dareSeconds(text) && <TimerChip key={card.id} seconds={dareSeconds(text)!} />}
           </CardBody>

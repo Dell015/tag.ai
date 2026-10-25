@@ -25,6 +25,7 @@ function roomFromStore(base: Room): Room {
     players: s.players,
     agreedPlayers: s.agreedPlayers,
     config: {
+      ...base.config, // keeps fields the session store does not mirror (picks, pot, source)
       cardCountTarget: s.cardCountTarget,
       gameMode: s.gameMode,
       extraModes: s.extraModes,

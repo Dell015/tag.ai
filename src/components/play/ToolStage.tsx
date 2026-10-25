@@ -89,8 +89,8 @@ function DiceStage({ dice = 1, outcomes, nonDrinking, onResult, onClose }: Stage
     };
     setTimeout(tick, delay);
   };
-  const first = useRef(true);
-  useEffect(() => { if (first.current) { first.current = false; roll.current(); } return () => { done.current = true; }; }, []);
+  // Always roll on mount. Strict mode runs effect, cleanup, effect again; a once-only guard left the die stopped after the cleanup.
+  useEffect(() => { roll.current(); return () => { done.current = true; }; }, []);
   return (
     <>
       <div className="flex flex-1 flex-col items-center justify-center">

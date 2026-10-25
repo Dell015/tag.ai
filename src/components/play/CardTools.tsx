@@ -16,8 +16,8 @@ const ONCE = new Set(['dice', 'coin', 'wheel']);
  * The tool a card brings. On the card it is just a button and, afterwards, the result. The animation
  * itself plays on its own full screen (ToolStage), so nothing is squeezed into the card.
  */
-export function CardToolView({ kind, tool, outcomes, prompt, nonDrinking, onResult }: {
-  kind: CardKind; tool?: CardTool; outcomes?: string[]; prompt: string; nonDrinking: boolean; onResult?: (text: string) => void;
+export function CardToolView({ kind, tool, outcomes, prompt, nonDrinking, onResult, deck }: {
+  deck?: string; kind: CardKind; tool?: CardTool; outcomes?: string[]; prompt: string; nonDrinking: boolean; onResult?: (text: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<ToolResult | null>(null);
@@ -36,7 +36,7 @@ export function CardToolView({ kind, tool, outcomes, prompt, nonDrinking, onResu
         <button onClick={() => { haptic('tap'); setOpen(true); }} className="min-h-tap w-full rounded-xl bg-onaccent px-5 text-xl font-extrabold text-accent active:translate-y-px">{result ? again : first}</button>
       )}
       {open && (
-        <ToolStage kind={kind} prompt={prompt} dice={tool?.dice ?? 1} outcomes={outcomes} labels={tool?.labels} seconds={tool?.seconds} nonDrinking={nonDrinking}
+        <ToolStage kind={kind} deck={deck} prompt={prompt} dice={tool?.dice ?? 1} outcomes={outcomes} labels={tool?.labels} seconds={tool?.seconds} nonDrinking={nonDrinking}
           onResult={(r) => { setResult(r); onResult?.(r.text); }} onClose={() => setOpen(false)} />
       )}
     </div>
