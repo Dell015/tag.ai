@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Chip, EmptyState, Icon, Sheet, TextField, toast } from '@/components/ui';
 import { PAINT } from '@/components/ui/Art';
+import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/cn';
 import { adminAuditLog } from '@/lib/supabase/account';
 import {
@@ -101,12 +102,11 @@ export function AuditLog() {
     toast(`Exported ${r.data.rows.length} rows${r.data.total > 1000 ? ' (the newest 1000)' : ''}`, { tone: 'ok' });
   };
 
-  const toggleArea = (id: string) => setF((p) => ({ ...p, areas: p.areas.includes(id) ? p.areas.filter((x) => x !== id) : [...p.areas, id] }));
   const quickOn = (q: (typeof QUICK)[number]) => f.sort === q.sort && f.dir === q.dir;
   const n = activeCount(f);
   const reset = () => { setTyping(''); setF(DEFAULT_FILTERS); setDraft(DEFAULT_FILTERS); };
   const openSheet = () => { setDraft(f); setSheet(true); };
-  const actionOptions = ACTION_IDS.filter((a) => draft.areas.length === 0 || draft.areas.includes(a.split('.')[0]));
+  const actionOptions = ACTION_IDS.filter((a) => f.areas.length === 0 || f.areas.includes(a.split('.')[0]));
 
   let lastDay = '';
   return (
@@ -123,13 +123,13 @@ export function AuditLog() {
         </button>
       </div>
 
-      <div className="-mx-4 mt-3 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
-        <Chip selected={f.areas.length === 0} onClick={() => setF((p) => ({ ...p, areas: [] }))} className="shrink-0 snap-start">Everything</Chip>
-        {AREAS.map((a) => <Chip key={a.id} selected={f.areas.includes(a.id)} onClick={() => toggleArea(a.id)} className="shrink-0 snap-start">{a.label}</Chip>)}
-      </div>
-      <div className="-mx-4 mt-2 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
-        {QUICK.map((q) => <Chip key={q.label} selected={quickOn(q)} onClick={() => setF((p) => ({ ...p, sort: q.sort, dir: q.dir }))} className="shrink-0 snap-start">{q.label}</Chip>)}
-        {(['today', '7d', '30d'] as Range[]).map((r) => <Chip key={r} selected={f.range === r} onClick={() => setF((p) => ({ ...p, range: p.range === r ? 'all' : r }))} className="shrink-0 snap-start">{RANGES.find((x) => x.id === r)?.label}</Chip>)}
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <Select label="Show" value={f.areas.length === 1 ? f.areas[0] : f.areas.length === 0 ? 'all' : 'several'} onChange={(e) => setF((p) => ({ ...p, areas: e.target.value === 'all' ? [] : [e.target.value], actions: [] }))}
+          options={[{ id: 'all', label: 'Everything' }, ...(f.areas.length > 1 ? [{ id: 'several', label: 'Several' }] : []), ...AREAS.map((a) => ({ id: a.id, label: a.label }))]} />
+        <Select label="Order" value={QUICK.find(quickOn)?.label ?? 'custom'} onChange={(e) => { const q = QUICK.find((x) => x.label === e.target.value); if (q) setF((p) => ({ ...p, sort: q.sort, dir: q.dir })); }}
+          options={[...QUICK.map((q) => ({ id: q.label, label: q.label })), ...(QUICK.some(quickOn) ? [] : [{ id: 'custom', label: 'Custom' }])]} />
+        <Select label="When" value={f.range === 'custom' ? 'custom' : f.range} onChange={(e) => { const r = e.target.value as Range; if (r === 'custom') { setDraft({ ...f, range: 'custom' }); setSheet(true); } else setF((p) => ({ ...p, range: r })); }}
+          options={RANGES.map((r) => ({ id: r.id, label: r.id === 'custom' ? 'Pick dates' : r.label }))} />
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2">

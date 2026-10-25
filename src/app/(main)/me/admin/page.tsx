@@ -3,6 +3,7 @@ import { refreshAccount } from '@/components/AuthSync';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge, Button, Chip, ConfirmSheet, EmptyState, Screen, TextField, toast } from '@/components/ui';
+import { Select } from '@/components/ui/Select';
 import { AuditLog } from '@/components/admin/AuditLog';
 import { useAccountStore } from '@/stores/account-store';
 import { useHydrated } from '@/lib/hydration';
@@ -350,13 +351,7 @@ export default function AdminPage() {
     <Screen title="Admin" back="/me">
       <p className="text-lg text-muted">Only admins see this screen. Changes go live for everyone.</p>
       <div className="mt-4">
-        <div role="tablist" aria-label="Admin section" className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
-          {TABS.map((t) => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-              ref={(el) => { if (el && tab === t.id) el.scrollIntoView({ inline: 'center', block: 'nearest' }); }}
-              className={`h-11 shrink-0 snap-start rounded-xl border-2 px-4 text-base font-extrabold ${tab === t.id ? 'border-accent bg-accent text-onaccent' : 'border-line text-muted'}`}>{t.label}</button>
-          ))}
-        </div>
+        <Select label="Section" value={tab} onChange={(e) => setTab(e.target.value as Tab)} options={TABS} />
       </div>
       <div className="mt-4">{tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'audit' ? <AuditLog /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
     </Screen>
