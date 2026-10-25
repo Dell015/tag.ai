@@ -1,6 +1,5 @@
 'use client';
-import { forwardRef, useId, useState, type InputHTMLAttributes, type ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { forwardRef, useEffect, useId, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
 import { Icon } from '@/components/ui';
@@ -20,23 +19,22 @@ export function AuthShell({ step, total = 3, onBack, title, subtitle, children }
           {Array.from({ length: total }, (_, i) => {
             const done = i < step - 1, here = i === step - 1;
             return (
-              <motion.span
+              <span
                 key={i}
-                animate={{ y: here ? -4 : 0, rotate: here ? (i - 1) * 6 : 0, scale: here ? 1.08 : 1 }}
-                transition={{ type: 'spring', stiffness: 380, damping: 18 }}
+                style={{ transform: here ? `translate3d(0, -4px, 0) rotate(${(i - 1) * 6}deg) scale(1.08)` : 'none', transition: 'transform 320ms cubic-bezier(0.3, 1.5, 0.5, 1)' }}
                 className={cn('flex h-10 w-7 items-center justify-center rounded-md border-2', done || here ? 'border-[#181310] bg-accent text-onaccent' : 'border-line')}
               >
-                {done && <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }}><Icon name="check" size={14} /></motion.span>}
-              </motion.span>
+                {done && <span className="pop-in flex"><Icon name="check" size={14} /></span>}
+              </span>
             );
           })}
         </div>
       </div>
-      <motion.div key={title} initial={{ opacity: 0, y: 28, rotate: 1.5 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 22 }} className="flex flex-1 flex-col">
+      <div key={title} className="auth-in flex flex-1 flex-col">
         <h1 className="mt-6 text-5xl leading-[0.95]">{title}</h1>
         {subtitle && <p className="mt-3 text-lg text-muted">{subtitle}</p>}
         {children}
-      </motion.div>
+      </div>
     </div>
   );
 }
@@ -108,30 +106,39 @@ export function Divider({ children }: { children: ReactNode }) {
   );
 }
 
-/** The player's card, filled in live while they type. Flips over when `dealt` is true. */
+/** The player's card, filled in live while they type. When `dealt` is true it turns over (a 2D squash, no 3D, so it stays smooth). */
 export function PlayerCard({ name, avatar, coins, dealt }: { name: string; avatar: string; coins: number; dealt?: boolean }) {
   const c = avatarColor(avatar, name || '?');
   const initial = (name.trim()[0] ?? '?').toUpperCase();
-  const face = { backfaceVisibility: 'hidden' as const, WebkitBackfaceVisibility: 'hidden' as const };
+  const [phase, setPhase] = useState<0 | 1 | 2>(0); // 0 front, 1 squashed, 2 back
+  useEffect(() => {
+    if (!dealt) { setPhase(0); return; }
+    setPhase(1);
+    const t = setTimeout(() => setPhase(2), 200);
+    return () => clearTimeout(t);
+  }, [dealt]);
   return (
-    <div className="mx-auto" style={{ perspective: 900 }} aria-hidden>
-      <motion.div key={avatar} initial={{ rotate: 9, scale: 0.94 }} animate={{ rotate: -3, scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 12 }}>
-        <motion.div animate={{ rotateY: dealt ? 180 : 0 }} transition={{ duration: 0.6, ease: 'easeInOut' }} style={{ transformStyle: 'preserve-3d', position: 'relative', width: 140, height: 184 }}>
-          <div style={{ ...face, background: c.bg, color: c.fg, border: '3px solid #181310' }} className="absolute inset-0 flex flex-col overflow-hidden rounded-card">
-            <div className="trim h-2.5 shrink-0" />
-            <div className="flex flex-1 flex-col items-center justify-center px-2">
-              <span className="sign text-6xl leading-none">{initial}</span>
-              <span className="mt-2 max-w-full truncate text-lg font-extrabold">{name.trim() || 'Your name'}</span>
+    <div className="mx-auto" aria-hidden style={{ width: 140 }}>
+      <div key={avatar} className="wobble">
+        <div style={{ width: 140, height: 184, transform: phase === 1 ? 'scaleX(0.02)' : 'none', transition: 'transform 200ms ease-in-out', willChange: 'transform' }}>
+          {phase < 2 ? (
+            <div style={{ background: c.bg, color: c.fg, border: '3px solid #181310' }} className="flex h-full w-full flex-col overflow-hidden rounded-card">
+              <div className="trim h-2.5 shrink-0" />
+              <div className="flex flex-1 flex-col items-center justify-center px-2">
+                <span className="sign text-6xl leading-none">{initial}</span>
+                <span className="mt-2 max-w-full truncate text-lg font-extrabold">{name.trim() || 'Your name'}</span>
+              </div>
+              <div className="mx-2 mb-2 flex items-center justify-center gap-1.5 rounded-lg bg-[#181310] py-1.5 text-sm font-extrabold text-white">
+                <Icon name="coin" size={16} />{coins} coins
+              </div>
             </div>
-            <div className="mx-2 mb-2 flex items-center justify-center gap-1.5 rounded-lg bg-[#181310] py-1.5 text-sm font-extrabold text-white">
-              <Icon name="coin" size={16} />{coins} coins
+          ) : (
+            <div style={{ background: '#181310', border: '3px solid #FFC72C' }} className="flex h-full w-full items-center justify-center rounded-card">
+              <span className="sign text-2xl text-[#FFC72C]">tag.ai</span>
             </div>
-          </div>
-          <div style={{ ...face, transform: 'rotateY(180deg)', background: '#181310', border: '3px solid #FFC72C' }} className="absolute inset-0 flex items-center justify-center rounded-card">
-            <span className="sign text-2xl text-[#FFC72C]">tag.ai</span>
-          </div>
-        </motion.div>
-      </motion.div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

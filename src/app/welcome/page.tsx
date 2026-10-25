@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { Button, Logo, AvatarPicker, DeckFan, Icon, SegmentedControl, Splash } from '@/components/ui';
 import { AuthField, AuthShell, Divider, ErrorNote, GoogleButton, PlayerCard } from '@/components/auth/AuthParts';
 import { emailLooksValid, suggestEmailFix } from '@/lib/email-hint';
@@ -169,7 +168,7 @@ function WelcomeInner() {
       <AuthShell
         step={2} onBack={() => { setError(''); setStep(adultOk ? 1 : 0); }}
         title={creating ? 'Make your account' : 'Welcome back'}
-        subtitle={creating ? <span className="inline-flex items-center gap-2"><motion.span initial={{ scale: 0, rotate: -40 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 420, damping: 12, delay: 0.25 }} className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-onaccent"><Icon name="coin" size={18} /></motion.span>You start with {WELCOME_COINS} free coins.</span> : 'Sign in to get your coins and stacks back.'}
+        subtitle={creating ? <span className="inline-flex items-center gap-2"><span style={{ animationDelay: '250ms' }} className="seat-pop flex h-8 w-8 items-center justify-center rounded-full bg-accent text-onaccent"><Icon name="coin" size={18} /></span>You start with {WELCOME_COINS} free coins.</span> : 'Sign in to get your coins and stacks back.'}
       >
         <div className="mt-6">
           <SegmentedControl label="Account" value={creating ? 'new' : 'old'} onChange={(v) => { setCreating(v === 'new'); setError(''); setEmailErr(null); setPwErr(null); }}

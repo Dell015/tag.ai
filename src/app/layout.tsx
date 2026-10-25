@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   applicationName: "tag.ai",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg", apple: "/apple-touch-icon.png" },
-  appleWebApp: { capable: true, title: "tag.ai", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "tag.ai", statusBarStyle: "black" },
 };
 
 export const viewport: Viewport = {
@@ -35,8 +35,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AuthSync />
         <SettingsApplier />
         <MotionProvider><div className="mx-auto min-h-dvh w-full">{children}</div></MotionProvider>
-        {/* iPhone: the status bar is see-through in the installed app, so cover it with the page colour while content scrolls under it. */}
-        <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 z-40 bg-bg" style={{ height: 'env(safe-area-inset-top)' }} />
         <AgeGateOverlay />
         <OfflineBanner />
         <ToastHost />

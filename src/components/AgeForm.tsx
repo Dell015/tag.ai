@@ -1,6 +1,5 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Button, Icon } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { MONTHS, monthCells } from '@/lib/calendar';
@@ -66,24 +65,15 @@ export function AgeForm({ onAdult, onUnderage, busy }: { onAdult: () => void; on
           })}
         </div>
       </div>
-      <div className="mt-3 h-16" style={{ perspective: 600 }}>
-        <AnimatePresence mode="wait" initial={false}>
-          {sel ? (
-            <motion.div
-              key={`${sel.d}-${sel.m}-${sel.y}`}
-              initial={{ rotateX: -90, opacity: 0 }} animate={{ rotateX: 0, opacity: 1 }} exit={{ rotateX: 90, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-              className="flex h-full items-center justify-between overflow-hidden rounded-card border-[3px] border-[#181310] bg-accent pl-4 text-onaccent"
-            >
-              <span className="sign text-xl">{sel.d} {MONTHS[sel.m].slice(0, 3)} {sel.y}</span>
-              <span className="trim h-full w-6" />
-            </motion.div>
-          ) : (
-            <motion.div key="none" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex h-full items-center rounded-card border-2 border-dashed border-line px-4 text-lg font-medium text-muted">
-              Tap the day you were born.
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="mt-3 h-16">
+        {sel ? (
+          <div key={`${sel.d}-${sel.m}-${sel.y}`} className="pop-in flex h-full items-center justify-between overflow-hidden rounded-card border-[3px] border-[#181310] bg-accent pl-4 text-onaccent">
+            <span className="sign text-xl">{sel.d} {MONTHS[sel.m].slice(0, 3)} {sel.y}</span>
+            <span className="trim h-full w-6" />
+          </div>
+        ) : (
+          <div className="flex h-full items-center rounded-card border-2 border-dashed border-line px-4 text-lg font-medium text-muted">Tap the day you were born.</div>
+        )}
       </div>
       <p className="mt-3 text-base text-muted">We only use this to check your age. We do not keep your birth date.</p>
       {error && <p role="alert" className="mt-3 text-base font-bold text-danger">{error}</p>}
