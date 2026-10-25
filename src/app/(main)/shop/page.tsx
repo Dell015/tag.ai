@@ -2,6 +2,7 @@
 import { fillDrink } from '@/lib/game/card-kinds';
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Avatar, Badge, Button, CoinAmount, CoinStack, PAINT, Screen, SegmentedControl, Sheet, toast } from '@/components/ui';
 import { COIN_PACKAGES, PACK_CARDS, SHOP_ITEMS, packCardCount, packPreview, type CoinPackage, type ShopItem } from '@/lib/data/shop-catalogue';
 import { cardBack } from '@/lib/card-back';
@@ -10,19 +11,18 @@ import { useProfileStore } from '@/stores/profile-store';
 import { useSettingsStore } from '@/stores/settings-store';
 import { useAdultOn } from '@/lib/adult';
 import { useShopStore } from '@/stores/shop-store';
-import { cn } from '@/lib/cn';
 
 type Seg = 'coins' | 'packs' | 'style';
 const SEGS: { id: Seg; label: string }[] = [{ id: 'coins', label: 'Coins' }, { id: 'packs', label: 'Packs' }, { id: 'style', label: 'Style' }];
 
 function Preview({ item }: { item: ShopItem }) {
-  const box = 'flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl';
-  if (item.kind === 'frame') return <span className={box}><Avatar value="c0" name="A" size={40} frame={item.value} /></span>;
-  if (item.kind === 'back') return <span className={cn(box, 'border-2 border-line')} style={cardBack(item.value).style} />;
+  const box = 'flex h-24 w-full items-center justify-center overflow-hidden rounded-xl bg-raised';
+  if (item.kind === 'frame') return <span className={box}><Avatar value="c0" name="A" size={56} frame={item.value} /></span>;
+  if (item.kind === 'back') return <span className={box}><span className="block h-[4.5rem] w-14 rotate-[-5deg] rounded-lg border-2 border-black/50" style={cardBack(item.value).style} /></span>;
   if (item.kind === 'theme') return <span className={box} style={{ background: `rgb(${item.value})` }} />;
   if (item.kind === 'pack') {
     const tones = Object.values(PAINT); const c = tones[Math.abs(item.id.split("").reduce((a, ch) => a + ch.charCodeAt(0), 0)) % tones.length];
-    return <span className={cn(box, 'rotate-[-4deg] border-[3px] border-[#181310] text-[#181310]')} style={{ background: c }}><span className="display text-3xl">{packCardCount(item.id)}</span></span>;
+    return <span className={box}><span className="flex h-[4.5rem] w-14 rotate-[-5deg] items-center justify-center rounded-lg border-[3px] border-[#181310] text-[#181310]" style={{ background: c }}><span className="display text-3xl">{packCardCount(item.id)}</span></span></span>;
   }
   return null;
 }
@@ -50,50 +50,48 @@ function ShopInner() {
   };
 
   return (
-    <Screen title="Shop">
-      <div className="sticky top-0 z-10 -mx-4 mb-4 border-b-2 border-line bg-bg px-4 pb-3 pt-1">
-        <p className="text-lg">You have <b><CoinAmount value={Number(formatPot(coins))} /></b></p>
-        <div className="mt-3"><SegmentedControl<Seg> label="Shop sections" options={SEGS} value={seg} onChange={setSeg} /></div>
-      </div>
+    <Screen title="Shop" action={<span className="shrink-0 rounded-lg border-2 border-line px-3 py-1.5 text-base font-extrabold"><CoinAmount value={Number(formatPot(coins))} /></span>}>
+      <div className="mb-5 mt-1"><SegmentedControl<Seg> label="Shop sections" options={SEGS} value={seg} onChange={setSeg} /></div>
 
       {seg === 'coins' && (
-        <ul>
-          {COIN_PACKAGES.map((p, idx) => (
-            <li key={p.id} className="flex items-center gap-4 border-b-2 border-line/60 py-4">
-              <CoinStack count={idx + 2} size={48} className="shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="text-2xl font-extrabold leading-tight">{p.name}</p>
-                {p.badge && <Badge>{p.badge}</Badge>}
-                <p className="text-lg text-muted">{p.coins} coins{p.bonus ? `, includes ${p.bonus} bonus` : ''}</p>
-              </div>
-              <Button onClick={() => setPkg(p)}>P{p.price}</Button>
-            </li>
-          ))}
-        </ul>
+        <>
+          <p className="mb-3 text-base text-muted">Coins pay for the cards in a game. Wild cards are free. Pay with GCash, Maya or card.</p>
+          <ul className="grid grid-cols-2 gap-3">
+            {COIN_PACKAGES.map((p, idx) => (
+              <motion.li key={p.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: idx * 0.05 }}
+                className="relative flex flex-col rounded-2xl border-2 border-b-4 border-line/60 bg-panel p-3.5">
+                {p.badge && <span className="absolute right-3 top-3"><Badge>{p.badge}</Badge></span>}
+                <CoinStack count={idx + 2} size={56} />
+                <p className="display mt-2 text-[2.2rem] leading-none tabular-nums">{p.coins}</p>
+                <p className="text-sm font-bold text-muted">{p.bonus ? `coins, ${p.bonus} bonus` : 'coins'}</p>
+                <Button className="mt-3 w-full px-3" onClick={() => setPkg(p)}>P{p.price}</Button>
+              </motion.li>
+            ))}
+          </ul>
+        </>
       )}
 
       {seg !== 'coins' && (
-        <ul>
-          {items.map((i) => {
+        <ul className="grid grid-cols-2 gap-3">
+          {items.map((i, idx) => {
             const have = owned(i);
             const short = !have && coins < i.price;
             return (
-              <li key={i.id} className="flex items-center gap-4 border-b-2 border-line/60 py-4">
+              <motion.li key={i.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: Math.min(idx, 8) * 0.04 }}
+                className="flex flex-col rounded-2xl border-2 border-b-4 border-line/60 bg-panel p-2.5">
                 <Preview item={i} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-xl font-extrabold">{i.name}</p>
-                  <p className="text-base leading-snug text-muted">{i.description}{i.kind === 'pack' && ` ${packCardCount(i.id)} cards.`}</p>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
+                <p className="mt-2.5 px-1 text-lg font-extrabold leading-tight">{i.name}</p>
+                <p className="mt-0.5 flex-1 px-1 text-sm leading-snug text-muted">{i.description}{i.kind === 'pack' && ` ${packCardCount(i.id)} cards.`}</p>
+                <div className="mt-3">
                   {have ? (
-                    i.kind === 'pack' ? <Badge tone="ok">Owned</Badge>
-                    : <Button variant={equippedNow(i) ? 'primary' : 'secondary'} onClick={() => (equippedNow(i) ? shop.unequip(i.kind as 'frame' | 'back' | 'theme') : shop.equip(i.id))}>{equippedNow(i) ? 'Equipped' : 'Equip'}</Button>
+                    i.kind === 'pack' ? <p className="flex h-tap items-center justify-center rounded-xl bg-ok/15 text-base font-extrabold text-ok">Owned</p>
+                    : <Button full variant={equippedNow(i) ? 'primary' : 'secondary'} className="px-3" onClick={() => (equippedNow(i) ? shop.unequip(i.kind as 'frame' | 'back' | 'theme') : shop.equip(i.id))}>{equippedNow(i) ? 'Equipped' : 'Equip'}</Button>
                   ) : (
-                    <Button variant="secondary" onClick={() => setItem(i)}>{i.price} coins</Button>
+                    <Button full variant="secondary" className="px-3" onClick={() => setItem(i)}>{i.price} coins</Button>
                   )}
-                  {short && <span className="text-sm font-bold text-muted">Need {formatPot(i.price - coins)} more</span>}
+                  {short && <p className="mt-1.5 text-center text-xs font-bold text-muted">Need {formatPot(i.price - coins)} more</p>}
                 </div>
-              </li>
+              </motion.li>
             );
           })}
         </ul>

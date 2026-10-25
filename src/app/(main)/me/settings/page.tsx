@@ -3,7 +3,7 @@ import { useAccountStore } from '@/stores/account-store';
 import { signOutServer } from '@/lib/supabase/account';
 import { useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
-import { Button, Chip, ConfirmSheet, ListRow, Screen, SegmentedControl, TextField, Toggle, toast } from '@/components/ui';
+import { Button, Chip, ConfirmSheet, ListRow, Plate, Screen, Section, SegmentedControl, Sheet, TextField, Toggle, toast } from '@/components/ui';
 import { PRESET_TOPICS, normalizeTopic } from '@/lib/game/comfort-filters';
 import { DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 import { useSettingsStore, type Language, type MotionPref, type PotStyle, type TextSize } from '@/stores/settings-store';
@@ -13,20 +13,15 @@ import { useWalletStore } from '@/stores/wallet-store';
 
 const BUILD = 'a1';
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="mt-9">
-      <h2 className="mb-1 text-3xl">{title}</h2>
-      <div>{children}</div>
-    </section>
-  );
+function Group({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return <Section title={title} hint={hint}><Plate>{children}</Plate></Section>;
 }
 
 function Block({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
-    <div className="border-b-2 border-line/60 py-4">
-      <p className="text-xl font-bold">{label}</p>
-      {hint && <p className="mt-0.5 text-base text-muted">{hint}</p>}
+    <div className="px-4 py-3.5">
+      <p className="text-[1.05rem] font-bold leading-tight">{label}</p>
+      {hint && <p className="mt-0.5 text-sm text-muted">{hint}</p>}
       <div className="mt-3">{children}</div>
     </div>
   );
@@ -49,6 +44,7 @@ export default function SettingsPage() {
   const [rule, setRule] = useState('');
   const [ask, setAsk] = useState<null | 'profile' | 'game' | 'all'>(null);
   const [taps, setTaps] = useState(0);
+  const [sheet, setSheet] = useState<null | 'topics' | 'rules'>(null);
 
   const customTopics = s.skipTopics.filter((t) => !(PRESET_TOPICS as readonly string[]).includes(t) && t !== '18+ Cards');
   const toggleTopic = (t: string) => s.set('skipTopics', s.skipTopics.includes(t) ? s.skipTopics.filter((x) => x !== t) : [...s.skipTopics, t]);
@@ -79,38 +75,14 @@ export default function SettingsPage() {
   return (
     <Screen title="Settings" back="/me">
       <Group title="Game defaults">
-        <Block label="Topics to skip" hint="Cards on these topics never show up.">
-          <div className="flex flex-wrap gap-2">
-            {PRESET_TOPICS.map((t) => <Chip key={t} selected={s.skipTopics.includes(t)} onClick={() => toggleTopic(t)}>{t}</Chip>)}
-            {customTopics.map((t) => <Chip key={t} selected onClick={() => toggleTopic(t)}>{t}</Chip>)}
-          </div>
-          <form className="mt-3 flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); const w = normalizeTopic(word); if (w && !s.skipTopics.includes(w)) s.set('skipTopics', [...s.skipTopics, w]); setWord(''); }}>
-            <div className="min-w-0 flex-1"><TextField label="Add a word" value={word} maxLength={20} onChange={(e) => setWord(e.target.value)} /></div>
-            <Button type="submit" variant="secondary" disabled={!word.trim()}>Add</Button>
-          </form>
-        </Block>
+        <ListRow label="Topics to skip" hint="Cards on these topics never show up." value={s.skipTopics.length ? `${s.skipTopics.length} skipped` : 'None'} onClick={() => setSheet('topics')} />
         <Block label="Default drink rules">
           <div className="flex flex-wrap gap-2">
             {DRINK_RULE_TEMPLATES.map((t) => <Chip key={t.id} selected={s.defaultDrinkRule === t.id} onClick={() => s.set('defaultDrinkRule', t.id)}>{t.name}</Chip>)}
           </div>
         </Block>
         <ToggleRow k="nonDrinkingDefault" label="Non-drinking by default" hint="Forfeits instead of drinks." />
-        <Block label="My custom rules" hint={`Up to ${MAX_CUSTOM_RULES}. They are added to every game you host.`}>
-          <ul>
-            {s.customRules.map((r) => (
-              <li key={r} className="flex items-center justify-between gap-3 py-1.5">
-                <span className="text-lg">{r}</span>
-                <button onClick={() => s.removeRule(r)} className="h-tap px-2 text-base font-extrabold text-danger">Remove</button>
-              </li>
-            ))}
-          </ul>
-          {s.customRules.length < MAX_CUSTOM_RULES && (
-            <form className="mt-2 flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (s.addRule(rule)) setRule(''); }}>
-              <div className="min-w-0 flex-1"><TextField label="New rule" value={rule} maxLength={60} onChange={(e) => setRule(e.target.value)} /></div>
-              <Button type="submit" variant="secondary" disabled={!rule.trim()}>Add</Button>
-            </form>
-          )}
-        </Block>
+        <ListRow label="My custom rules" hint={`Up to ${MAX_CUSTOM_RULES}. Added to every game you host.`} value={s.customRules.length} onClick={() => setSheet('rules')} />
         <Block label="Default pot style" hint="Who covers the coin pot.">
           <SegmentedControl<PotStyle> label="Pot style" value={s.potStyle} onChange={(v) => s.set('potStyle', v)} options={[{ id: 'solo', label: 'I pay it all' }, { id: 'split', label: 'Split' }, { id: 'chipin', label: 'Chip in' }]} />
         </Block>
@@ -148,23 +120,54 @@ export default function SettingsPage() {
         </Block>
       </Group>
 
-      <Group title="Content">
-        <ListRow label="Trashed cards" value={trashedCount} href="/me/settings/trashed" />
-        <ListRow label="Saved cards" href="/me/saved" />
+      <Group title="Cards">
+        <ListRow icon="trash" tone="orange" label="Trashed cards" hint="Cards you will not see again. Undo them here." value={trashedCount} href="/me/settings/trashed" />
       </Group>
 
-      <Group title="Data and about">
+      <Group title="Your data">
         <ListRow label="Export my data" hint="Downloads a JSON file." onClick={exportData} />
         <ListRow label="Clear game in progress" danger onClick={() => setAsk('game')} />
         <ListRow label={connected ? 'Sign out' : 'Reset profile'} danger onClick={() => setAsk('profile')} />
         <ListRow label="Clear all local data" danger onClick={() => setAsk('all')} />
         {s.hiddenUnlocked && <ToggleRow k="testPurchases" label="Test purchases" hint="Developer. Lets you add test coins in the Shop." />}
+      </Group>
+
+      <Group title="About">
         <ListRow label="Terms" href="/legal/terms" />
         <ListRow label="Privacy" href="/legal/privacy" />
-        <ListRow label="Help" href="/help" />
         <ListRow label="Send feedback" hint="Opens your mail app." onClick={() => { window.location.href = 'mailto:hello@tag.ai?subject=tag.ai%20feedback'; }} />
         <ListRow label="Version" value={`0.1 (${BUILD})`} onClick={versionTap} />
       </Group>
+
+
+      <Sheet open={sheet === 'topics'} onClose={() => setSheet(null)} title="Topics to skip">
+        <p className="-mt-3 mb-4 text-base text-muted">Cards on these topics never show up.</p>
+        <div className="flex flex-wrap gap-2">
+            {PRESET_TOPICS.map((t) => <Chip key={t} selected={s.skipTopics.includes(t)} onClick={() => toggleTopic(t)}>{t}</Chip>)}
+            {customTopics.map((t) => <Chip key={t} selected onClick={() => toggleTopic(t)}>{t}</Chip>)}
+          </div>
+          <form className="mt-3 flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); const w = normalizeTopic(word); if (w && !s.skipTopics.includes(w)) s.set('skipTopics', [...s.skipTopics, w]); setWord(''); }}>
+            <div className="min-w-0 flex-1"><TextField label="Add a word" value={word} maxLength={20} onChange={(e) => setWord(e.target.value)} /></div>
+            <Button type="submit" variant="secondary" disabled={!word.trim()}>Add</Button>
+          </form>
+      </Sheet>
+      <Sheet open={sheet === 'rules'} onClose={() => setSheet(null)} title="My custom rules">
+        <p className="-mt-3 mb-3 text-base text-muted">{`Up to ${MAX_CUSTOM_RULES}. They are added to every game you host.`}</p>
+        <ul>
+            {s.customRules.map((r) => (
+              <li key={r} className="flex items-center justify-between gap-3 py-1.5">
+                <span className="text-lg">{r}</span>
+                <button onClick={() => s.removeRule(r)} className="h-tap px-2 text-base font-extrabold text-danger">Remove</button>
+              </li>
+            ))}
+          </ul>
+          {s.customRules.length < MAX_CUSTOM_RULES && (
+            <form className="mt-2 flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (s.addRule(rule)) setRule(''); }}>
+              <div className="min-w-0 flex-1"><TextField label="New rule" value={rule} maxLength={60} onChange={(e) => setRule(e.target.value)} /></div>
+              <Button type="submit" variant="secondary" disabled={!rule.trim()}>Add</Button>
+            </form>
+          )}
+      </Sheet>
 
       <ConfirmSheet open={ask === 'game'} title="Clear the game in progress?" body="The current game on this phone ends and cannot be resumed." confirmLabel="Clear game" danger onConfirm={() => { const left = useGameStore.getState().settlePot(); if (left > 0) useWalletStore.getState().apply('refund', left, 'Unused pot returned'); resetGame(); toast('Game cleared', {}); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'profile'} title={connected ? 'Sign out?' : 'Reset your profile?'} body={connected ? 'Your coins and saved cards stay in your account. Sign in again with your email to get them back.' : 'Your name, coins, saved and trashed cards on this phone are removed.'} confirmLabel={connected ? 'Sign out' : 'Reset profile'} danger onConfirm={() => { if (connected) { void signOutServer().then(() => router.replace('/welcome')); return; } useWalletStore.getState().clear(); signOut(); router.replace('/welcome'); }} onClose={() => setAsk(null)} />

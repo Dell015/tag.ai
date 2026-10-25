@@ -1,12 +1,17 @@
 'use client';
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, ListRow, Screen, Sheet, TextField } from '@/components/ui';
+import { motion } from 'framer-motion';
+import { Button, Icon, Screen, Section, Sheet, TextField } from '@/components/ui';
 import { useProfileStore } from '@/stores/profile-store';
 import { useStackStore } from '@/stores/stack-store';
 import { libraryCards } from '@/lib/data/card-pool';
 import { DECKS, deckPool } from '@/lib/game/decks';
 import { useAdultOn } from '@/lib/adult';
+import { cn } from '@/lib/cn';
+
+const tile = 'flex min-h-[7.5rem] flex-col justify-between rounded-2xl border-b-4 border-black/35 p-3.5 text-left transition-transform active:translate-y-[3px] active:border-b-[1px]';
 
 export default function StacksPage() {
   const router = useRouter();
@@ -32,26 +37,50 @@ export default function StacksPage() {
     router.push(`/stacks/${s.id}`);
   };
 
+  const decks = DECKS.filter((d) => d.ready);
+
   return (
     <Screen title="Stacks">
-      <p className="text-lg text-muted">Pick a stack before each game. Build your own from cards you like.</p>
+      <p className="text-base text-muted">Pick a stack before each game, or build your own from cards you like.</p>
 
-      <section className="mt-6" aria-label="Your stacks">
-        <h2 className="text-3xl">Yours</h2>
-        <ListRow icon="heart" label="Liked cards" hint="Cards you hearted in a game" value={liked} href="/stacks/liked" />
-        {stacks.map((s) => <ListRow key={s.id} icon="cards" label={s.name} value={s.cardIds.length} href={`/stacks/${s.id}`} />)}
-        <ListRow icon="plus" label="New stack" hint="Start an empty stack" onClick={() => setOpen(true)} />
-      </section>
+      <Section title="Yours">
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/stacks/liked" data-deck="lovers" className={cn(tile, 'bg-accent text-onaccent')}>
+            <Icon name="heart" size={26} />
+            <span><span className="sign block text-[1.05rem]">Liked cards</span><span className="mt-1 block text-sm font-bold opacity-80">{liked} {liked === 1 ? 'card' : 'cards'}</span></span>
+          </Link>
+          {stacks.map((s) => (
+            <Link key={s.id} href={`/stacks/${s.id}`} className={cn(tile, 'bg-raised')}>
+              <Icon name="cards" size={26} className="text-accent" />
+              <span><span className="sign block break-words text-[1.05rem] leading-tight">{s.name}</span><span className="mt-1 block text-sm font-bold text-muted">{s.cardIds.length} {s.cardIds.length === 1 ? 'card' : 'cards'}</span></span>
+            </Link>
+          ))}
+          <button onClick={() => setOpen(true)} className={cn(tile, 'border-2 border-dashed border-line/80 text-muted active:border-b-2')}>
+            <Icon name="plus" size={26} className="text-accent" />
+            <span className="text-base font-extrabold text-text">New stack</span>
+          </button>
+        </div>
+      </Section>
 
-      <section className="mt-8" aria-label="In-game stacks">
-        <h2 className="text-3xl">In-game stacks</h2>
-        {DECKS.filter((d) => d.ready).map((d) => <ListRow key={d.id} label={d.name} hint={d.blurb} value={counts[d.id]} href={`/stacks/in-game/${d.id}`} />)}
-      </section>
+      <Section title="In-game stacks" hint="The decks that come with the game.">
+        <div className="grid grid-cols-2 gap-3">
+          {decks.map((d, i) => (
+            <motion.div key={d.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: Math.min(i, 8) * 0.04 }}>
+              <Link href={`/stacks/in-game/${d.id}`} data-deck={d.id} className={cn(tile, 'h-full bg-accent text-onaccent')}>
+                <span className="text-sm font-extrabold opacity-80">{counts[d.id]} cards</span>
+                <span><span className="sign block text-[1.15rem] leading-tight">{d.name}</span><span className="mt-1.5 line-clamp-2 block text-[0.8rem] font-bold leading-snug opacity-85">{d.blurb}</span></span>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </Section>
 
-      <section className="mt-8" aria-label="Community stacks">
-        <h2 className="text-3xl">Community</h2>
-        <ListRow label="Monthly stack" hint="Still being built. The best community cards will land here." />
-      </section>
+      <Section title="Community">
+        <div className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-line/80 p-4">
+          <Icon name="users" size={26} className="shrink-0 text-muted" />
+          <p className="text-sm text-muted"><b className="block text-base text-text">Monthly stack</b>Still being built. The best community cards will land here.</p>
+        </div>
+      </Section>
 
       <Sheet open={open} onClose={() => setOpen(false)} title="New stack">
         <form onSubmit={(e) => { e.preventDefault(); void make(); }} className="space-y-3 pb-2">

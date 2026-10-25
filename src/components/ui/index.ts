@@ -14,6 +14,7 @@ export { DeckFan } from './DeckFan';
 export { SegmentedControl } from './SegmentedControl';
 export { Toggle } from './Toggle';
 export { ListRow } from './ListRow';
+export { Plate, Section } from './Plate';
 export { ConfirmSheet } from './ConfirmSheet';
 export { EmptyState } from './EmptyState';
 export { Skeleton, SkeletonList } from './Skeleton';

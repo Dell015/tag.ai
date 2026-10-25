@@ -19,7 +19,13 @@
   --danger: 255 107 94;
   --ok: 94 214 140;
   color-scheme: dark;
+  /* Touch sizes. Preparation screens are calm and sober, so they are compact. */
+  --tap: 2.8rem;
+  --cta: 3.1rem;
 }
+
+/* The game itself is played drunk: keep the big, forgiving targets there (D51). */
+[data-surface="game"] { --tap: 3rem; --cta: 3.5rem; }
 
 /* Each mode is a printed deck with its own flat colour. Set data-mode on a wrapper. */
 [data-mode="icebreaker"] { --accent: 66 116 255;  --on-accent: 255 255 255; }

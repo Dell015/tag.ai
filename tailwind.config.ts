@@ -25,10 +25,10 @@ const config: Config = {
       },
       // Shape by role instead of one big radius everywhere: controls are plates, cards are cards, only avatars are round.
       borderRadius: { md: "4px", lg: "6px", xl: "8px", "2xl": "10px", "3xl": "14px", card: "12px", sheet: "16px" },
-      minHeight: { tap: "3rem" },
-      minWidth: { tap: "3rem" },
-      height: { tap: "3rem", cta: "3.5rem" },
-      width: { tap: "3rem" },
+      minHeight: { tap: "var(--tap)" },
+      minWidth: { tap: "var(--tap)" },
+      height: { tap: "var(--tap)", cta: "var(--cta)" },
+      width: { tap: "var(--tap)" },
       keyframes: {
         "toast-in": {
           "0%": { opacity: "0", transform: "translateY(10px)" },

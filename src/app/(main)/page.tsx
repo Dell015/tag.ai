@@ -77,7 +77,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex min-h-[calc(100dvh-4.25rem)] flex-col px-4 pb-24 safe-top">
+    <div className="flex min-h-[calc(100dvh-4.25rem-max(env(safe-area-inset-bottom),16px))] flex-col px-4 pb-3 safe-top">
       <header className="flex items-center justify-between">
         <Logo />
         <Link href="/me" aria-label="Your profile" className="flex h-tap items-center gap-3 rounded-lg border-2 border-line pl-4 pr-1.5">
@@ -95,32 +95,26 @@ export default function HomePage() {
         <Dealt className="scale-100" />
       </div>
 
-      <section aria-label="Choose a game" className="pb-3">
-        <div className="overflow-hidden rounded-card border-2 border-line bg-black/60">
-          <div aria-hidden className="trim h-2.5" />
-          <ul>
-            {rows.map((r, i) => {
-              const inner = (
-                <>
-                  <span className="min-w-0 flex-1">
-                    <span className={cn('sign block text-[1.25rem]', r.hot ? 'text-onaccent' : 'text-accent')}>{r.title}</span>
-                    <span className={cn('mt-1.5 block text-sm', r.hot ? 'text-onaccent/80' : 'text-muted')}>{r.sub}</span>
-                  </span>
-                  <Icon name="chevron" size={26} className={r.hot ? 'text-onaccent' : 'text-accent'} />
-                </>
-              );
-              const cls = cn('flex min-h-[5rem] w-full items-center gap-3 px-4 py-3 text-left transition-colors', r.hot ? 'bg-accent' : 'active:bg-raised', i > 0 && 'border-t-2 border-line');
-              return (
-                <motion.li key={r.key} initial={{ opacity: 0, x: -28 }} animate={{ opacity: 1, x: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: 0.55 + i * 0.1 }}>
-                  {r.href ? <Link href={r.href} className={cls}>{inner}</Link> : <button onClick={() => { haptic('tap'); r.onClick?.(); }} className={cls}>{inner}</button>}
-                </motion.li>
-              );
-            })}
-          </ul>
-          <div aria-hidden className="trim h-2.5" />
-        </div>
-        {coach ? <p className="pt-3 text-center text-base font-bold">Start here. Pick a game above.</p>
-          : tip && <Link href="/help" className="block pt-3 text-center text-sm text-muted">{tip}</Link>}
+      <section aria-label="Choose a game" className="space-y-3 pb-2">
+        {rows.map((r, i) => {
+          const mode = r.key === 'talk' || r.key === 'resume-talk' ? 'icebreaker' : 'barkada';
+          const inner = (
+            <>
+              <span className="min-w-0 flex-1">
+                <span className="sign block text-[1.3rem]">{r.title}</span>
+                <span className="mt-1.5 block text-sm font-bold opacity-80">{r.sub}</span>
+              </span>
+              <Icon name="chevron" size={26} />
+            </>
+          );
+          const cls = cn('flex min-h-[5.25rem] w-full items-center gap-3 rounded-2xl border-b-4 border-black/35 px-4 py-3 text-left transition-transform active:translate-y-[3px] active:border-b-[1px]', r.hot ? 'bg-text text-bg' : 'bg-accent text-onaccent');
+          return (
+            <motion.div key={r.key} data-mode={mode} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26, delay: 0.35 + i * 0.1 }}>
+              {r.href ? <Link href={r.href} className={cls}>{inner}</Link> : <button onClick={() => { haptic('tap'); r.onClick?.(); }} className={cls}>{inner}</button>}
+            </motion.div>
+          );
+        })}
+        {!coach && tip && <Link href="/help" className="block pt-1 text-center text-sm text-muted">{tip}</Link>}
       </section>
     </div>
   );
