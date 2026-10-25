@@ -168,7 +168,7 @@ function WelcomeInner() {
       <AuthShell
         step={2} progress={creating} onBack={() => { setError(''); setStep(adultOk ? 1 : 0); }}
         title={creating ? 'Make your account' : 'Welcome back'}
-        subtitle={creating ? <span className="inline-flex items-center gap-2"><span style={{ animationDelay: '250ms' }} className="seat-pop flex h-8 w-8 items-center justify-center rounded-full bg-accent text-onaccent"><Icon name="coin" size={18} /></span>You start with {WELCOME_COINS} free coins.</span> : 'Sign in to get your coins and stacks back.'}
+        subtitle={creating ? <span className="inline-flex items-center gap-2"><span style={{ animationDelay: '250ms' }} className="seat-pop flex h-8 w-8 items-center justify-center rounded-full bg-accent text-onaccent"><Icon name="coin" size={18} /></span>You start with {WELCOME_COINS} free coins.</span> : 'Sign in to get your coins and decks back.'}
       >
         {googleEnabled && (
           <div className="mt-6">

@@ -25,7 +25,7 @@ const CATEGORIES: { id: CardCategory; label: string }[] = [
   { id: 'confessions', label: 'Confessions' }, { id: 'relationships', label: 'Relationships' }, { id: 'roasts', label: 'Roasts' },
   { id: 'controversial', label: 'Controversial' }, { id: 'deep_philosophical', label: 'Deep' }, { id: 'dares', label: 'Dares' },
 ];
-const deckName = (id: string | null) => (id && DECK_BY_ID[id as DeckId]?.name) || 'No stack';
+const deckName = (id: string | null) => (id && DECK_BY_ID[id as DeckId]?.name) || 'No deck';
 const kindLabel = (k: string) => KIND_META[k as CardKind]?.label ?? k;
 
 function ReportedPosts() {
@@ -105,7 +105,7 @@ function Queue() {
           </button>
           {open === s.id && (
             <div className="mt-4">
-              <p className="mb-1.5 text-base font-bold text-muted">Heat (leave empty to use the stack default)</p>
+              <p className="mb-1.5 text-base font-bold text-muted">Heat (leave empty to use the deck default)</p>
               <div className="flex gap-2">{[1, 2, 3, 4, 5].map((n) => <Chip key={n} selected={intensity === n} onClick={() => setIntensity(intensity === n ? undefined : n)}>{n}</Chip>)}</div>
               <p className="mb-1.5 mt-4 text-base font-bold text-muted">Category (leave empty for the default)</p>
               <div className="flex flex-wrap gap-2">{CATEGORIES.map((c) => <Chip key={c.id} selected={category === c.id} onClick={() => setCategory(category === c.id ? undefined : c.id)}>{c.label}</Chip>)}</div>

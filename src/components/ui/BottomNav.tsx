@@ -10,7 +10,7 @@ import { Icon, type IconName } from './Icon';
 export const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [
   { href: '/', label: 'Play', icon: 'play' },
   { href: '/cards', label: 'Cards', icon: 'users' },
-  { href: '/stacks', label: 'Stacks', icon: 'cards' },
+  { href: '/stacks', label: 'Decks', icon: 'cards' },
   { href: '/shop', label: 'Shop', icon: 'bag' },
   { href: '/me', label: 'Me', icon: 'user' },
 ];

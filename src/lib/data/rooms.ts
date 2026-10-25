@@ -54,11 +54,15 @@ export interface Room {
   agreedPlayers: string[];
   config: RoomConfig;
   createdAt: number;
+  /** True once the room lives on the server, so other phones can join it. */
+  online?: boolean;
 }
 
 export interface RoomRepository {
   create(host: { id: string; name: string; avatar: string }): Room;
   get(code: string): Room | null;
+  /** Stores a room as is (used for rooms that arrive from the server). */
+  put(room: Room): void;
   update(code: string, fn: (room: Room) => Room): Room | null;
   remove(code: string): void;
   /** Called whenever the room changes anywhere (including other tabs). */
@@ -148,6 +152,11 @@ export const localRoomRepository: RoomRepository = {
   },
 
   get: read,
+
+  put(room) {
+    write(room);
+    notify(room.code);
+  },
 
   update(code, fn) {
     const current = read(code);

@@ -24,7 +24,7 @@ export default function InGameStackPage() {
   const [adding, setAdding] = useState<string | null>(null);
   const cards = useMemo(() => (deck ? deckPool(deck, libraryCards(adultOn)) : []), [deck, adultOn]);
 
-  if (!deck) return <Screen title="Stack" back="/stacks"><EmptyState title="No such stack." action={<Link href="/stacks"><Button>Back to Stacks</Button></Link>} /></Screen>;
+  if (!deck) return <Screen title="Deck" back="/stacks"><EmptyState title="No such deck." action={<Link href="/stacks"><Button>Back to Decks</Button></Link>} /></Screen>;
   return (
     <Screen title={deck.name} back="/stacks">
       <p className="text-lg text-muted">{deck.blurb}. {cards.length} cards.</p>
@@ -36,7 +36,7 @@ export default function InGameStackPage() {
               <button onClick={() => (liked ? unsave(c.id) : save(c.id))} aria-pressed={liked} className={cn('inline-flex h-tap items-center gap-1.5 text-base font-extrabold', liked ? 'text-accent' : 'text-muted')}>
                 <Icon name="heart" size={20} filled={liked} />{liked ? 'Liked' : 'Like'}
               </button>
-              <button onClick={() => setAdding(c.id)} className="inline-flex h-tap items-center gap-1.5 text-base font-extrabold text-muted"><Icon name="plus" size={20} />Add to stack</button>
+              <button onClick={() => setAdding(c.id)} className="inline-flex h-tap items-center gap-1.5 text-base font-extrabold text-muted"><Icon name="plus" size={20} />Add to deck</button>
             </>} />
           );
         })}

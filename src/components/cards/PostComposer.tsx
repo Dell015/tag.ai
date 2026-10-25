@@ -10,7 +10,7 @@ import { haptic } from '@/lib/haptics';
 import { cn } from '@/lib/cn';
 import { cardTextClass } from '@/lib/card-text';
 
-const STEPS = ['Type', 'Stack', 'Text'] as const;
+const STEPS = ['Type', 'Deck', 'Text'] as const;
 const HINT: Record<string, string> = {
   dice: 'Roll the die. Your number is how many...',
   coin: 'Heads, everyone drinks. Tails, you pick who.',
@@ -69,7 +69,7 @@ export function PostComposer({ open, onClose, adultOk, onPosted }: { open: boole
               <motion.div layout className={cn('relative flex aspect-[5/4.6] max-h-[42dvh] flex-col overflow-hidden rounded-2xl border-[3px] p-5 transition-colors', deck ? 'border-[#181310] bg-accent text-onaccent' : 'border-dashed border-line bg-panel text-muted')}>
                 <div className="flex items-center justify-between text-base font-extrabold">
                   <span className="sign">{kind ? KIND_META[kind].label : 'Type'}</span>
-                  <span className="opacity-80">{deck ? DECK_BY_ID[deck].name : 'Stack'}</span>
+                  <span className="opacity-80">{deck ? DECK_BY_ID[deck].name : 'Deck'}</span>
                 </div>
                 {step === 2 ? (
                   <textarea autoFocus value={text} maxLength={MAX_LEN} onChange={(e) => setText(e.target.value)} aria-label="Card text"
@@ -101,7 +101,7 @@ export function PostComposer({ open, onClose, adultOk, onPosted }: { open: boole
                   )}
                   {step === 1 && (
                     <>
-                      <h2 className="mb-4 text-[2.1rem]">Which stack is it for?</h2>
+                      <h2 className="mb-4 text-[2.1rem]">Which deck is it for?</h2>
                       <div className="grid grid-cols-2 gap-3">
                         {SUGGEST_DECKS.filter((d) => d !== 'adult' || adultOk).map((d) => (
                           <button key={d} data-deck={d} onClick={() => { haptic('tap'); setDeck(d); }} aria-pressed={deck === d}

@@ -6,6 +6,7 @@ import { Avatar, Button, Chip, Icon, RollNumber, Screen, Splash, Stepper } from 
 import { MIN_POT, formatPot } from '@/lib/game/pot';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
+import { agreeOnline } from '@/lib/data/room-sync';
 import { rooms, type RoomConfig } from '@/lib/data/rooms';
 import { MIN_OWN_CARDS, allAgreed, roomPlan, startGame } from '@/lib/data/start-game';
 import { availableSources } from '@/lib/data/game-source';
@@ -15,19 +16,14 @@ import { PRESET_TOPICS } from '@/lib/game/comfort-filters';
 import { formatDuration, DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 import { useProfileStore } from '@/stores/profile-store';
 import { buildLibrary } from '@/lib/data/start-game';
-import { PAINT, type Paint } from '@/components/ui/Art';
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
 
 
-/** Tile colour per deck. Adult is plain ink with an 18+ mark so it never reads as just another colour. */
-const TILE: Record<DeckId, Paint | 'ink'> = { icebreaker: 'blue', family: 'green', life: 'orange', deep: 'blue', barkada: 'yellow', lovers: 'pink', spicy: 'red', adult: 'ink', social: 'green', chaos: 'orange' };
-const tileStyle = (id: DeckId) => TILE[id] === 'ink' ? { backgroundColor: '#2A231E', borderColor: '#564B40', color: '#F4F1EC' } : { backgroundColor: PAINT[TILE[id] as Paint], borderColor: '#0c0a08', color: ['blue', 'red'].includes(TILE[id]) ? '#fff' : '#181310' };
-
 type StepKey = 'basket' | 'topics' | 'drinks' | 'house';
 const STEPS: StepKey[] = ['basket', 'topics', 'house'];
 const TOTAL = STEPS.length;
-const TITLES: Record<StepKey, string> = { basket: 'Pick your stacks', topics: 'Skip these topics', drinks: 'Drink rules', house: 'House rules' };
+const TITLES: Record<StepKey, string> = { basket: 'Pick your decks', topics: 'Skip these topics', drinks: 'Drink rules', house: 'House rules' };
 
 function Row({ selected, onClick, children }: { selected?: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -70,8 +66,11 @@ export default function SetupPage() {
   const isHost = room.hostId === profile.id;
   const cfg = room.config;
   const set = (patch: Partial<RoomConfig>) => rooms.update(code, (r) => ({ ...r, config: { ...r.config, ...patch } }));
-  const agree = (userId: string) =>
+  const agree = (userId: string) => {
+    // On your own phone in an online room, the server records your tap so the host sees it at once.
+    if (room.online && !isHost) { void agreeOnline(code); return; }
     rooms.update(code, (r) => ({ ...r, agreedPlayers: r.agreedPlayers.includes(userId) ? r.agreedPlayers.filter((i) => i !== userId) : [...r.agreedPlayers, userId] }));
+  };
 
   const view = isHost ? step : TOTAL;
   const key = STEPS[view - 1];
@@ -110,7 +109,7 @@ export default function SetupPage() {
   const adultBlocked = hasAdult && !adultOk;
   const accentDeck = picks.decks.length === 1 && picks.sources.length === 0 ? DECKS.find((d) => d.id === picks.decks[0]) : undefined;
   const blocked = key === 'basket'
-    ? (poolSize === 0 ? 'Pick a stack' : cards < MIN_OWN_CARDS ? `Pick more cards, at least ${MIN_OWN_CARDS}` : total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
+    ? (poolSize === 0 ? 'Pick a deck' : cards < MIN_OWN_CARDS ? `Pick more cards, at least ${MIN_OWN_CARDS}` : total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
     : null;
 
   const footer = view < TOTAL ? (
@@ -134,17 +133,17 @@ export default function SetupPage() {
 
       {key === 'basket' && (
         <>
-          <p className="-mt-2 mb-5 text-base text-muted">Tick every stack you want in the game. Cards that appear in more than one are only used once. Then set the pot: 1 coin is 1 card.</p>
+          <p className="-mt-2 mb-5 text-base text-muted">Tick every deck you want in the game. Cards that appear in more than one are only used once. Then set the pot: 1 coin is 1 card.</p>
 
           <div className="space-y-7">
             <section>
               <h3 className="text-3xl">Your cards</h3>
-              <p className="mb-1 mt-1 text-base text-muted">Your own stacks, liked cards and packs you own.</p>
+              <p className="mb-1 mt-1 text-base text-muted">Your own decks, liked cards and packs you own.</p>
               {sources.length === 0 ? (
                 <div className="mt-3 rounded-xl border-2 border-dashed border-line p-4">
                   <p className="text-base font-semibold">Nothing here yet.</p>
-                  <p className="mt-1 text-base text-muted">Tap the heart on a card during a game, or make a stack of your own, and it shows up here.</p>
-                  <Link href="/stacks" className="mt-3 inline-flex h-tap items-center rounded-xl border-2 border-line px-4 font-bold">Open Stacks</Link>
+                  <p className="mt-1 text-base text-muted">Tap the heart on a card during a game, or make a deck of your own, and it shows up here.</p>
+                  <Link href="/stacks" className="mt-3 inline-flex h-tap items-center rounded-xl border-2 border-line px-4 font-bold">Open Decks</Link>
                 </div>
               ) : (
                 <ul>
@@ -156,7 +155,7 @@ export default function SetupPage() {
                           className={cn('flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors', on ? 'border-accent bg-accent/10' : 'border-line')}>
                           <span className="min-w-0 flex-1">
                             <span className="sign block text-[1.15rem] leading-tight">{x.name}</span>
-                            <span className="block text-base font-semibold text-muted">{x.count} cards{x.kind === 'pack' ? ', shop pack' : x.kind === 'stack' ? ', your stack' : ''}</span>
+                            <span className="block text-base font-semibold text-muted">{x.count} cards{x.kind === 'pack' ? ', shop pack' : x.kind === 'stack' ? ', your deck' : ''}</span>
                           </span>
                           <span aria-hidden className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2', on ? 'border-accent bg-accent text-onaccent' : 'border-line')}>{on && <Icon name="check" size={16} />}</span>
                         </button>
@@ -179,7 +178,7 @@ export default function SetupPage() {
                       <li key={id} className="border-b-2 border-line/60 py-3">
                         <button disabled={!d.ready} role="checkbox" aria-checked={on} onClick={() => toggleDeck(id)}
                           className={cn('flex w-full items-start gap-3 rounded-xl border-2 p-3 text-left transition-colors', on ? 'border-accent bg-accent/10' : 'border-line', !d.ready && 'opacity-50')}>
-                          <span aria-hidden style={{ ...tileStyle(id), transform: `rotate(${(id.length % 3 - 1) * 4}deg)` }} className="sign mt-0.5 flex h-[3.4rem] w-11 shrink-0 items-end justify-end rounded-md border-[3px] p-1 text-xl leading-none">{id === 'adult' ? '18+' : '?'}</span>
+                          <span aria-hidden data-deck={id} style={{ transform: `rotate(${(id.length % 3 - 1) * 4}deg)` }} className="sign mt-0.5 flex h-[3.4rem] w-11 shrink-0 items-end justify-end rounded-md border-[3px] border-[#0c0a08] bg-accent p-1 text-xl leading-none text-onaccent">{id === 'adult' ? '18+' : '?'}</span>
                           <span className="min-w-0 flex-1">
                             <span className="sign block text-[1.15rem] leading-tight">{d.name}</span>
                             <span className="block text-base text-muted">{d.blurb}</span>
@@ -207,7 +206,7 @@ export default function SetupPage() {
 
           <section className="mt-8 rounded-2xl border-2 border-line p-4">
             <h3 className="text-3xl">The pot</h3>
-            <p className="mt-1 text-base text-muted">{poolSize === 0 ? 'Pick a stack first.' : `${poolSize} different cards to play from. The pot decides how many you get.`}</p>
+            <p className="mt-1 text-base text-muted">{poolSize === 0 ? 'Pick a deck first.' : `${poolSize} different cards to play from. The pot decides how many you get.`}</p>
             <div className="mt-4 flex items-center justify-center gap-4">
               <button aria-label="Fewer coins" disabled={poolSize === 0 || cards <= minPot} onClick={() => setPot(cards - 5)} className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-line text-3xl font-extrabold disabled:opacity-40">-</button>
               <div className="min-w-[7rem] text-center"><span className="display block text-6xl leading-none tabular-nums"><RollNumber value={cards} format={formatPot} /></span><span className="text-base font-semibold text-muted">coins, {cards} cards</span></div>

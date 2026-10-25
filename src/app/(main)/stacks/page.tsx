@@ -31,7 +31,7 @@ export default function StacksPage() {
 
   const make = async () => {
     setBusy(true);
-    const s = await create(name || 'New stack');
+    const s = await create(name || 'New deck');
     setBusy(false);
     if (!s) return;
     setOpen(false); setName('');
@@ -41,8 +41,8 @@ export default function StacksPage() {
   const decks = DECKS.filter((d) => d.ready);
 
   return (
-    <Screen title="Stacks" wide>
-      <p className="text-base text-muted">Pick a stack before each game, or build your own from cards you like.</p>
+    <Screen title="Decks" wide>
+      <p className="text-base text-muted">Pick a deck before each game, or build your own from cards you like.</p>
 
       <Section title="Yours">
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 lg:gap-4">
@@ -56,14 +56,14 @@ export default function StacksPage() {
               <span><span className="sign block break-words text-[0.78rem] leading-tight">{s.name}</span><span className="mt-0.5 block text-xs font-extrabold text-muted">{s.cardIds.length} {s.cardIds.length === 1 ? 'card' : 'cards'}</span></span>
             </Link>
           ))}
-          <button onClick={() => setOpen(true)} aria-label="New stack" className={cn(card, 'border-dashed border-line/80 text-muted')}>
+          <button onClick={() => setOpen(true)} aria-label="New deck" className={cn(card, 'border-dashed border-line/80 text-muted')}>
             <Icon name="plus" size={22} className="text-accent" />
-            <span className="text-sm font-extrabold text-text">New stack</span>
+            <span className="text-sm font-extrabold text-text">New deck</span>
           </button>
         </div>
       </Section>
 
-      <Section title="In-game stacks" hint="The stacks that come with the game. Tap one to see its cards.">
+      <Section title="In-game decks" hint="The decks that come with the game. Tap one to see its cards.">
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 lg:gap-4">
           {decks.map((d, i) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: Math.min(i, 9) * 0.035 }}>
@@ -80,14 +80,14 @@ export default function StacksPage() {
       <Section title="Community">
         <div className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-line/80 p-4">
           <Icon name="users" size={26} className="shrink-0 text-muted" />
-          <p className="text-sm text-muted"><b className="block text-base text-text">Monthly stack</b>Still being built. The best community cards will land here.</p>
+          <p className="text-sm text-muted"><b className="block text-base text-text">Monthly deck</b>Still being built. The best community cards will land here.</p>
         </div>
       </Section>
 
-      <Sheet open={open} onClose={() => setOpen(false)} title="New stack">
+      <Sheet open={open} onClose={() => setOpen(false)} title="New deck">
         <form onSubmit={(e) => { e.preventDefault(); void make(); }} className="space-y-3 pb-2">
           <TextField label="Name" placeholder="Friday barkada" value={name} maxLength={40} counter onChange={(e) => setName(e.target.value)} autoFocus />
-          <Button size="lg" full type="submit" disabled={busy}>Create stack</Button>
+          <Button size="lg" full type="submit" disabled={busy}>Create deck</Button>
         </form>
       </Sheet>
     </Screen>

@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { rooms, type Room } from '@/lib/data/rooms';
 import { useSessionStore } from '@/stores/session-store';
+import { useProfileStore } from '@/stores/profile-store';
+import { startSync, stopSync as stopRoomSync } from '@/lib/data/room-sync';
 
 type Status = 'loading' | 'ready' | 'missing';
 
@@ -66,8 +68,11 @@ export function useRoom(code: string): { status: Status; room: Room | null } {
     applyRoom(initial);
     setRoom(initial);
     setStatus('ready');
+    const myId = useProfileStore.getState().profile?.id;
+    if (initial.online && myId) startSync(code, myId);
 
     const unsubRepo = rooms.subscribe(code, (next) => {
+      if (next?.online && myId) startSync(code, myId);
       if (!next) {
         setStatus('missing');
         return;
@@ -84,6 +89,7 @@ export function useRoom(code: string): { status: Status; room: Room | null } {
     });
 
     return () => {
+      stopRoomSync(code);
       unsubRepo();
       unsubStore();
     };

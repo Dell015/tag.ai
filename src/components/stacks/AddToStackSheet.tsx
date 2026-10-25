@@ -14,15 +14,15 @@ export function AddToStackSheet({ open, cardIds, onClose }: { open: boolean; car
     onClose();
   };
   const fresh = async () => {
-    const s = await create('New stack');
+    const s = await create('New deck');
     if (!s) return;
     add(s.id, cardIds);
-    toast('Added to your new stack. Rename it in Stacks.', { tone: 'ok' });
+    toast('Added to your new deck. Rename it in Decks.', { tone: 'ok' });
     onClose();
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Add to a stack">
+    <Sheet open={open} onClose={onClose} title="Add to a deck">
       <ul>
         {stacks.map((s) => (
           <li key={s.id}>
@@ -34,7 +34,7 @@ export function AddToStackSheet({ open, cardIds, onClose }: { open: boolean; car
         ))}
       </ul>
       <div className="mt-4 space-y-3 pb-2">
-        <Button size="lg" full onClick={fresh}>New stack with this card</Button>
+        <Button size="lg" full onClick={fresh}>New deck with this card</Button>
         <Button full variant="secondary" onClick={onClose}>Cancel</Button>
       </div>
     </Sheet>

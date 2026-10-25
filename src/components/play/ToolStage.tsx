@@ -21,6 +21,8 @@ interface StageProps {
   nonDrinking: boolean;
   /** Topic deck: the topic group's colour instead of the card type's. */
   tint?: string;
+  /** Drinking game: the deck's colour, so the tool screen matches its card. */
+  deck?: string;
   /** Vote countdown: the word and the line shown when it hits zero. */
   endWord?: string; endText?: string;
   onResult: (r: ToolResult) => void;
@@ -296,7 +298,7 @@ export function ToolStage(props: StageProps) {
   if (!mounted) return null;
   const Body = { dice: DiceStage, coin: CoinStage, bottle: BottleStage, wheel: WheelStage, timer: TimerStage, vote: VoteStage }[props.kind];
   return createPortal(
-    <motion.div {...(props.tint ? { 'data-group': props.tint } : { 'data-kind': props.kind })} role="dialog" aria-modal="true" aria-label={KIND_META[props.kind].label}
+    <motion.div {...(props.tint ? { 'data-group': props.tint } : props.deck ? { 'data-deck': props.deck } : { 'data-kind': props.kind })} role="dialog" aria-modal="true" aria-label={KIND_META[props.kind].label}
       initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.2 }}
       onPointerDownCapture={(e) => e.stopPropagation()}
       className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-accent px-6 pb-6 pt-12 text-onaccent">

@@ -124,7 +124,7 @@ export function blendModes(modes: GameMode[]): GameModeConfig {
   for (let i = 1; i <= 5; i++) dist[i] = Math.round(avg((c) => c.poolDistribution[i] ?? 0));
   return {
     name: cfgs.map((c) => c.name).join(' + '),
-    description: 'A mix of stacks',
+    description: 'A mix of decks',
     audienceTag: 'Mixed',
     entryHeat: Math.round(avg((c) => c.entryHeat)),
     poolDistribution: dist,

@@ -43,7 +43,7 @@ function Picker({ stackId, open, onClose }: { stackId: string; open: boolean; on
           return (
             <li key={c.id} className="flex items-center gap-3 border-b-2 border-line/60 py-3">
               <p className="min-w-0 flex-1 text-lg leading-snug">{c.text}</p>
-              <Chip selected={on} onClick={() => (on ? removeCard(stackId, c.id) : add(stackId, [c.id]) === 0 && toast(`A stack holds up to ${MAX_STACK_CARDS} cards.`, { tone: 'warn' }))}>{on ? 'Added' : 'Add'}</Chip>
+              <Chip selected={on} onClick={() => (on ? removeCard(stackId, c.id) : add(stackId, [c.id]) === 0 && toast(`A deck holds up to ${MAX_STACK_CARDS} cards.`, { tone: 'warn' }))}>{on ? 'Added' : 'Add'}</Chip>
             </li>
           );
         })}
@@ -65,26 +65,26 @@ export default function StackPage() {
   const [picking, setPicking] = useState(false);
   const [ask, setAsk] = useState(false);
 
-  if (!stack) return <Screen title="Stack" back="/stacks"><EmptyState title="No such stack." action={<Link href="/stacks"><Button>Back to Stacks</Button></Link>} /></Screen>;
+  if (!stack) return <Screen title="Deck" back="/stacks"><EmptyState title="No such deck." action={<Link href="/stacks"><Button>Back to Decks</Button></Link>} /></Screen>;
   const cards = stack.cardIds.map((cid) => findCard(cid, adultOn)).filter((c): c is QueuedCard => !!c);
   const value = name ?? stack.name;
   const commit = () => { if (name !== null && name.trim() && name.trim() !== stack.name) { rename(stack.id, name); toast('Renamed', { tone: 'ok' }); } setName(null); };
 
   return (
-    <Screen title="Stack" back="/stacks">
+    <Screen title="Deck" back="/stacks">
       <TextField label="Name" value={value} maxLength={40} counter onChange={(e) => setName(e.target.value)} onBlur={commit} />
       <p className="mt-2 text-lg text-muted">{stack.cardIds.length} {stack.cardIds.length === 1 ? 'card' : 'cards'}</p>
       <Button size="lg" full className="mt-3" onClick={() => setPicking(true)}>Add cards</Button>
       {cards.length === 0 ? (
-        <p className="py-8 text-lg text-muted">Nothing here yet. Add cards you liked, or find some in the in-game stacks.</p>
+        <p className="py-8 text-lg text-muted">Nothing here yet. Add cards you liked, or find some in the in-game decks.</p>
       ) : (
         <ul className="mt-2">
           {cards.map((c) => <CardRow key={c.id} card={c} actions={<button onClick={() => removeCard(stack.id, c.id)} className="h-tap text-base font-extrabold text-muted">Remove</button>} />)}
         </ul>
       )}
-      <Button full variant="danger" className="mt-8" onClick={() => setAsk(true)}>Delete stack</Button>
+      <Button full variant="danger" className="mt-8" onClick={() => setAsk(true)}>Delete deck</Button>
       <Picker stackId={stack.id} open={picking} onClose={() => setPicking(false)} />
-      <ConfirmSheet open={ask} title="Delete this stack?" body="The cards stay in the game. Only this list is deleted." confirmLabel="Delete stack" danger onConfirm={() => { remove(stack.id); router.replace('/stacks'); }} onClose={() => setAsk(false)} />
+      <ConfirmSheet open={ask} title="Delete this deck?" body="The cards stay in the game. Only this list is deleted." confirmLabel="Delete deck" danger onConfirm={() => { remove(stack.id); router.replace('/stacks'); }} onClose={() => setAsk(false)} />
     </Screen>
   );
 }

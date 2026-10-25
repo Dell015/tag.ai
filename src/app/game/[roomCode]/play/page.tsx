@@ -114,7 +114,7 @@ export default function PlayPage() {
     const built = pool ? buildPoolQueue({ pool, count: MORE_CARDS, ...opts }) : src ? buildPoolQueue({ pool: sourceCards(src), count: MORE_CARDS, ...opts }) : buildBasketQueue({ basket: { [deck as DeckId]: MORE_CARDS }, ...opts }, buildLibrary());
     const n = built.cards.filter((c) => c.cardType !== 'wild').length;
     const price = built.cards.filter((c) => c.cardType !== 'wild').reduce((a, c) => a + cardCost(c), 0);
-    if (n === 0) { toast('No new cards left in this stack. Start again with another stack.', {}); return; }
+    if (n === 0) { toast('No new cards left in this deck. Start again with another deck.', {}); return; }
     if (!applyCoins('pot', -price, `${n} more cards`)) { toast('Not enough coins', {}); return; }
     g.topUpPot(price);
     g.extendQueue(built.cards, built.buffer);

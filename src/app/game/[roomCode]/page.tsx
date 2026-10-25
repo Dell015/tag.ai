@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Button, ConfirmSheet, Icon, Screen, Splash } from '@/components/ui';
@@ -7,6 +8,9 @@ import { PlayerRow } from '@/components/lobby/PlayerRow';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
 import { rooms, withPlayer, withoutPlayer, MAX_PLAYERS } from '@/lib/data/rooms';
+import { goOnline, leaveOnline } from '@/lib/data/room-sync';
+import { useAccountStore } from '@/stores/account-store';
+import { toast } from '@/components/ui';
 
 export default function LobbyPage() {
   const params = useParams<{ roomCode: string }>();
@@ -16,13 +20,17 @@ export default function LobbyPage() {
   const { status, room } = useRoom(code);
   const [guest, setGuest] = useState('');
   const [leaving, setLeaving] = useState(false);
+  const account = useAccountStore((s) => s.status);
+  const [publishing, setPublishing] = useState(false);
+  const [origin, setOrigin] = useState('');
+  useEffect(() => { setOrigin(window.location.origin); }, []);
 
   if (!ready || !profile || status === 'loading') return <Splash />;
 
   if (status === 'missing' || !room) {
     return (
       <Screen title="Game not found" back="/">
-        <p className="text-lg text-muted">This game is not on this phone. Start a new one from home.</p>
+        <p className="text-lg text-muted">This room is closed, or the host removed you. Ask for a new code, or start a game from home.</p>
         <Link href="/" className="mt-6 block"><Button full>Back home</Button></Link>
       </Screen>
     );
@@ -47,10 +55,24 @@ export default function LobbyPage() {
   }
 
   const full = room.players.length >= MAX_PLAYERS;
+  const link = `${origin}/join?code=${code}`;
+  const invite = async () => {
+    setPublishing(true);
+    const res = await goOnline(code);
+    setPublishing(false);
+    if (!res.ok) toast(res.error, { tone: 'warn' });
+  };
+  const share = async () => {
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Join my game on Tag.ai', text: `Room code ${code}`, url: link }); return; }
+      await navigator.clipboard.writeText(link); toast('Link copied.', { tone: 'ok' });
+    } catch { /* cancelled */ }
+  };
+  const leave = () => { void leaveOnline(code); rooms.remove(code); router.push('/'); };
 
   return (
     <Screen
-      onBack={isHost && room.players.length > 1 ? () => setLeaving(true) : () => router.push('/')}
+      onBack={isHost && room.players.length > 1 || room.online ? () => setLeaving(true) : () => router.push('/')}
       footer={
         isHost ? (
           <>
@@ -59,7 +81,7 @@ export default function LobbyPage() {
             </Button>
           </>
         ) : (
-          <p className="pb-2 text-center text-lg text-muted">Waiting for the host to start.</p>
+          <p className="pb-2 text-center text-lg text-muted">Waiting for the host to start. You are in room {code}.</p>
         )
       }
     >
@@ -94,9 +116,36 @@ export default function LobbyPage() {
           <Button type="submit" variant="secondary" disabled={full || !guest.trim()}><Icon name="plus" size={20} />Add</Button>
         </form>
       )}
-      {isHost && <p className="mt-2 text-sm text-muted">One phone runs the whole game. Friends do not need the app.</p>}
-      <ConfirmSheet open={leaving} title="Leave this game?" body="Everyone you added will be removed." confirmLabel="Leave game" danger
-        onConfirm={() => { rooms.remove(code); router.push('/'); }} onClose={() => setLeaving(false)} />
+      {isHost && <p className="mt-2 text-sm text-muted">Friends without the app can be added by name. They play from this phone.</p>}
+
+      {isHost && (
+        <section className="mt-8 rounded-xl border-2 border-line p-4" aria-label="Invite friends">
+          {room.online ? (
+            <div className="flex items-center gap-4">
+              <div className="shrink-0 rounded-lg bg-white p-2"><QRCodeSVG value={link} size={104} /></div>
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-bold text-muted">Room code</p>
+                <p className="sign text-4xl tracking-[0.18em]" aria-label={`Room code ${code.split('').join(' ')}`}>{code}</p>
+                <Button size="md" variant="secondary" className="mt-2" onClick={share}>Share link</Button>
+              </div>
+            </div>
+          ) : account === 'signedIn' ? (
+            <>
+              <p className="text-lg font-bold">Friends with the app can join from their own phones.</p>
+              <p className="mb-3 mt-1 text-base text-muted">You get a code and a QR to share. They sign up in a minute if they do not have an account.</p>
+              <Button size="lg" full onClick={invite} disabled={publishing}>{publishing ? 'Opening the room' : 'Invite friends'}</Button>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-bold">Want friends to join from their own phones?</p>
+              <p className="mb-3 mt-1 text-base text-muted">Online rooms need an account. It takes under a minute.</p>
+              <Link href={`/welcome?next=${encodeURIComponent(`/game/${code}`)}`}><Button size="lg" full variant="secondary">Create an account</Button></Link>
+            </>
+          )}
+        </section>
+      )}
+      <ConfirmSheet open={leaving} title="Leave this game?" body={isHost ? (room.online ? "The room closes for everyone, and the people you added are removed." : "Everyone you added will be removed.") : "You leave this room. You can join again with the code."} confirmLabel="Leave game" danger
+        onConfirm={leave} onClose={() => setLeaving(false)} />
     </Screen>
   );
 }

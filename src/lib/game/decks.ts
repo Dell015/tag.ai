@@ -49,7 +49,7 @@ export const DECKS: DeckDef[] = [
     has: (c) => c.cardType !== 'wild' && !!c.adult },
   { id: 'social', name: 'Social media', blurb: 'The juiciest stories and debates from the internet', price: 1, mode: 'spicy', ready: false,
     has: () => false },
-  { id: 'chaos', name: 'Shuffle everything', blurb: 'Every card from every stack in one pile, 18+ cards included', price: 1, mode: 'chaos', ready: true, includesAdult: true,
+  { id: 'chaos', name: 'Shuffle everything', blurb: 'Every card from every deck in one pile, 18+ cards included', price: 1, mode: 'chaos', ready: true, includesAdult: true,
     has: (c) => c.cardType !== 'wild' },
 ];
 

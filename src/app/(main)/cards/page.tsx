@@ -126,7 +126,7 @@ export default function CardsPage() {
 
       {error && <p role="alert" className="mt-4 text-base font-bold text-danger">{error}</p>}
       {posts && posts.length === 0 && !error && (
-        <EmptyState art={<Spot name="cards" />} title={active > 0 ? 'No cards match.' : sort === 'top' ? 'No cheers yet.' : 'No cards yet.'} body="Post a truth, a dare or a rule. The most cheered cards each month become a stack in the shop."
+        <EmptyState art={<Spot name="cards" />} title={active > 0 ? 'No cards match.' : sort === 'top' ? 'No cheers yet.' : 'No cards yet.'} body="Post a truth, a dare or a rule. The most cheered cards each month become a deck in the shop."
           action={<Button size="lg" onClick={() => setCompose(true)}>Post a card</Button>} />
       )}
       <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -141,7 +141,7 @@ export default function CardsPage() {
         <div className="flex flex-wrap gap-2">{PERIODS.map((x) => <Chip key={x.id} selected={period === x.id} onClick={() => setPeriod(x.id)}>{x.label}</Chip>)}</div>
         <p className="mb-1.5 mt-4 text-base font-bold text-muted">Type</p>
         <div className="flex flex-wrap gap-2"><Chip selected={!kindF} onClick={() => setKindF(null)}>All</Chip>{SUGGEST_KINDS.map((k) => <Chip key={k} selected={kindF === k} onClick={() => setKindF(k)}>{KIND_META[k].label}</Chip>)}</div>
-        <p className="mb-1.5 mt-4 text-base font-bold text-muted">Stack</p>
+        <p className="mb-1.5 mt-4 text-base font-bold text-muted">Deck</p>
         <div className="flex flex-wrap gap-2"><Chip selected={!deckF} onClick={() => setDeckF(null)}>All</Chip>{SUGGEST_DECKS.filter((d) => d !== 'adult' || adultOk).map((d) => <Chip key={d} selected={deckF === d} onClick={() => setDeckF(d)}>{DECK_BY_ID[d].name}</Chip>)}</div>
         {adultOk && (
           <div className="mt-4 flex items-center justify-between gap-3"><span className="text-base font-bold">Show 18+ cards</span>

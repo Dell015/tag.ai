@@ -44,7 +44,7 @@ export default function TalkSetupPage() {
 
   const start = () => {
     const queue = buildTalkQueue(n, groups, filters);
-    if (queue.length === 0 || !useWalletStore.getState().apply('pot', -talkCost(queue.length), 'Topic stack')) return;
+    if (queue.length === 0 || !useWalletStore.getState().apply('pot', -talkCost(queue.length), 'Topic deck')) return;
     useTalkStore.getState().start(queue, players.length >= 2 ? cleanNames(players) : []);
     router.push('/talk/play');
   };
@@ -53,7 +53,7 @@ export default function TalkSetupPage() {
   const input = 'h-tap min-w-0 flex-1 rounded-xl border-2 border-line bg-transparent px-4 text-lg placeholder:text-muted/60 focus:border-accent';
 
   return (
-    <Screen mode="family" back="/" title="Topic stack"
+    <Screen mode="family" back="/" title="Topic deck"
       footer={<Button size="lg" full disabled={blocked !== null} onClick={start}>{blocked ?? `Start, ${formatPot(total)} coins`}</Button>}>
       {active && <Link href="/talk/play" className="mb-5 block"><Button full variant="secondary">Resume your topics</Button></Link>}
       <p className="-mt-1 mb-6 text-lg text-muted">Things to talk about. No turns, no shots, no pot. Tap for the next topic and go back whenever you like.</p>
@@ -91,7 +91,7 @@ export default function TalkSetupPage() {
 
       <h2 className="sign mt-8 text-3xl">How many topics</h2>
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-base font-bold">{formatPrice(TALK_PRICE)} coins a topic<span className="block font-semibold text-muted">{pool.length} in the stack</span></p>
+        <p className="text-base font-bold">{formatPrice(TALK_PRICE)} coins a topic<span className="block font-semibold text-muted">{pool.length} in the deck</span></p>
         <NumberStepper label="topics" value={n} min={Math.min(TALK_MIN, max)} max={max} step={TALK_STEP} onChange={setCount} />
       </div>
 
