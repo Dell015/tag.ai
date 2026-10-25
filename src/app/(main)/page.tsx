@@ -21,7 +21,7 @@ const TIPS = [
   'Add friends by name. They do not need an account.',
   'Skip is always allowed. Nobody has to answer.',
   'Wild cards are free. They never use coins from the pot.',
-  'Pick how many cards to buy from each deck. Cheap decks last longer.',
+  'Pick how many cards to buy from each stack. Cheap stacks last longer.',
 ];
 
 export default function HomePage() {
@@ -73,7 +73,7 @@ export default function HomePage() {
     ...(resume ? [{ key: 'resume', title: 'Resume game', sub: `Card ${cardNo} of ${cardTotal}`, hot: true, href: `/game/${resume}/play` }] : []),
     ...(talking ? [{ key: 'resume-talk', title: 'Resume topics', sub: `Topic ${Math.min(topicNo, topicTotal)} of ${topicTotal}`, hot: !resume, href: '/talk/play' }] : []),
     { key: 'game', title: 'Drinking game', sub: 'Cards, dares and shots. Add friends by name.', onClick: host },
-    { key: 'talk', title: 'Topic deck', sub: 'Just talk. Debates, dilemmas and stories.', href: '/talk' },
+    { key: 'talk', title: 'Topic stack', sub: 'Just talk. Debates, dilemmas and stories.', href: '/talk' },
   ];
 
   return (

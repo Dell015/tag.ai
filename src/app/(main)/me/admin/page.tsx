@@ -7,7 +7,7 @@ import { useAccountStore } from '@/stores/account-store';
 import { useHydrated } from '@/lib/hydration';
 import { refreshContent } from '@/lib/content-sync';
 import {
-  adminAddWord, adminApprove, adminGiveCoins, adminSendMessage, adminPending, adminReject, adminRemoveWord, adminRetire, adminSearchCards, adminWords,
+  adminAddWord, adminApprove, adminGiveCoins, adminSendMessage, adminReportedPosts, adminRestorePost, deletePost, type ReportedPost, adminPending, adminReject, adminRemoveWord, adminRetire, adminSearchCards, adminWords,
   type AdminCard, type PendingSuggestion,
 } from '@/lib/supabase/account';
 import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
@@ -21,8 +21,37 @@ const CATEGORIES: { id: CardCategory; label: string }[] = [
   { id: 'confessions', label: 'Confessions' }, { id: 'relationships', label: 'Relationships' }, { id: 'roasts', label: 'Roasts' },
   { id: 'controversial', label: 'Controversial' }, { id: 'deep_philosophical', label: 'Deep' }, { id: 'dares', label: 'Dares' },
 ];
-const deckName = (id: string | null) => (id && DECK_BY_ID[id as DeckId]?.name) || 'No deck';
+const deckName = (id: string | null) => (id && DECK_BY_ID[id as DeckId]?.name) || 'No stack';
 const kindLabel = (k: string) => KIND_META[k as CardKind]?.label ?? k;
+
+function ReportedPosts() {
+  const [items, setItems] = useState<ReportedPost[] | null>(null);
+  const load = useCallback(async () => { const r = await adminReportedPosts(); setItems(r.ok ? r.data ?? [] : []); }, []);
+  useEffect(() => { void load(); }, [load]);
+  if (!items || items.length === 0) return null;
+  const act = async (fn: () => Promise<{ ok: boolean; error?: string }>, done: string) => {
+    const r = await fn();
+    if (!r.ok) { toast(r.error ?? 'Failed.', { tone: 'warn' }); return; }
+    toast(done, { tone: 'ok' }); void load();
+  };
+  return (
+    <section aria-label="Reported cards" className="mb-6">
+      <h2 className="mb-2 text-2xl">Reported cards</h2>
+      <ul className="space-y-3">
+        {items.map((p) => (
+          <li key={p.id} className="rounded-2xl border-2 border-line/60 bg-panel p-4">
+            <p className="flex items-center gap-2 text-sm font-bold text-muted">{p.authorName}, {p.kind}, {p.deckId}<Badge tone={p.hidden ? 'accent' : 'line'}>{p.hidden ? 'Hidden' : `${p.reports} report`}</Badge></p>
+            <p className="mt-2 text-lg">{p.body}</p>
+            <div className="mt-3 flex gap-2">
+              <Button variant="secondary" onClick={() => void act(() => adminRestorePost(p.id), 'Restored')}>Restore</Button>
+              <Button variant="danger" onClick={() => void act(() => deletePost(p.id), 'Deleted')}>Delete</Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function Queue() {
   const [items, setItems] = useState<PendingSuggestion[] | null>(null);
@@ -72,7 +101,7 @@ function Queue() {
           </button>
           {open === s.id && (
             <div className="mt-4">
-              <p className="mb-1.5 text-base font-bold text-muted">Heat (leave empty to use the deck default)</p>
+              <p className="mb-1.5 text-base font-bold text-muted">Heat (leave empty to use the stack default)</p>
               <div className="flex gap-2">{[1, 2, 3, 4, 5].map((n) => <Chip key={n} selected={intensity === n} onClick={() => setIntensity(intensity === n ? undefined : n)}>{n}</Chip>)}</div>
               <p className="mb-1.5 mt-4 text-base font-bold text-muted">Category (leave empty for the default)</p>
               <div className="flex flex-wrap gap-2">{CATEGORIES.map((c) => <Chip key={c.id} selected={category === c.id} onClick={() => setCategory(category === c.id ? undefined : c.id)}>{c.label}</Chip>)}</div>
@@ -252,7 +281,7 @@ export default function AdminPage() {
       <div className="mt-4">
         <SegmentedControl<Tab> label="Admin section" value={tab} onChange={setTab} options={[{ id: 'queue', label: 'Queue' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'mail', label: 'Mail' }]} />
       </div>
-      <div className="mt-4">{tab === 'queue' ? <Queue /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
+      <div className="mt-4">{tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
     </Screen>
   );
 }

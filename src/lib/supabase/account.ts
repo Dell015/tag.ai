@@ -366,3 +366,60 @@ export async function adminSendMessage(email: string, title: string, body: strin
   const { data, error } = await sb.rpc('admin_send_message', { target_email: email.trim() || null, msg_title: title.trim(), msg_body: body.trim(), msg_coins: coins });
   return error ? { ok: false, error: msg(error) } : { ok: true, data: Number(data) };
 }
+
+export interface FeedPost { id: string; authorId: string; authorName: string; authorAvatar: string; kind: string; deckId: string; body: string; at: number; cheers: number; mine: boolean; cheered: boolean }
+interface PostRow { id: string; author_id: string; author_name: string; author_avatar: string; kind: string; deck_id: string; body: string; created_at: string; cheers: number; mine: boolean; cheered: boolean }
+
+/** The Cards feed. `new` is newest first; `top` is this month ranked by cheers that count. */
+export async function fetchFeed(sort: 'new' | 'top', adult: boolean): Promise<Result<FeedPost[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('list_posts', { p_sort: sort, p_adult: adult, p_limit: 40 });
+  if (error) return { ok: false, error: msg(error) };
+  return { ok: true, data: ((data ?? []) as PostRow[]).map((p) => ({ id: p.id, authorId: p.author_id, authorName: p.author_name, authorAvatar: p.author_avatar, kind: p.kind, deckId: p.deck_id, body: p.body, at: Date.parse(p.created_at), cheers: p.cheers, mine: p.mine, cheered: p.cheered })) };
+}
+
+export async function createPost(kind: string, deck: string, body: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('create_post', { p_kind: kind, p_deck: deck, p_body: body });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export async function cheerPost(id: string): Promise<Result<{ cheers: number; cheered: boolean }>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('cheer_post', { p_post: id });
+  const row = (Array.isArray(data) ? data[0] : data) as { cheers: number; cheered: boolean } | undefined;
+  return error || !row ? { ok: false, error: msg(error) } : { ok: true, data: row };
+}
+
+export async function reportPost(id: string, reason?: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('report_post', { p_post: id, p_reason: reason ?? null });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export async function deletePost(id: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('delete_post', { p_post: id });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export interface ReportedPost { id: string; authorName: string; kind: string; deckId: string; body: string; hidden: boolean; reports: number }
+export async function adminReportedPosts(): Promise<Result<ReportedPost[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_reported_posts');
+  if (error) return { ok: false, error: msg(error) };
+  return { ok: true, data: ((data ?? []) as { id: string; author_name: string; kind: string; deck_id: string; body: string; hidden: boolean; reports: number }[]).map((p) => ({ id: p.id, authorName: p.author_name, kind: p.kind, deckId: p.deck_id, body: p.body, hidden: p.hidden, reports: p.reports })) };
+}
+
+export async function adminRestorePost(id: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('admin_restore_post', { p_post: id });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}

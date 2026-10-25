@@ -63,7 +63,7 @@ export default function StacksPage() {
         </div>
       </Section>
 
-      <Section title="In-game stacks" hint="The decks that come with the game. Tap one to see its cards.">
+      <Section title="In-game stacks" hint="The stacks that come with the game. Tap one to see its cards.">
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 lg:gap-4">
           {decks.map((d, i) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: Math.min(i, 9) * 0.035 }}>

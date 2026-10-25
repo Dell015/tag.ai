@@ -48,7 +48,7 @@ export default function SuggestPage() {
         <h2 className="mb-2 text-3xl">Your card</h2>
         <p className="mb-1.5 text-base font-bold text-muted">Card type</p>
         <div className="flex flex-wrap gap-2">{SUGGEST_KINDS.map((k) => <Chip key={k} selected={kind === k} onClick={() => setKind(k)}>{KIND_META[k].label}</Chip>)}</div>
-        <p className="mb-1.5 mt-4 text-base font-bold text-muted">Deck</p>
+        <p className="mb-1.5 mt-4 text-base font-bold text-muted">Stack</p>
         <div className="flex flex-wrap gap-2">{SUGGEST_DECKS.map((d) => <Chip key={d} selected={deck === d} onClick={() => setDeck(d)}>{DECK_BY_ID[d].name}</Chip>)}</div>
         <label htmlFor="suggest-text" className="mb-1.5 mt-4 flex justify-between text-base font-bold text-muted"><span>Card text</span><span>{text.length}/{MAX_LEN}</span></label>
         <textarea id="suggest-text" value={text} maxLength={MAX_LEN} rows={4} onChange={(e) => { setText(e.target.value); setError(null); }} aria-invalid={!!error}

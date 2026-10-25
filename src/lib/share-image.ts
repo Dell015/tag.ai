@@ -34,7 +34,7 @@ export async function renderShareImage(d: ShareData): Promise<Blob | null> {
   ctx.fillStyle = bg; ctx.fillRect(0, 0, 1080, 1920);
   ctx.fillStyle = fg; ctx.textBaseline = 'top';
   ctx.font = font(800, 84); ctx.fillText('tag.ai', 80, 90);
-  ctx.font = font(700, 48); ctx.fillText(`${d.deckName} deck`, 80, 230);
+  ctx.font = font(700, 48); ctx.fillText(`${d.deckName} stack`, 80, 230);
   ctx.font = font(800, 230);
   wrap(ctx, "That's a wrap.", 920).forEach((l, i) => ctx.fillText(l, 80, 330 + i * 220));
 

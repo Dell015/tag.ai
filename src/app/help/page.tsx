@@ -6,17 +6,17 @@ import { cn } from '@/lib/cn';
 
 const STEPS = [
   ['Host a game', 'Tap Drinking game on the home screen and add your friends by name. They do not need the app.'],
-  ['Pick a deck', 'Choose a deck, how many cards, the topics to skip and how many coins go in the pot.'],
+  ['Pick a stack', 'Choose a stack, how many cards, the topics to skip and how many coins go in the pot.'],
   ['Pass the phone', 'The phone shows whose turn it is. Tap the card to reveal it, then answer or take the dare.'],
   ['Next or skip', 'Tap Next, or swipe the card, when it is played. Skip gives the same player a new card. Every card shows what happens if you fail or refuse it.'],
 ];
 
 const GLOSSARY = [
-  ['Deck', 'A set of cards with its own mood, like Barkada or Spicy.'],
+  ['Stack', 'A set of cards with its own mood, like Barkada or Spicy.'],
   ['Heat', 'How intense the cards are right now, from 1 to 5. It rises when cards are played and falls when they are skipped.'],
   ['Wild card', 'A challenge for the whole table, such as calling someone outside the group and shouting. Fail it and you take 2 or 3 shots. It never costs coins.'],
   ['Rule card', 'A rule that holds until the next wild card, such as all shots doubled. It stays on screen while it is on.'],
-  ['Card types', 'Truth, dare, dice, coin, bottle, wheel, timer, vote and rule. Each deck has its own card colour, and the dice, coin, bottle, wheel and timer cards bring their own tool.'],
+  ['Card types', 'Truth, dare, dice, coin, bottle, wheel, timer, vote and rule. Each stack has its own card colour, and the dice, coin, bottle, wheel and timer cards bring their own tool.'],
   ['Pot', 'The coins that pay for the cards in one game. Whatever is left comes back to you.'],
   ['Dare', 'A card that asks you to do something instead of answer.'],
   ['Forfeit', 'What you do instead of drinking in non-drinking mode.'],
@@ -25,8 +25,8 @@ const GLOSSARY = [
 const FAQ = [
   ['Do my friends need the app?', 'No. You add them by name and pass one phone around. One phone runs the whole game.'],
   ['What do coins do?', 'Before a game you pick a stack and a Short (10 cards) or Long (30 cards) session. Every card is 1 coin, and the cards go into the pot. When they run out you can get 10 more for 10 coins. You can also spend coins in the Shop on card packs and looks. Tools are free.'],
-  ['How do decks and prices work?', 'Easy decks like Icebreaker and Family cost the least. Every card costs 1 coin, whichever stack you pick. Short is 10 cards and Long is 30. Shuffle everything mixes all the stacks, 18+ cards included. Wild cards are free.'],
-  ['What is the Adult deck?', 'Flirty to frank cards for adults only. Everyone at the table confirms they are 18 or older before it is used.'],
+  ['How do stacks and prices work?', 'Easy stacks like Icebreaker and Family cost the least. Every card costs 1 coin, whichever stack you pick. Short is 10 cards and Long is 30. Shuffle everything mixes all the stacks, 18+ cards included. Wild cards are free.'],
+  ['What is the Adult stack?', 'Flirty to frank cards for adults only. Everyone at the table confirms they are 18 or older before it is used.'],
   ['Can I play without alcohol?', 'Yes. Turn on non-drinking mode in the drink rules step. Drinks become dares and forfeits.'],
   ['How do I remove a card?', 'Tap Trash while a card is showing. You will not see that card again. All your trashed cards are stored in Settings, under Trashed cards, where you can undo it.'],
   ['Does it work offline?', 'Yes. Once a game starts, it runs on your phone without a connection.'],

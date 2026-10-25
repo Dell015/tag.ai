@@ -38,7 +38,7 @@ export default function TalkPlayPage() {
   return (
     <div {...(topic ? { 'data-group': topic.group } : { 'data-mode': 'family' })} className="flex h-dvh flex-col px-4 safe-top safe-bottom">
       <header className="flex items-center justify-between gap-3">
-        <button onClick={() => (done ? leave('/') : setEnding(true))} aria-label="End topic deck" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="close" /></button>
+        <button onClick={() => (done ? leave('/') : setEnding(true))} aria-label="End topic stack" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="close" /></button>
         <p className="text-lg font-bold text-muted">{done ? `${total} topics done` : `Topic ${t.index + 1} of ${total}`}</p>
       </header>
 
@@ -90,7 +90,7 @@ export default function TalkPlayPage() {
           </div>
         )}
       </footer>
-      <ConfirmSheet open={ending} title="End the topic deck?" body="Topics you have not reached are refunded to your wallet." confirmLabel="End and go home" danger onConfirm={() => leave('/')} onClose={() => setEnding(false)} />
+      <ConfirmSheet open={ending} title="End the topic stack?" body="Topics you have not reached are refunded to your wallet." confirmLabel="End and go home" danger onConfirm={() => leave('/')} onClose={() => setEnding(false)} />
     </div>
   );
 }
