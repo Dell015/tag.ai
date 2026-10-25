@@ -8,13 +8,14 @@ import { useHydrated } from '@/lib/hydration';
 import { refreshContent } from '@/lib/content-sync';
 import {
   adminAddWord, adminApprove, adminGiveCoins, adminSendMessage, adminReportedPosts, adminRestorePost, deletePost, type ReportedPost, adminPending, adminReject, adminRemoveWord, adminRetire, adminSearchCards, adminWords,
+  adminPaymentRequests, adminCompletePayment, adminRejectPayment, type AdminPaymentRequest,
   type AdminCard, type PendingSuggestion,
 } from '@/lib/supabase/account';
 import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
 import { DECK_BY_ID, type DeckId } from '@/lib/game/decks';
 import type { CardCategory } from '@/types/game';
 
-type Tab = 'queue' | 'cards' | 'words' | 'coins' | 'mail';
+type Tab = 'queue' | 'pay' | 'cards' | 'words' | 'coins' | 'mail';
 
 const CATEGORIES: { id: CardCategory; label: string }[] = [
   { id: 'hot_takes', label: 'Hot takes' }, { id: 'hypotheticals', label: 'Hypotheticals' }, { id: 'memories', label: 'Memories' },
@@ -194,6 +195,65 @@ function Mail() {
   );
 }
 
+const ago = (iso: string) => {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
+};
+
+/** QR payments waiting to be checked. Done credits the coins once and sends the player a message. */
+function Payments() {
+  const [rows, setRows] = useState<AdminPaymentRequest[] | null>(null);
+  const [ask, setAsk] = useState<AdminPaymentRequest | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(async () => { const r = await adminPaymentRequests(); setRows(r.ok ? r.data ?? [] : []); }, []);
+  useEffect(() => { void load(); const t = setInterval(() => void load(), 20000); return () => clearInterval(t); }, [load]);
+  const done = async (r: AdminPaymentRequest) => {
+    setBusy(true);
+    const res = await adminCompletePayment(r.id);
+    setBusy(false); setAsk(null);
+    if (!res.ok) { toast(res.error ?? 'Could not add the coins.', { tone: 'warn' }); void load(); return; }
+    toast(`Added ${r.coins} coins for ${r.username ?? r.email}`, { tone: 'ok' });
+    void load(); void refreshAccount();
+  };
+  const reject = async (r: AdminPaymentRequest) => {
+    const res = await adminRejectPayment(r.id, '');
+    if (!res.ok) toast(res.error ?? 'Could not reject.', { tone: 'warn' });
+    void load();
+  };
+  if (!rows) return <p className="text-base text-muted">Loading.</p>;
+  const pending = rows.filter((r) => r.status === 'pending');
+  const handled = rows.filter((r) => r.status !== 'pending');
+  return (
+    <div>
+      <p className="text-base text-muted">Match the code with the payment in your GCash or bank app, then tap Done. Pending: {pending.length}.</p>
+      {pending.length === 0 ? <EmptyState title="No payments waiting" body="New requests show up here by themselves." /> : (
+        <ul className="mt-3 space-y-3">
+          {pending.map((r) => (
+            <li key={r.id} className="rounded-xl border-2 border-line p-3">
+              <p className="display text-3xl">{r.ref}</p>
+              <p className="mt-1 text-lg font-bold">P{r.price_php} for {r.coins} coins</p>
+              <p className="text-base text-muted">{r.username ?? 'No name'}, {r.email}, {ago(r.created_at)}</p>
+              <div className="mt-3 flex gap-2">
+                <Button className="flex-1" disabled={busy} onClick={() => setAsk(r)}>Done, add coins</Button>
+                <Button variant="secondary" onClick={() => void reject(r)}>No payment</Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {handled.length > 0 && (
+        <>
+          <h3 className="mt-6 text-xl font-extrabold">Last 7 days</h3>
+          <ul className="mt-2 divide-y divide-line/60">
+            {handled.map((r) => <li key={r.id} className="py-2 text-base"><b>{r.ref}</b> {r.status}, P{r.price_php}, {r.username ?? r.email}, {ago(r.created_at)}</li>)}
+          </ul>
+        </>
+      )}
+      <ConfirmSheet open={!!ask} title={ask ? `Add ${ask.coins} coins?` : ''} body={ask ? `${ask.username ?? ask.email} paid P${ask.price_php} with code ${ask.ref}? Only tap this once the money is in your account.` : ''} confirmLabel="Add coins" onConfirm={() => { if (ask) void done(ask); }} onClose={() => setAsk(null)} />
+    </div>
+  );
+}
+
 function Coins() {
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
@@ -279,9 +339,9 @@ export default function AdminPage() {
     <Screen title="Admin" back="/me">
       <p className="text-lg text-muted">Only admins see this screen. Changes go live for everyone.</p>
       <div className="mt-4">
-        <SegmentedControl<Tab> label="Admin section" value={tab} onChange={setTab} options={[{ id: 'queue', label: 'Queue' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'mail', label: 'Mail' }]} />
+        <SegmentedControl<Tab> label="Admin section" value={tab} onChange={setTab} options={[{ id: 'queue', label: 'Queue' }, { id: 'pay', label: 'Payments' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'mail', label: 'Mail' }]} />
       </div>
-      <div className="mt-4">{tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
+      <div className="mt-4">{tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
     </Screen>
   );
 }

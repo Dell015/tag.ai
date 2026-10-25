@@ -3,6 +3,7 @@
  * player's session and the public key; row-level security and the RPC functions decide what is allowed.
  */
 import { getBrowserClient } from '@/lib/supabase/browser';
+import { clearFailures, lockSeconds, recordFailure } from '@/lib/throttle';
 import type { QueuedCard } from '@/lib/game/escalation-engine';
 import type { TalkTopic } from '@/lib/data/talk-topics';
 import type { Remote } from '@/lib/data/remote-content';
@@ -92,8 +93,12 @@ export async function signUpWithPassword(email: string, password: string): Promi
 export async function signInWithPassword(email: string, password: string): Promise<Result> {
   const sb = getBrowserClient();
   if (!sb) return noClient;
+  const wait = lockSeconds();
+  if (wait > 0) return { ok: false, error: `Too many tries. Wait ${wait} seconds, then try again.` };
   const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
-  return error ? { ok: false, error: authText(error.message, 'Could not sign in. Try again.') } : { ok: true };
+  if (error) { recordFailure(); return { ok: false, error: authText(error.message, 'Could not sign in. Try again.') }; }
+  clearFailures();
+  return { ok: true };
 }
 
 /** Whether the email code option is shown. Set NEXT_PUBLIC_CODE_SIGNIN=on once sign in emails can reach everyone (verified domain in Resend). */
@@ -480,5 +485,53 @@ export async function adminRestorePost(id: string): Promise<Result> {
   const sb = getBrowserClient();
   if (!sb) return noClient;
   const { error } = await sb.rpc('admin_restore_post', { p_post: id });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export interface PaymentRequest { id: string; ref: string; price_php: number; coins: number; status: 'pending' | 'paid' | 'rejected' | 'cancelled'; created_at: string }
+export interface AdminPaymentRequest extends PaymentRequest { email: string; username: string | null }
+
+/** Asks for a coin package. The price and coins are decided by the database, not by this screen. */
+export async function createPaymentRequest(packageId: string): Promise<Result<PaymentRequest>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('create_payment_request', { p_package: packageId });
+  const row = (Array.isArray(data) ? data[0] : data) as PaymentRequest | undefined;
+  return error || !row ? { ok: false, error: msg(error) || 'Could not start the payment.' } : { ok: true, data: { ...row, status: 'pending', created_at: new Date().toISOString() } };
+}
+
+export async function myPaymentRequests(): Promise<Result<PaymentRequest[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('my_payment_requests');
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: (data ?? []) as PaymentRequest[] };
+}
+
+export async function cancelPaymentRequest(id: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('cancel_payment_request', { p_id: id });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export async function adminPaymentRequests(): Promise<Result<AdminPaymentRequest[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_payment_requests');
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: (data ?? []) as AdminPaymentRequest[] };
+}
+
+/** The money arrived: credits the coins once. Returns the player's new balance. */
+export async function adminCompletePayment(id: string): Promise<Result<number>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_complete_payment', { p_id: id });
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: Number(data) };
+}
+
+export async function adminRejectPayment(id: string, reason: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('admin_reject_payment', { p_id: id, p_reason: reason || null });
   return error ? { ok: false, error: msg(error) } : { ok: true };
 }

@@ -11,11 +11,12 @@ export type ShopKind = 'coins' | 'tool' | 'pack' | 'frame' | 'back' | 'theme';
 export interface CoinPackage { id: string; name: string; price: number; coins: number; bonus?: number; badge?: string }
 export interface ShopItem { id: string; kind: Exclude<ShopKind, 'coins'>; name: string; price: number; description: string; value?: string; /** Hidden in the Shop unless 18+ cards are on. */ adult?: boolean }
 
+/** Beta prices. The database holds the same numbers (coin_packages, migration 015): change both together. */
 export const COIN_PACKAGES: CoinPackage[] = [
-  { id: 'starter', name: 'Starter', price: 50, coins: 50 },
-  { id: 'night-out', name: 'Night Out', price: 100, coins: 110, bonus: 10, badge: 'Most picked' },
-  { id: 'party-pack', name: 'Party Pack', price: 200, coins: 240, bonus: 40 },
-  { id: 'treasurer', name: 'Treasurer', price: 500, coins: 650, bonus: 150 },
+  { id: 'starter', name: 'Starter', price: 10, coins: 50 },
+  { id: 'night-out', name: 'Night Out', price: 20, coins: 110, badge: 'Most picked' },
+  { id: 'party-pack', name: 'Party Pack', price: 50, coins: 300 },
+  { id: 'treasurer', name: 'Treasurer', price: 100, coins: 650 },
 ];
 
 export const SHOP_ITEMS: ShopItem[] = [

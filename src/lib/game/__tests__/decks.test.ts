@@ -8,7 +8,7 @@ const library = autoPool([], true);
 const opts = { comfortFilters: [], trashedCardIds: [], playerCount: 4 };
 
 describe('deck prices', () => {
-  it('every stack costs 1 coin a card, Chaos 2', () => DECKS.forEach((d) => expect(d.price).toBe(d.id === 'chaos' ? 2 : 1)));
+  it('every stack costs 1 coin a card', () => DECKS.forEach((d) => expect(d.price).toBe(1)));
   it('a short session is 10 cards and a long one is 30', () => {
     expect(SESSIONS).toEqual({ short: 10, long: 30 });
     expect(MORE_CARDS).toBe(10);
@@ -53,7 +53,7 @@ describe('basket maths', () => {
   });
   it('a card costs its deck price, a wild card is free', () => {
     expect(cardCost({ cardType: 'question', intensity: 5, deckId: 'icebreaker' })).toBe(1);
-    expect(cardCost({ cardType: 'question', intensity: 1, deckId: 'chaos' })).toBe(2);
+    expect(cardCost({ cardType: 'question', intensity: 1, deckId: 'chaos' })).toBe(1);
     expect(cardCost({ cardType: 'wild', intensity: 0, deckId: 'chaos' })).toBe(0);
   });
 });

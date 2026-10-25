@@ -4,6 +4,9 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Avatar, Badge, Button, CoinCount, CoinStack, PAINT, Screen, SegmentedControl, Sheet, toast } from '@/components/ui';
+import { PayBySheet, PendingPayments } from '@/components/shop/PayBySheet';
+import { useAccountStore } from '@/stores/account-store';
+import type { PaymentRequest } from '@/lib/supabase/account';
 import { COIN_PACKAGES, PACK_CARDS, SHOP_ITEMS, packCardCount, packPreview, type CoinPackage, type ShopItem } from '@/lib/data/shop-catalogue';
 import { cardBack } from '@/lib/card-back';
 import { formatPot } from '@/lib/game/pot';
@@ -33,6 +36,9 @@ function ShopInner() {
   const [seg, setSeg] = useState<Seg>(initial);
   const [item, setItem] = useState<ShopItem | null>(null);
   const [pkg, setPkg] = useState<CoinPackage | null>(null);
+  const [existing, setExisting] = useState<PaymentRequest | null>(null);
+  const [payVersion, setPayVersion] = useState(0);
+  const signedIn = useAccountStore((st) => st.status === 'signedIn');
   const coins = useProfileStore((s) => s.profile?.coins ?? 0);
   const shop = useShopStore();
   const test = useSettingsStore((s) => s.testPurchases);
@@ -55,7 +61,8 @@ function ShopInner() {
 
       {seg === 'coins' && (
         <>
-          <p className="mb-3 text-base text-muted">Coins pay for the cards in a game. Wild cards are free. Pay with GCash, Maya or card.</p>
+          <p className="mb-3 text-base text-muted">Coins pay for the cards in a game. Wild cards are free. Buying coins is still being built, so for now you pay by QR and we add the coins by hand, usually within minutes.</p>
+          {signedIn && <PendingPayments version={payVersion} onOpen={setExisting} />}
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
             {COIN_PACKAGES.map((p, idx) => (
               <motion.li key={p.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: idx * 0.05 }}
@@ -121,21 +128,23 @@ function ShopInner() {
         )}
       </Sheet>
 
-      <Sheet open={!!pkg} onClose={() => setPkg(null)} title={pkg ? `${pkg.name}, P${pkg.price}` : undefined}>
-        {pkg && (
-          <>
-            <p className="-mt-2 text-lg text-muted">{pkg.coins} coins{pkg.bonus ? `, with ${pkg.bonus} bonus` : ''}. Pay with GCash, Maya or card.</p>
-            <div className="mt-6 space-y-3 pb-2">
+      {signedIn ? (
+        <PayBySheet pkg={pkg} existing={existing} onClose={() => { setPkg(null); setExisting(null); setPayVersion((v) => v + 1); }} />
+      ) : (
+        <Sheet open={!!pkg} onClose={() => setPkg(null)} title={pkg ? `${pkg.name}, P${pkg.price}` : undefined}>
+          {pkg && (
+            <div className="space-y-3 pb-2">
+              <p className="-mt-2 text-lg text-muted">{pkg.coins} coins for P{pkg.price}.</p>
               {test ? (
                 <Button size="lg" full onClick={() => { shop.testBuyCoins(pkg.id); toast(`Added ${pkg.coins} test coins`, { tone: 'ok' }); setPkg(null); }}>Add {pkg.coins} test coins</Button>
               ) : (
-                <Button size="lg" full disabled>Payments open soon</Button>
+                <p className="rounded-xl bg-raised px-4 py-3 text-lg font-semibold">Sign in to buy coins.</p>
               )}
               <Button full variant="secondary" onClick={() => setPkg(null)}>Close</Button>
             </div>
-          </>
-        )}
-      </Sheet>
+          )}
+        </Sheet>
+      )}
     </Screen>
   );
 }
