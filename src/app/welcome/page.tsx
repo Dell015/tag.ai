@@ -44,7 +44,7 @@ function WelcomeInner() {
 
   if (step === 0) {
     return (
-      <div className="flex min-h-dvh flex-col overflow-x-clip px-5 safe-top safe-bottom">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-5 safe-top safe-bottom">
         <Logo className="text-3xl" />
         <DeckFan className="mt-6" />
         <h1 className="mt-8 text-[3rem] leading-[0.95]">
@@ -62,7 +62,7 @@ function WelcomeInner() {
 
   if (step === 1) {
     return (
-      <div className="flex min-h-dvh flex-col px-5 safe-top safe-bottom">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 safe-top safe-bottom">
         <button onClick={() => setStep(0)} aria-label="Back" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="back" /></button>
         <h1 className="mt-5 text-6xl">When were you born?</h1>
         <p className="mt-4 text-lg text-muted">tag.ai is a drinking game, so it is for adults only.</p>
@@ -76,7 +76,7 @@ function WelcomeInner() {
 
   if (step === 3) {
     return (
-      <div className="flex min-h-dvh flex-col justify-center px-5 safe-top safe-bottom">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 safe-top safe-bottom">
         <h1 className="text-6xl">tag.ai is for adults.</h1>
         <p className="mt-4 text-lg text-muted">Come back when you&apos;re 18.{lockLeft > 0 && <> You can try again in {lockText(lockLeft)}.</>}</p>
       </div>
@@ -86,7 +86,7 @@ function WelcomeInner() {
   if (step === 4) {
     const emailOk = /^\S+@\S+\.\S+$/.test(email.trim());
     return (
-      <div className="flex min-h-dvh flex-col px-5 safe-top safe-bottom">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 safe-top safe-bottom">
         <button onClick={() => setStep(0)} aria-label="Back" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="back" /></button>
         <h1 className="mt-5 text-6xl">What is your email?</h1>
         <p className="mt-4 text-lg text-muted">We send you a code. No password to remember.</p>
@@ -110,7 +110,7 @@ function WelcomeInner() {
   if (step === 5) {
     const codeOk = /^\d{6,8}$/.test(code.trim());
     return (
-      <div className="flex min-h-dvh flex-col px-5 safe-top safe-bottom">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 safe-top safe-bottom">
         <button onClick={() => setStep(4)} aria-label="Back" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="back" /></button>
         <h1 className="mt-5 text-6xl">Enter your code</h1>
         <p className="mt-4 text-lg text-muted">We sent it to {email.trim()}. Check spam if you do not see it.</p>
@@ -136,7 +136,7 @@ function WelcomeInner() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col px-5 safe-top safe-bottom">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 safe-top safe-bottom">
       <button onClick={() => setStep(1)} aria-label="Back" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="back" /></button>
       <h1 className="mt-5 text-6xl">What do your friends call you?</h1>
       <div className="mt-6 flex items-center gap-4">

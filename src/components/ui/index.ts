@@ -22,6 +22,6 @@ export { TextField } from './TextField';
 export { NumberStepper } from './NumberStepper';
 export { CoinAmount, CoinCount } from './CoinAmount';
 export { Badge } from './Badge';
-export { TableScene, CoinStack, Spot, IconTile, PAINT, type Paint } from './Art';
+export { TableScene, CoinStack, stackFor, Spot, IconTile, PAINT, type Paint } from './Art';
 export { RollNumber } from './RollNumber';
 export { Dealt } from './Dealt';

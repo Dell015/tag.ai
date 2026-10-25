@@ -82,7 +82,7 @@ export async function loadAccount(): Promise<AccountData | null> {
     profile: {
       username: profile.username,
       avatar: profile.avatar,
-      coins: num(profile.coins),
+      coins: Math.floor(num(profile.coins)),
       adultConfirmed: profile.is_adult_confirmed,
       createdAt: Date.parse(profile.created_at) || Date.now(),
     },
@@ -330,4 +330,39 @@ export async function removeStackCardRemote(id: string, cardId: string): Promise
   if (!sb) return noClient;
   const { error } = await sb.from('stack_cards').delete().eq('stack_id', id).eq('card_id', cardId);
   return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+export interface InboxMessage { id: string; title: string; body: string; coins: number; at: number; read: boolean; claimed: boolean }
+interface MessageRow { id: string; title: string; body: string; coins: number; created_at: string; read_at: string | null; claimed_at: string | null }
+
+/** The signed-in player's inbox, newest first. */
+export async function fetchInbox(): Promise<Result<InboxMessage[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.from('messages').select('id,title,body,coins,created_at,read_at,claimed_at').order('created_at', { ascending: false }).limit(50);
+  if (error) return { ok: false, error: msg(error) };
+  return { ok: true, data: ((data ?? []) as MessageRow[]).map((m) => ({ id: m.id, title: m.title, body: m.body, coins: m.coins, at: Date.parse(m.created_at), read: !!m.read_at, claimed: !!m.claimed_at })) };
+}
+
+export async function markInboxRead(): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('mark_messages_read');
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+/** Claims the coin gift on a message, once. Returns the new balance. */
+export async function claimMessage(id: string): Promise<Result<number>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('claim_message', { msg_id: id });
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: Number(data) };
+}
+
+/** Sends a message (admins only). Empty email means everyone. Returns how many players got it. */
+export async function adminSendMessage(email: string, title: string, body: string, coins: number): Promise<Result<number>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_send_message', { target_email: email.trim() || null, msg_title: title.trim(), msg_body: body.trim(), msg_coins: coins });
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: Number(data) };
 }

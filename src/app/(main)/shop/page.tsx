@@ -50,13 +50,13 @@ function ShopInner() {
   };
 
   return (
-    <Screen title="Shop" action={<span className="shrink-0 rounded-lg border-2 border-line px-3 py-1.5 text-base font-extrabold"><CoinCount value={Number(formatPot(coins))} /></span>}>
-      <div className="mb-5 mt-1"><SegmentedControl<Seg> label="Shop sections" options={SEGS} value={seg} onChange={setSeg} /></div>
+    <Screen title="Shop" wide action={<span className="shrink-0 rounded-lg border-2 border-line px-3 py-1.5 text-base font-extrabold"><CoinCount value={Number(formatPot(coins))} /></span>}>
+      <div className="mb-5 mt-1 max-w-md"><SegmentedControl<Seg> label="Shop sections" options={SEGS} value={seg} onChange={setSeg} /></div>
 
       {seg === 'coins' && (
         <>
           <p className="mb-3 text-base text-muted">Coins pay for the cards in a game. Wild cards are free. Pay with GCash, Maya or card.</p>
-          <ul className="grid grid-cols-2 gap-3">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
             {COIN_PACKAGES.map((p, idx) => (
               <motion.li key={p.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: idx * 0.05 }}
                 className="relative flex flex-col rounded-2xl border-2 border-b-4 border-line/60 bg-panel p-3.5">
@@ -72,7 +72,7 @@ function ShopInner() {
       )}
 
       {seg !== 'coins' && (
-        <ul className="grid grid-cols-2 gap-3">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
           {items.map((i, idx) => {
             const have = owned(i);
             const short = !have && coins < i.price;

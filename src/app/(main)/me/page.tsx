@@ -1,10 +1,12 @@
 'use client';
-import { Avatar, AvatarPicker, CoinAmount, CoinStack, Icon, ListRow, Plate, Screen, Section, toast } from '@/components/ui';
+import { Avatar, AvatarPicker, CoinAmount, CoinStack, stackFor, Icon, ListRow, Plate, Screen, Section, toast } from '@/components/ui';
 import { completeProfile } from '@/lib/supabase/account';
 import { refreshAccount } from '@/components/AuthSync';
 import { photoToAvatar } from '@/lib/avatar-photo';
 import { useProfileStore } from '@/stores/profile-store';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useInboxStore } from '@/stores/inbox-store';
+import { supabaseConfigured } from '@/lib/supabase/config';
 import { useShopStore } from '@/stores/shop-store';
 import { useAccountStore } from '@/stores/account-store';
 import { itemById } from '@/lib/data/shop-catalogue';
@@ -15,6 +17,9 @@ export default function MePage() {
   const saved = useProfileStore((s) => s.savedCardIds.length);
   const isAdmin = useAccountStore((a) => a.isAdmin);
   const frameId = useShopStore((st) => st.equipped.frame);
+  const unread = useInboxStore((i) => i.unread);
+  const loadInbox = useInboxStore((i) => i.load);
+  useEffect(() => { if (supabaseConfigured) void loadInbox(); }, [loadInbox]);
   const [name, setName] = useState(profile.username);
   const [editing, setEditing] = useState(false);
 
@@ -71,11 +76,12 @@ export default function MePage() {
           <p className="text-sm font-extrabold">Balance</p>
           <CoinAmount value={profile.coins} className="display text-[2.6rem]" />
         </div>
-        <CoinStack count={Math.max(1, Math.min(5, Math.ceil(profile.coins / 10)))} size={72} />
+        <CoinStack count={stackFor(profile.coins)} size={72} />
       </div>
 
       <Section className="mt-6" title="Your stuff">
         <Plate>
+          <ListRow icon="mail" tone="blue" label="Inbox" hint={unread ? `${unread} new` : 'Updates and gifts'} value={unread || undefined} href="/me/inbox" />
           <ListRow icon="wallet" tone="yellow" label="Wallet" hint="Balance and history" href="/me/wallet" />
           <ListRow icon="heart" tone="pink" label="Saved cards" value={saved} href="/me/saved" />
           <ListRow icon="plus" tone="green" label="Suggest a card" hint="Write a card, friends like it" href="/me/suggest" />

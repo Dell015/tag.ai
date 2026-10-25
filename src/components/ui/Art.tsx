@@ -43,6 +43,11 @@ export function TableScene({ letters, className }: { letters: string[]; classNam
   );
 }
 
+/** How many coins to draw for a balance: the stack grows as you get richer. */
+export function stackFor(coins: number): number {
+  return coins < 10 ? 1 : coins < 30 ? 2 : coins < 100 ? 3 : coins < 300 ? 4 : 5;
+}
+
 /** A stack of one to five coins; taller stack means a bigger pack. */
 export function CoinStack({ count = 3, size = 64, className }: { count?: number; size?: number; className?: string }) {
   const n = Math.max(1, Math.min(5, count));

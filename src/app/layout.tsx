@@ -34,7 +34,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <StoreHydrator />
         <AuthSync />
         <SettingsApplier />
-        <MotionProvider><div className="mx-auto min-h-dvh w-full max-w-md">{children}</div></MotionProvider>
+        <MotionProvider><div className="mx-auto min-h-dvh w-full">{children}</div></MotionProvider>
         {/* iPhone: the status bar is see-through in the installed app, so cover it with the page colour while content scrolls under it. */}
         <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 z-40 bg-bg" style={{ height: 'env(safe-area-inset-top)' }} />
         <AgeGateOverlay />

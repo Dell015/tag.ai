@@ -1,6 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { BottomNav, isTabPath } from '@/components/ui/BottomNav';
+import { SideNav } from '@/components/ui/SideNav';
 import { Splash } from '@/components/ui/Splash';
 import { useRequireProfile } from '@/lib/use-profile';
 import { cn } from '@/lib/cn';
@@ -11,8 +12,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   if (!ready) return <Splash />;
   return (
     <div className="min-h-dvh">
-      {/* Room for the fixed tab bar on the five top-level screens only. */}
-      <div className={cn('min-h-dvh', isTabPath(path) && 'pb-[calc(5.5rem+max(env(safe-area-inset-bottom),14px))]')}>{children}</div>
+      {/* Desktop: a left sidebar replaces the floating tab bar. */}
+      <SideNav />
+      <div className="lg:pl-64">
+        {/* Phone: room for the floating tab bar on the five top-level screens only. */}
+        <div className={cn('min-h-dvh', isTabPath(path) && 'pb-[calc(5.5rem+max(env(safe-area-inset-bottom),14px))] lg:pb-0')}>{children}</div>
+      </div>
       <BottomNav />
     </div>
   );

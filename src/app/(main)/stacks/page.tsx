@@ -41,11 +41,11 @@ export default function StacksPage() {
   const decks = DECKS.filter((d) => d.ready);
 
   return (
-    <Screen title="Stacks">
+    <Screen title="Stacks" wide>
       <p className="text-base text-muted">Pick a stack before each game, or build your own from cards you like.</p>
 
       <Section title="Yours">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 lg:gap-4">
           <Link href="/stacks/liked" data-deck="lovers" className={cn(card, 'bg-accent text-onaccent')}>
             <Icon name="heart" size={22} filled />
             <span><span className="sign block text-[0.78rem] leading-tight">Liked</span><span className="mt-0.5 block text-xs font-extrabold opacity-80">{liked} {liked === 1 ? 'card' : 'cards'}</span></span>
@@ -64,7 +64,7 @@ export default function StacksPage() {
       </Section>
 
       <Section title="In-game stacks" hint="The decks that come with the game. Tap one to see its cards.">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6 lg:gap-4">
           {decks.map((d, i) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: Math.min(i, 9) * 0.035 }}>
               <Link href={`/stacks/in-game/${d.id}`} data-deck={d.id} aria-label={`${d.name}, ${counts[d.id]} cards`} className={cn(card, 'bg-accent text-onaccent')}>

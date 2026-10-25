@@ -6,7 +6,7 @@ import { useShopStore } from '@/stores/shop-store';
 import { itemById } from '@/lib/data/shop-catalogue';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Avatar, Dealt, Icon, Logo, RollNumber } from '@/components/ui';
+import { Avatar, CoinStack, stackFor, Dealt, Icon, Logo, RollNumber } from '@/components/ui';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
@@ -77,25 +77,25 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex min-h-[calc(100dvh-5.5rem-max(env(safe-area-inset-bottom),14px))] flex-col px-4 pb-3 safe-top">
-      <header className="flex items-center justify-between">
+    <div className="mx-auto flex min-h-[calc(100dvh-5.5rem-max(env(safe-area-inset-bottom),14px))] max-w-md flex-col px-4 pb-3 safe-top lg:grid lg:min-h-dvh lg:max-w-5xl lg:grid-cols-2 lg:content-center lg:gap-x-16 lg:px-10">
+      <header className="flex items-center justify-between lg:hidden">
         <Logo />
         <Link href="/me" aria-label={`Your profile, ${formatPot(profile.coins)} coins`} className="flex h-tap items-center gap-3 rounded-lg border-2 border-line pl-4 pr-1.5">
-          <span className="inline-flex items-center gap-1.5 font-extrabold tabular-nums"><Icon name="coin" size={20} className="text-accent" /><RollNumber value={profile.coins} format={formatPot} /></span>
+          <span className="inline-flex items-center gap-1.5 font-extrabold tabular-nums"><CoinStack count={stackFor(profile.coins)} size={28} /><RollNumber value={profile.coins} format={formatPot} /></span>
           <Avatar value={profile.avatar} name={profile.username} size={38} frame={frameValue} />
         </Link>
       </header>
 
-      <section className="mt-6">
+      <section className="mt-6 lg:col-start-1 lg:row-start-1 lg:self-end">
         <p className="text-lg text-muted">Kumusta, {profile.username}.</p>
-        <h1 className="mt-3 text-[3.4rem] leading-[0.9]">Who&apos;s drinking<br />tonight?</h1>
+        <h1 className="mt-3 text-[3.4rem] leading-[0.9] lg:text-[5rem]">Who&apos;s drinking<br />tonight?</h1>
       </section>
 
-      <div className="flex flex-1 items-center justify-center py-4">
+      <div className="flex flex-1 items-center justify-center py-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:scale-125">
         <Dealt className="scale-100" />
       </div>
 
-      <section aria-label="Choose a game" className="space-y-3 pb-2">
+      <section aria-label="Choose a game" className="space-y-3 pb-2 lg:col-start-1 lg:row-start-2 lg:mt-8 lg:self-start">
         {rows.map((r, i) => {
           const mode = r.key === 'talk' || r.key === 'resume-talk' ? 'icebreaker' : 'barkada';
           const inner = (

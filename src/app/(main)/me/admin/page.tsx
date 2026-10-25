@@ -7,14 +7,14 @@ import { useAccountStore } from '@/stores/account-store';
 import { useHydrated } from '@/lib/hydration';
 import { refreshContent } from '@/lib/content-sync';
 import {
-  adminAddWord, adminApprove, adminGiveCoins, adminPending, adminReject, adminRemoveWord, adminRetire, adminSearchCards, adminWords,
+  adminAddWord, adminApprove, adminGiveCoins, adminSendMessage, adminPending, adminReject, adminRemoveWord, adminRetire, adminSearchCards, adminWords,
   type AdminCard, type PendingSuggestion,
 } from '@/lib/supabase/account';
 import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
 import { DECK_BY_ID, type DeckId } from '@/lib/game/decks';
 import type { CardCategory } from '@/types/game';
 
-type Tab = 'queue' | 'cards' | 'words' | 'coins';
+type Tab = 'queue' | 'cards' | 'words' | 'coins' | 'mail';
 
 const CATEGORIES: { id: CardCategory; label: string }[] = [
   { id: 'hot_takes', label: 'Hot takes' }, { id: 'hypotheticals', label: 'Hypotheticals' }, { id: 'memories', label: 'Memories' },
@@ -130,6 +130,41 @@ function Cards() {
   );
 }
 
+function Mail() {
+  const [email, setEmail] = useState('');
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [gift, setGift] = useState('');
+  const [ask, setAsk] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const g = gift ? Number(gift) : 0;
+  const everyone = email.trim() === '';
+  const emailOk = everyone || /^\S+@\S+\.\S+$/.test(email.trim());
+  const valid = emailOk && title.trim().length >= 1 && g >= 0 && g <= 10000;
+  const send = async () => {
+    setBusy(true);
+    const r = await adminSendMessage(email, title, body, g);
+    setBusy(false);
+    setAsk(false);
+    if (!r.ok) { toast(r.error ?? 'Could not send.', { tone: 'warn' }); return; }
+    toast(r.data === 1 ? 'Sent to 1 player.' : `Sent to ${r.data} players.`, { tone: 'ok' });
+    setTitle(''); setBody(''); setGift('');
+  };
+  return (
+    <div>
+      <p className="text-base text-muted">Players read it in Me, then Inbox. Leave the email empty to send to everyone. A gift is claimed by the player, once.</p>
+      <form className="mt-3 space-y-3" onSubmit={(e) => { e.preventDefault(); if (valid) setAsk(true); }}>
+        <TextField label="To (email, empty for everyone)" type="email" inputMode="email" autoCapitalize="none" value={email} maxLength={120} onChange={(e) => setEmail(e.target.value)} />
+        <TextField label="Title" value={title} maxLength={60} counter onChange={(e) => setTitle(e.target.value)} />
+        <TextField label="Message (optional)" value={body} maxLength={500} counter onChange={(e) => setBody(e.target.value)} />
+        <TextField label="Coin gift (optional, up to 10000)" inputMode="numeric" value={gift} maxLength={5} onChange={(e) => setGift(e.target.value.replace(/\D/g, ''))} error={g > 10000 ? 'The most is 10000 coins.' : null} />
+        <Button full type="submit" disabled={!valid || busy}>Send</Button>
+      </form>
+      <ConfirmSheet open={ask} title={everyone ? 'Send to everyone?' : 'Send this message?'} body={`${everyone ? 'Every player' : email.trim()} gets "${title.trim()}"${g ? ` with a ${g} coin gift` : ''}. It cannot be taken back.`} confirmLabel="Send" onConfirm={() => void send()} onClose={() => setAsk(false)} />
+    </div>
+  );
+}
+
 function Coins() {
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
@@ -215,9 +250,9 @@ export default function AdminPage() {
     <Screen title="Admin" back="/me">
       <p className="text-lg text-muted">Only admins see this screen. Changes go live for everyone.</p>
       <div className="mt-4">
-        <SegmentedControl<Tab> label="Admin section" value={tab} onChange={setTab} options={[{ id: 'queue', label: 'Suggestions' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Blocked words' }, { id: 'coins', label: 'Coins' }]} />
+        <SegmentedControl<Tab> label="Admin section" value={tab} onChange={setTab} options={[{ id: 'queue', label: 'Queue' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'mail', label: 'Mail' }]} />
       </div>
-      <div className="mt-4">{tab === 'queue' ? <Queue /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : <Words />}</div>
+      <div className="mt-4">{tab === 'queue' ? <Queue /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
     </Screen>
   );
 }

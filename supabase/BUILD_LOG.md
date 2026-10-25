@@ -44,3 +44,4 @@ Cards and topics are read from the database after sign in (CLAUDE.md D40). Real 
 
 - 009_admin_give_coins_email: admin_give_coins now takes target_email (looked up in auth.users). Applied and tested (admin ok, unknown email rejected).
 - 010_profile_photos: public avatars bucket (JPEG, 200KB), own-folder insert/update/delete policies, profiles.avatar accepts photo paths, complete_profile updated. Applied.
+- 012_inbox: messages table + admin_send_message, mark_messages_read, claim_message. Applied; tested send to all, claim once, second claim refused.

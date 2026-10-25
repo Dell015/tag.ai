@@ -1,0 +1,3 @@
+-- Coins are whole numbers. Balances with decimals (left over from the old fractional prices) were rounded down
+-- with a ledger row 'Rounded down to whole coins'. spend_coins now rounds up and refund_coins rounds down.
+-- See the applied migration for the full function bodies (spend_coins, refund_coins use ceil/floor instead of round(amount, 2)).
