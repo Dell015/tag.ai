@@ -1,14 +1,14 @@
 import type { LucideProps } from 'lucide-react';
 import {
   ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Coins, Copy, Dices, Download, Flame, Heart, Info, Layers, Lock, Minus, Pause,
-  Camera, Mail, MoreHorizontal, Pencil, Play, Plus, RefreshCw, Search, Share, ShoppingBag, SkipForward, SlidersHorizontal, Snowflake, Timer, Trash2, Undo2, User, Users, Wallet, Wine, X,
+  Camera, CircleAlert, Eye, EyeOff, Mail, MoreHorizontal, Pencil, Play, Plus, RefreshCw, Search, Share, ShoppingBag, SkipForward, SlidersHorizontal, Snowflake, Timer, Trash2, Undo2, User, Users, Wallet, Wine, X,
 } from 'lucide-react';
 
 const ICONS = {
   back: ChevronLeft, close: X, pause: Pause, trash: Trash2, skip: SkipForward, heart: Heart, check: Check, share: Share, plus: Plus,
   play: Play, cards: Layers, user: User, undo: Undo2, minus: Minus, flame: Flame, snow: Snowflake, bag: ShoppingBag, chevron: ChevronRight,
   search: Search, sliders: SlidersHorizontal, coin: Coins, shot: Wine, dice: Dices, edit: Pencil, lock: Lock, refresh: RefreshCw,
-  timer: Timer, info: Info, copy: Copy, download: Download, users: Users, wallet: Wallet, camera: Camera, mail: Mail, more: MoreHorizontal, up: ArrowUp, down: ArrowDown,
+  timer: Timer, info: Info, copy: Copy, download: Download, users: Users, wallet: Wallet, camera: Camera, mail: Mail, more: MoreHorizontal, up: ArrowUp, down: ArrowDown, alert: CircleAlert, eye: Eye, eyeoff: EyeOff,
 } as const;
 
 export type IconName = keyof typeof ICONS;

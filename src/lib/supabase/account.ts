@@ -72,6 +72,7 @@ const authText = (m: string | undefined, fallback: string): string => {
   if (/already registered|already been registered/i.test(t)) return 'That email already has an account. Sign in instead.';
   if (/password should be|weak password|at least/i.test(t)) return 'Use a password with at least 8 characters.';
   if (/rate limit|too many/i.test(t)) return 'Too many tries. Wait a minute and try again.';
+  if (/failed to fetch|network|load failed/i.test(t)) return 'No connection. Check your internet and try again.';
   if (/email not confirmed/i.test(t)) return 'This account is not confirmed yet. Ask for help at the table.';
   if (!t || /^[{[]/.test(t)) return fallback;
   return t;
@@ -94,6 +95,9 @@ export async function signInWithPassword(email: string, password: string): Promi
   const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
   return error ? { ok: false, error: authText(error.message, 'Could not sign in. Try again.') } : { ok: true };
 }
+
+/** Whether the email code option is shown. Set NEXT_PUBLIC_CODE_SIGNIN=on once sign in emails can reach everyone (verified domain in Resend). */
+export const codeLoginEnabled = process.env.NEXT_PUBLIC_CODE_SIGNIN === 'on';
 
 /** Whether the Google button is shown. Set NEXT_PUBLIC_GOOGLE_SIGNIN=on once Google is switched on in Supabase. */
 export const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === 'on';
