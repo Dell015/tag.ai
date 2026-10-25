@@ -99,17 +99,19 @@ export default function PlayPage() {
     if (ended && room && room.status === 'active') rooms.update(code, (r) => ({ ...r, status: 'ended' }));
   }, [ended, room, code]);
 
-  const moreDeck = room && !room.config.source ? Object.entries(roomPlan(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] : undefined;
+  const plan = room ? roomPlan(room) : undefined;
+  const moreDeck = room && !room.config.source && !plan?.picks ? Object.entries(roomPlan(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] : undefined;
   const moreCost = MORE_CARDS * (moreDeck ? DECK_BY_ID[moreDeck as DeckId]?.price ?? 1 : 1);
-  /** Pay as you go: 10 more cards of the same stack for 10 coins, then the game carries on. */
+  /** Pay as you go: 10 more cards from the same stacks for 10 coins, then the game carries on. */
   const buyMore = () => {
     if (!room) return;
     const src = room.config.source;
+    const pool = plan?.picks ? plan.pool : undefined;
     const deck = Object.entries(roomPlan(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] as DeckId | undefined;
-    if ((!deck && !src) || wallet < moreCost) return;
+    if ((!deck && !src && !pool) || wallet < moreCost) return;
     const seen = [...g.cardQueue, ...g.bufferCards].map((c) => c.id);
     const opts = { comfortFilters: room.config.comfortFilters, trashedCardIds: [...useProfileStore.getState().trashedCardIds, ...seen], playerCount: g.turnRotation.players.length, fitPlayers: true };
-    const built = src ? buildPoolQueue({ pool: sourceCards(src), count: MORE_CARDS, ...opts }) : buildBasketQueue({ basket: { [deck as DeckId]: MORE_CARDS }, ...opts }, buildLibrary());
+    const built = pool ? buildPoolQueue({ pool, count: MORE_CARDS, ...opts }) : src ? buildPoolQueue({ pool: sourceCards(src), count: MORE_CARDS, ...opts }) : buildBasketQueue({ basket: { [deck as DeckId]: MORE_CARDS }, ...opts }, buildLibrary());
     const n = built.cards.filter((c) => c.cardType !== 'wild').length;
     const price = built.cards.filter((c) => c.cardType !== 'wild').reduce((a, c) => a + cardCost(c), 0);
     if (n === 0) { toast('No new cards left in this stack. Start again with another stack.', {}); return; }

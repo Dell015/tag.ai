@@ -8,7 +8,7 @@
  */
 
 import type { GameMode, SessionPlayer } from '@/types/game';
-import type { Basket } from '@/lib/game/decks';
+import type { Basket, DeckId } from '@/lib/game/decks';
 import { generateRoomCode } from '@/lib/validators';
 
 /** A game played from the player's own cards instead of a built-in deck. */
@@ -32,6 +32,10 @@ export interface RoomConfig {
   session?: 'short' | 'long';
   /** Own stack, liked cards or an owned pack. When set, the basket is not used. */
   source?: GameSource;
+  /** Decks and own cards chosen to play together (duplicates are removed). The pot decides how many cards are played. */
+  picks?: { decks: DeckId[]; sources: GameSource[] };
+  /** Coins in the pot. One coin is one card. */
+  pot?: number;
   /** Cards bought per deck, shared by everyone (I pay it all, or split it). */
   basket?: Basket;
   /** Chip in: what each player buys for themselves, by user id. */

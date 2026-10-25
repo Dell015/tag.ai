@@ -12,7 +12,7 @@ export interface DeckDef {
   id: DeckId;
   name: string;
   blurb: string;
-  /** Coins one card uses from the pot. Every stack costs 1 coin a card, except Chaos (the shuffle-everything option) at 2. Wild cards are always free. */
+  /** Coins one card uses from the pot. Every stack costs 1 coin a card, Wild cards are always free. */
   price: number;
   /** Base game mode: sets how likely each heat level is, entry heat and wild card gap. Its colour is the deck colour. */
   mode: GameMode;
@@ -49,7 +49,7 @@ export const DECKS: DeckDef[] = [
     has: (c) => c.cardType !== 'wild' && !!c.adult },
   { id: 'social', name: 'Social media', blurb: 'The juiciest stories and debates from the internet', price: 1, mode: 'spicy', ready: false,
     has: () => false },
-  { id: 'chaos', name: 'Shuffle everything', blurb: 'Not a stack. Every card from every stack in one pile, 18+ cards included', price: 2, mode: 'chaos', ready: true, includesAdult: true,
+  { id: 'chaos', name: 'Shuffle everything', blurb: 'Every card from every stack in one pile, 18+ cards included', price: 1, mode: 'chaos', ready: true, includesAdult: true,
     has: (c) => c.cardType !== 'wild' },
 ];
 
