@@ -46,14 +46,15 @@ export function BottomNav() {
   const current = NAV_ITEMS.find((i) => i.href === path) ?? NAV_ITEMS[0];
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-start px-4 lg:hidden" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
+    <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-30 w-full lg:hidden" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
+      {/* Same centred column as the page content, so the bar lines up with it on tablets. */}
+      <div className="mx-auto w-full max-w-2xl px-4">
       <motion.nav
         aria-label="Main"
         initial={false}
         animate={{ width: small ? 60 : '100%', height: small ? 60 : 68 }}
         transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-        className="pointer-events-auto mx-auto ml-0 max-w-md overflow-hidden rounded-full border-2 border-line bg-panel shadow-[0_6px_0_0_rgba(0,0,0,0.35)]"
-        style={{ marginRight: 'auto' }}
+        className="pointer-events-auto overflow-hidden rounded-full border-2 border-line bg-panel shadow-[0_6px_0_0_rgba(0,0,0,0.35)]"
       >
         <AnimatePresence initial={false} mode="popLayout">
           {small ? (
@@ -80,6 +81,7 @@ export function BottomNav() {
           )}
         </AnimatePresence>
       </motion.nav>
+      </div>
     </div>
   );
 }

@@ -74,6 +74,7 @@ html {
   background: rgb(var(--bg));
   -webkit-tap-highlight-color: transparent;
   text-size-adjust: 100%;
+  overflow-x: clip; /* nothing may widen the layout viewport and push the fixed tab bar off centre */
 }
 
 body {
@@ -84,6 +85,7 @@ body {
   font-weight: 450;
   line-height: 1.45;
   overscroll-behavior-y: none;
+  overflow-x: clip;
 }
 
 /* Signage: the jeepney destination board voice. Page titles, deck names, the logo. */
