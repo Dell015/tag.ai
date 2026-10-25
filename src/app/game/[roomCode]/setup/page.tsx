@@ -2,14 +2,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Avatar, Button, Chip, Icon, RollNumber, Screen, SegmentedControl, Splash, Stepper } from '@/components/ui';
-import { MIN_POT, formatPot, isPotValid } from '@/lib/game/pot';
+import { Avatar, Button, Chip, Icon, RollNumber, Screen, Splash, Stepper } from '@/components/ui';
+import { MIN_POT, formatPot } from '@/lib/game/pot';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
 import { rooms, type RoomConfig } from '@/lib/data/rooms';
 import { MIN_OWN_CARDS, allAgreed, roomPlan, startGame } from '@/lib/data/start-game';
-import { availableSources, sourceHasAdult } from '@/lib/data/game-source';
-import { DECKS, DECK_GROUPS, DECK_BY_ID, MORE_CARDS, SESSIONS, basketHasAdult, deckPool, type Basket, type DeckId, type SessionLength } from '@/lib/game/decks';
+import { availableSources } from '@/lib/data/game-source';
+import { picksHaveAdult, picksPool } from '@/lib/data/game-pool';
+import { DECKS, DECK_GROUPS, DECK_BY_ID, deckPool, type DeckId } from '@/lib/game/decks';
 import { PRESET_TOPICS } from '@/lib/game/comfort-filters';
 import { formatDuration, DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 import { useProfileStore } from '@/stores/profile-store';
@@ -24,9 +25,9 @@ const TILE: Record<DeckId, Paint | 'ink'> = { icebreaker: 'blue', family: 'green
 const tileStyle = (id: DeckId) => TILE[id] === 'ink' ? { backgroundColor: '#2A231E', borderColor: '#564B40', color: '#F4F1EC' } : { backgroundColor: PAINT[TILE[id] as Paint], borderColor: '#0c0a08', color: ['blue', 'red'].includes(TILE[id]) ? '#fff' : '#181310' };
 
 type StepKey = 'basket' | 'topics' | 'drinks' | 'house';
-const STEPS: StepKey[] = ['basket', 'topics', 'drinks', 'house'];
+const STEPS: StepKey[] = ['basket', 'topics', 'house'];
 const TOTAL = STEPS.length;
-const TITLES: Record<StepKey, string> = { basket: 'Buy your cards', topics: 'Skip these topics', drinks: 'Drink rules', house: 'House rules' };
+const TITLES: Record<StepKey, string> = { basket: 'Pick your stacks', topics: 'Skip these topics', drinks: 'Drink rules', house: 'House rules' };
 
 function Row({ selected, onClick, children }: { selected?: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -83,28 +84,33 @@ export default function SetupPage() {
   const addRule = () => { const r = rule.trim(); if (r && cfg.customDrinkRules.length < MAX_CUSTOM_RULES) set({ customDrinkRules: [...cfg.customDrinkRules, r] }); setRule(''); };
   const start = () => { starting.current = true; if (startGame(room, trashed)) router.push(`/game/${code}/play`); else starting.current = false; };
 
-  const basket: Basket = cfg.basket ?? {};
-  const deckId = (Object.keys(basket) as DeckId[]).find((id) => (basket[id] ?? 0) > 0);
-  const session: SessionLength = cfg.session ?? 'short';
-  const source = cfg.source;
+  const library2 = library;
+  const picks = cfg.picks ?? { decks: [], sources: [] };
   const sources = availableSources();
-  const pick = (id: DeckId | undefined, length: SessionLength) => {
-    if (!id) { set({ session: length, potStyle: 'solo' }); return; }
-    set({ session: length, potStyle: 'solo', source: undefined, basket: { [id]: Math.min(SESSIONS[length], pools[id]) }, playerBaskets: {} });
+  const pool = picksPool(picks, library2);
+  const poolSize = pool.length;
+  const hasAdult = picksHaveAdult(picks, pool);
+  const minPot = Math.min(MIN_POT, poolSize);
+  const setPicks = (next: typeof picks) => {
+    const size = picksPool(next, library2).length;
+    set({ picks: next, potStyle: 'solo', source: undefined, basket: {}, playerBaskets: {}, pot: Math.min(Math.max(cfg.pot ?? MIN_POT, Math.min(MIN_POT, size)), size) });
   };
-  const pickSource = (src: (typeof sources)[number] | undefined, length: SessionLength) => {
-    if (!src) return;
-    set({ session: length, potStyle: 'solo', source: { kind: src.kind, id: src.id, name: src.name }, basket: {}, playerBaskets: {} });
+  const toggleDeck = (id: DeckId) => { haptic('tap'); setPicks({ ...picks, decks: picks.decks.includes(id) ? picks.decks.filter((x) => x !== id) : [...picks.decks, id] }); };
+  const toggleSource = (x: (typeof sources)[number]) => {
+    haptic('tap');
+    const on = picks.sources.some((p) => p.kind === x.kind && p.id === x.id);
+    setPicks({ ...picks, sources: on ? picks.sources.filter((p) => !(p.kind === x.kind && p.id === x.id)) : [...picks.sources, { kind: x.kind, id: x.id, name: x.name }] });
   };
+  const setPot = (n: number) => { haptic('tap'); set({ pot: Math.max(minPot, Math.min(poolSize, n)) }); };
   const plan = roomPlan(room);
   const cards = plan.cards;
   const total = plan.coins;
   const wallet = profile.coins;
-  const potOk = (source ? cards >= MIN_OWN_CARDS : isPotValid(total)) && wallet + 1e-9 >= total;
-  const adultBlocked = (source ? sourceHasAdult(source) : basketHasAdult(basket)) && !adultOk;
-  const accentDeck = source ? undefined : DECKS.find((d) => (basket[d.id] ?? 0) > 0);
+  const potOk = cards >= MIN_OWN_CARDS && wallet + 1e-9 >= total;
+  const adultBlocked = hasAdult && !adultOk;
+  const accentDeck = picks.decks.length === 1 && picks.sources.length === 0 ? DECKS.find((d) => d.id === picks.decks[0]) : undefined;
   const blocked = key === 'basket'
-    ? (source ? (cards < MIN_OWN_CARDS ? `This stack needs ${MIN_OWN_CARDS} cards` : null) : !deckId ? 'Pick a stack' : total < MIN_POT ? `Pick at least ${MIN_POT} cards` : total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
+    ? (poolSize === 0 ? 'Pick a stack' : cards < MIN_OWN_CARDS ? `Pick more cards, at least ${MIN_OWN_CARDS}` : total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
     : null;
 
   const footer = view < TOTAL ? (
@@ -128,44 +134,39 @@ export default function SetupPage() {
 
       {key === 'basket' && (
         <>
-          <p className="-mt-2 mb-5 text-base text-muted">Pick a stack, then how long you want to play. Every card is 1 coin, Chaos is 2. Wild cards are free and come on top.</p>
-          <SegmentedControl<SessionLength> label="Session length" value={session} onChange={(v) => (source ? pickSource(sources.find((x) => x.id === source.id && x.kind === source.kind), v) : pick(deckId, v))}
-            options={[{ id: 'short', label: `Short, ${SESSIONS.short} cards` }, { id: 'long', label: `Long, ${SESSIONS.long} cards` }]} />
+          <p className="-mt-2 mb-5 text-base text-muted">Tick every stack you want in the game. Cards that appear in more than one are only used once. Then set the pot: 1 coin is 1 card.</p>
 
-          {sources.length > 0 && (
-            <section className="mt-6">
+          <div className="space-y-7">
+            <section>
               <h3 className="text-3xl">Your cards</h3>
-              <p className="mb-1 mt-1 text-base text-muted">Play your own stacks, liked cards or packs you own.</p>
-              <ul>
-                {sources.map((x) => {
-                  const on = source?.kind === x.kind && source.id === x.id;
-                  return (
-                    <li key={`${x.kind}-${x.id}`} className="border-b-2 border-line/60 py-3">
-                      <button role="radio" aria-checked={on} onClick={() => { haptic('tap'); pickSource(x, session); }}
-                        className={cn('flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors', on ? 'border-accent bg-accent/10' : 'border-transparent')}>
-                        <span className="min-w-0 flex-1">
-                          <span className="sign block text-[1.15rem] leading-tight">{x.name}</span>
-                          <span className="block text-base font-semibold text-muted">{x.count} cards{x.kind === 'pack' ? ', shop pack' : x.kind === 'stack' ? ', your stack' : ''}</span>
-                        </span>
-                        {on && <Icon name="check" />}
-                      </button>
-                      {on && sourceHasAdult(x) && (
-                        <button role="switch" aria-checked={adultOk} onClick={() => setAdultOk(!adultOk)}
-                          className="mt-3 flex min-h-[3.5rem] w-full items-center justify-between gap-3 rounded-xl border-2 border-line px-4 text-left">
-                          <span className="text-base font-bold">Everyone at the table is 18 or older and agrees to play. Any card can be skipped.</span>
-                          <span className={cn('h-8 w-14 shrink-0 rounded-full p-1 transition-colors', adultOk ? 'bg-accent' : 'bg-raised')}>
-                            <span className={cn('block h-6 w-6 rounded-full bg-text transition-transform', adultOk && 'translate-x-6 bg-onaccent')} />
+              <p className="mb-1 mt-1 text-base text-muted">Your own stacks, liked cards and packs you own.</p>
+              {sources.length === 0 ? (
+                <div className="mt-3 rounded-xl border-2 border-dashed border-line p-4">
+                  <p className="text-base font-semibold">Nothing here yet.</p>
+                  <p className="mt-1 text-base text-muted">Tap the heart on a card during a game, or make a stack of your own, and it shows up here.</p>
+                  <Link href="/stacks" className="mt-3 inline-flex h-tap items-center rounded-xl border-2 border-line px-4 font-bold">Open Stacks</Link>
+                </div>
+              ) : (
+                <ul>
+                  {sources.map((x) => {
+                    const on = picks.sources.some((p) => p.kind === x.kind && p.id === x.id);
+                    return (
+                      <li key={`${x.kind}-${x.id}`} className="border-b-2 border-line/60 py-3">
+                        <button role="checkbox" aria-checked={on} onClick={() => toggleSource(x)}
+                          className={cn('flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors', on ? 'border-accent bg-accent/10' : 'border-line')}>
+                          <span className="min-w-0 flex-1">
+                            <span className="sign block text-[1.15rem] leading-tight">{x.name}</span>
+                            <span className="block text-base font-semibold text-muted">{x.count} cards{x.kind === 'pack' ? ', shop pack' : x.kind === 'stack' ? ', your stack' : ''}</span>
                           </span>
+                          <span aria-hidden className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2', on ? 'border-accent bg-accent text-onaccent' : 'border-line')}>{on && <Icon name="check" size={16} />}</span>
                         </button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </section>
-          )}
 
-          <div className="mt-6 space-y-7">
             {DECK_GROUPS.map((g) => (
               <section key={g.label}>
                 <h3 className="text-3xl">{g.label}</h3>
@@ -173,28 +174,19 @@ export default function SetupPage() {
                 <ul>
                   {g.ids.map((id) => {
                     const d = DECK_BY_ID[id];
-                    const on = !source && deckId === id;
+                    const on = picks.decks.includes(id);
                     return (
                       <li key={id} className="border-b-2 border-line/60 py-3">
-                        <button disabled={!d.ready} role="radio" aria-checked={on} onClick={() => { haptic('tap'); pick(id, session); }}
-                          className={cn('flex w-full items-start gap-3 rounded-xl border-2 p-3 text-left transition-colors', on ? 'border-accent bg-accent/10' : 'border-transparent', !d.ready && 'opacity-50')}>
+                        <button disabled={!d.ready} role="checkbox" aria-checked={on} onClick={() => toggleDeck(id)}
+                          className={cn('flex w-full items-start gap-3 rounded-xl border-2 p-3 text-left transition-colors', on ? 'border-accent bg-accent/10' : 'border-line', !d.ready && 'opacity-50')}>
                           <span aria-hidden style={{ ...tileStyle(id), transform: `rotate(${(id.length % 3 - 1) * 4}deg)` }} className="sign mt-0.5 flex h-[3.4rem] w-11 shrink-0 items-end justify-end rounded-md border-[3px] p-1 text-xl leading-none">{id === 'adult' ? '18+' : '?'}</span>
                           <span className="min-w-0 flex-1">
                             <span className="sign block text-[1.15rem] leading-tight">{d.name}</span>
                             <span className="block text-base text-muted">{d.blurb}</span>
-                            <span className="mt-1 block text-base font-semibold text-muted">{d.ready ? `${pools[id]} cards${d.price !== 1 ? `, ${d.price} coins a card` : ''}` : 'Coming soon'}</span>
+                            <span className="mt-1 block text-base font-semibold text-muted">{d.ready ? `${pools[id]} cards` : 'Coming soon'}</span>
                           </span>
-                          {on && <Icon name="check" />}
+                          <span aria-hidden className={cn('mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2', on ? 'border-accent bg-accent text-onaccent' : 'border-line')}>{on && <Icon name="check" size={16} />}</span>
                         </button>
-                        {(d.adult || d.includesAdult) && on && (
-                          <button role="switch" aria-checked={adultOk} onClick={() => setAdultOk(!adultOk)}
-                            className="mt-3 flex min-h-[3.5rem] w-full items-center justify-between gap-3 rounded-xl border-2 border-line px-4 text-left">
-                            <span className="text-base font-bold">Everyone at the table is 18 or older and agrees to play. Any card can be skipped.</span>
-                            <span className={cn('h-8 w-14 shrink-0 rounded-full p-1 transition-colors', adultOk ? 'bg-accent' : 'bg-raised')}>
-                              <span className={cn('block h-6 w-6 rounded-full bg-text transition-transform', adultOk && 'translate-x-6 bg-onaccent')} />
-                            </span>
-                          </button>
-                        )}
                       </li>
                     );
                   })}
@@ -203,10 +195,32 @@ export default function SetupPage() {
             ))}
           </div>
 
-          <p className="mt-6 border-t-2 border-line pt-4 text-2xl font-extrabold">{cards} cards for <RollNumber value={total} format={formatPot} /> coins{cards > 0 ? `, ${formatDuration(cards)}` : ''}.</p>
-          <p className="mt-2 text-base text-muted">You pay for the table. Friends can pay you back in cash, P1 a coin. When the cards run out you can get {MORE_CARDS} more cards.</p>
+          {hasAdult && (
+            <button role="switch" aria-checked={adultOk} onClick={() => setAdultOk(!adultOk)}
+              className="mt-6 flex min-h-[3.5rem] w-full items-center justify-between gap-3 rounded-xl border-2 border-line px-4 py-3 text-left">
+              <span className="text-base font-bold">Everyone at the table is 18 or older and agrees to play. Any card can be skipped.</span>
+              <span className={cn('h-8 w-14 shrink-0 rounded-full p-1 transition-colors', adultOk ? 'bg-accent' : 'bg-raised')}>
+                <span className={cn('block h-6 w-6 rounded-full bg-text transition-transform', adultOk && 'translate-x-6 bg-onaccent')} />
+              </span>
+            </button>
+          )}
 
-          <p className="mt-5 text-lg">You have <b>{formatPot(wallet)} coins</b>.</p>
+          <section className="mt-8 rounded-2xl border-2 border-line p-4">
+            <h3 className="text-3xl">The pot</h3>
+            <p className="mt-1 text-base text-muted">{poolSize === 0 ? 'Pick a stack first.' : `${poolSize} different cards to play from. The pot decides how many you get.`}</p>
+            <div className="mt-4 flex items-center justify-center gap-4">
+              <button aria-label="Fewer coins" disabled={poolSize === 0 || cards <= minPot} onClick={() => setPot(cards - 5)} className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-line text-3xl font-extrabold disabled:opacity-40">-</button>
+              <div className="min-w-[7rem] text-center"><span className="display block text-6xl leading-none tabular-nums"><RollNumber value={cards} format={formatPot} /></span><span className="text-base font-semibold text-muted">coins, {cards} cards</span></div>
+              <button aria-label="More coins" disabled={poolSize === 0 || cards >= poolSize} onClick={() => setPot(cards + 5)} className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-line text-3xl font-extrabold disabled:opacity-40">+</button>
+            </div>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {[10, 20, 30, 50].filter((n) => n <= poolSize).map((n) => <Chip key={n} selected={cards === n} onClick={() => setPot(n)}>{n}</Chip>)}
+            </div>
+            {cards > 0 && <p className="mt-4 text-center text-lg font-bold">About {formatDuration(cards)} of play.</p>}
+            <p className="mt-3 rounded-xl bg-raised px-3 py-2 text-base font-semibold">Coins in the pot are not refunded. Cards you do not get to play are lost, so pick the pot you really want.</p>
+          </section>
+
+          <p className="mt-5 text-lg">You have <b>{formatPot(wallet)} coins</b>. When the cards run out you can add more.</p>
           {total > wallet && (
             <p className="mt-2 text-lg font-bold text-danger">You are {formatPot(total - wallet)} coins short. <Link href="/shop" className="underline">Add coins</Link></p>
           )}

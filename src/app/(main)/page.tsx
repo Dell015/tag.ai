@@ -6,7 +6,7 @@ import { useShopStore } from '@/stores/shop-store';
 import { itemById } from '@/lib/data/shop-catalogue';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Avatar, CoinStack, stackFor, Dealt, Icon, Logo, RollNumber } from '@/components/ui';
+import { Avatar, CoinStack, stackFor, Dealt, Icon, RollNumber } from '@/components/ui';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
@@ -78,8 +78,7 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto flex overflow-x-clip min-h-[calc(100dvh-5.5rem-max(env(safe-area-inset-bottom),14px))] max-w-md flex-col px-4 pb-3 safe-top lg:grid lg:min-h-dvh lg:max-w-5xl lg:grid-cols-2 lg:content-center lg:gap-x-16 lg:px-10">
-      <header className="flex items-center justify-between lg:hidden">
-        <Logo />
+      <header className="flex items-center justify-end lg:hidden">
         <Link href="/me" aria-label={`Your profile, ${formatPot(profile.coins)} coins`} className="flex h-tap items-center gap-3 rounded-lg border-2 border-line pl-4 pr-1.5">
           <span className="inline-flex items-center gap-1.5 font-extrabold tabular-nums"><CoinStack count={stackFor(profile.coins)} size={28} /><RollNumber value={profile.coins} format={formatPot} /></span>
           <Avatar value={profile.avatar} name={profile.username} size={38} frame={frameValue} />
