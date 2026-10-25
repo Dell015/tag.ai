@@ -370,11 +370,13 @@ export async function adminSendMessage(email: string, title: string, body: strin
 export interface FeedPost { id: string; authorId: string; authorName: string; authorAvatar: string; kind: string; deckId: string; body: string; at: number; cheers: number; mine: boolean; cheered: boolean }
 interface PostRow { id: string; author_id: string; author_name: string; author_avatar: string; kind: string; deck_id: string; body: string; created_at: string; cheers: number; mine: boolean; cheered: boolean }
 
-/** The Cards feed. `new` is newest first; `top` is this month ranked by cheers that count. */
-export async function fetchFeed(sort: 'new' | 'top', adult: boolean): Promise<Result<FeedPost[]>> {
+export interface FeedQuery { sort: 'new' | 'top'; dir: 'desc' | 'asc'; period: 'day' | 'week' | 'month' | 'all'; kind: string | null; deck: string | null; adult: boolean }
+
+/** The Cards feed. `new` orders by time, `top` by cheers that count; `dir` flips either one. */
+export async function fetchFeed(q: FeedQuery): Promise<Result<FeedPost[]>> {
   const sb = getBrowserClient();
   if (!sb) return noClient;
-  const { data, error } = await sb.rpc('list_posts', { p_sort: sort, p_adult: adult, p_limit: 40 });
+  const { data, error } = await sb.rpc('list_posts', { p_sort: q.sort, p_dir: q.dir, p_period: q.period, p_kind: q.kind, p_deck: q.deck, p_adult: q.adult, p_limit: 40 });
   if (error) return { ok: false, error: msg(error) };
   return { ok: true, data: ((data ?? []) as PostRow[]).map((p) => ({ id: p.id, authorId: p.author_id, authorName: p.author_name, authorAvatar: p.author_avatar, kind: p.kind, deckId: p.deck_id, body: p.body, at: Date.parse(p.created_at), cheers: p.cheers, mine: p.mine, cheered: p.cheered })) };
 }

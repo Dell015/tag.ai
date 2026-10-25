@@ -8,6 +8,7 @@ import { DECK_BY_ID } from '@/lib/game/decks';
 import { MAX_LEN, MIN_LEN, SUGGEST_DECKS, SUGGEST_KINDS, type SuggestDeck, type SuggestKind } from '@/lib/game/suggestions';
 import { haptic } from '@/lib/haptics';
 import { cn } from '@/lib/cn';
+import { cardTextClass } from '@/lib/card-text';
 
 const STEPS = ['Type', 'Stack', 'Text'] as const;
 const HINT: Record<string, string> = {
@@ -64,8 +65,8 @@ export function PostComposer({ open, onClose, adultOk, onPosted }: { open: boole
             </header>
 
             {/* The card that fills in as you go. */}
-            <div data-kind={kind ?? undefined} className="mx-auto mt-2 flex justify-center">
-              <motion.div layout className={cn('relative flex h-[38dvh] max-h-[24rem] min-h-[13rem] aspect-[5/7] flex-col rounded-2xl border-[3px] p-4 transition-colors', kind ? 'border-[#181310] bg-accent text-onaccent' : 'border-dashed border-line bg-panel text-muted')}>
+            <div data-deck={deck ?? undefined} className="mx-auto mt-2 w-full max-w-[21rem]">
+              <motion.div layout className={cn('relative flex aspect-[5/4.6] max-h-[42dvh] flex-col overflow-hidden rounded-2xl border-[3px] p-5 transition-colors', deck ? 'border-[#181310] bg-accent text-onaccent' : 'border-dashed border-line bg-panel text-muted')}>
                 <div className="flex items-center justify-between text-base font-extrabold">
                   <span className="sign">{kind ? KIND_META[kind].label : 'Type'}</span>
                   <span className="opacity-80">{deck ? DECK_BY_ID[deck].name : 'Stack'}</span>
@@ -73,9 +74,9 @@ export function PostComposer({ open, onClose, adultOk, onPosted }: { open: boole
                 {step === 2 ? (
                   <textarea autoFocus value={text} maxLength={MAX_LEN} onChange={(e) => setText(e.target.value)} aria-label="Card text"
                     placeholder={(kind && HINT[kind]) || 'What is the pettiest thing you did this year?'}
-                    className="display mt-2 w-full flex-1 resize-none bg-transparent text-[1.6rem] leading-[1.06] placeholder:opacity-45 focus:outline-none" />
+                    className={cn('display mt-2 w-full min-w-0 flex-1 resize-none bg-transparent leading-[1.06] [overflow-wrap:anywhere] placeholder:text-onaccent/70 focus:outline-none', cardTextClass(len || 60, true))} />
                 ) : (
-                  <p className="display mt-3 flex-1 text-[1.6rem] leading-[1.06] opacity-45">{text || 'Your card'}</p>
+                  <p className={cn('display mt-3 min-w-0 flex-1 overflow-hidden leading-[1.06] [overflow-wrap:anywhere]', text ? cardTextClass(len, true) : 'text-[1.9rem] opacity-70')}>{text || 'Your card'}</p>
                 )}
                 {step === 2 && <span className="absolute bottom-3 right-4 text-xs font-extrabold tabular-nums opacity-70">{len}/{MAX_LEN}</span>}
               </motion.div>
@@ -89,10 +90,10 @@ export function PostComposer({ open, onClose, adultOk, onPosted }: { open: boole
                       <h2 className="mb-4 text-[2.1rem]">What kind of card?</h2>
                       <div className="grid grid-cols-2 gap-3">
                         {SUGGEST_KINDS.map((k) => (
-                          <button key={k} data-kind={k} onClick={() => { haptic('tap'); setKind(k); }} aria-pressed={kind === k}
-                            className={cn('rounded-2xl border-2 p-4 text-left transition-colors', kind === k ? 'border-[#181310] bg-accent text-onaccent' : 'border-line/70 bg-panel')}>
+                          <button key={k} onClick={() => { haptic('tap'); setKind(k); }} aria-pressed={kind === k}
+                            className={cn('rounded-2xl border-2 p-4 text-left transition-colors', kind === k ? 'border-text bg-text text-bg' : 'border-line/70 bg-panel')}>
                             <span className="sign block text-base">{KIND_META[k].label}</span>
-                            <span className={cn('mt-1.5 block text-sm font-bold', kind === k ? 'opacity-80' : 'text-muted')}>{KIND_META[k].blurb}</span>
+                            <span className={cn('mt-1.5 block text-sm font-bold', kind === k ? 'opacity-70' : 'text-muted')}>{KIND_META[k].blurb}</span>
                           </button>
                         ))}
                       </div>

@@ -1,0 +1,4 @@
+-- Feed sort and filters: sort new or top, direction, time window, type and stack.
+-- (Applied through the dashboard tool; see list_posts in the database for the full body.)
+-- list_posts(p_sort 'new'|'top', p_dir 'desc'|'asc', p_period 'day'|'week'|'month'|'all', p_kind, p_deck, p_adult, p_limit)
+-- 'top' ranks by cheers from accounts at least 7 days old (not the author), then by every cheer; 'new' ranks by time.
