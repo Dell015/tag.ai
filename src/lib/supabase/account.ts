@@ -3,6 +3,7 @@
  * player's session and the public key; row-level security and the RPC functions decide what is allowed.
  */
 import { getBrowserClient } from '@/lib/supabase/browser';
+import { rpcArgs, type AuditRow } from '@/lib/audit';
 import { clearFailures, lockSeconds, recordFailure } from '@/lib/throttle';
 import type { QueuedCard } from '@/lib/game/escalation-engine';
 import type { TalkTopic } from '@/lib/data/talk-topics';
@@ -553,4 +554,16 @@ export async function receiptUrl(path: string): Promise<string | null> {
   if (!sb) return null;
   const { data } = await sb.storage.from('receipts').createSignedUrl(path, 120);
   return data?.signedUrl ?? null;
+}
+
+export interface AuditPage { rows: AuditRow[]; total: number }
+
+/** One page of the audit log. Admins only; the database refuses anyone else. */
+export async function adminAuditLog(args: ReturnType<typeof rpcArgs>): Promise<Result<AuditPage>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_audit_log', args);
+  if (error) return { ok: false, error: msg(error) };
+  const rows = ((data ?? []) as (AuditRow & { total: number | string })[]);
+  return { ok: true, data: { rows: rows.map((r) => { const { total, ...rest } = r; void total; return { ...rest, amount: rest.amount == null ? null : Number(rest.amount) }; }), total: rows.length ? Number(rows[0].total) : 0 } };
 }

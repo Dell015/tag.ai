@@ -19,6 +19,7 @@ For the owner and anyone testing the app. Everything here was checked on the liv
 | Uploads | Profile photos: JPEG only, 200 KB, only into the player's own folder (storage rules checked). |
 | Unused endpoint | `/api/sessions` now answers 410 and does nothing. |
 | Receipt uploads | Private bucket, JPEG only (re-encoded in the browser), 1 MB, only into the player's own folder, readable only by admins through a 2 minute signed link. The database checks the file name belongs to that player and request. |
+| Accountability | `audit_log` records admin and player actions (coins, payments, cards, words, messages, admins). Append-only, written by triggers, readable only by admins. Sign in events are in Supabase's own auth log, not here. |
 | Spam | Posts: 5 a day, blocked words, duplicate check. Cheers: 30 a day. Payment requests: 3 waiting, 10 a day. |
 
 ## Things only the owner can switch on (Supabase dashboard)

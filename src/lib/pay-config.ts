@@ -1,5 +1,5 @@
 /**
- * Beta payments by hand. QR images live in `public/pay/<Bank>/<Name><amount>.jpg`, one per package price
+ * Beta payments by hand. QR images live in `public/pay/<Folder>/<Name><amount>.jpg` (GCash, and MariBank shown as Bank transfer), one per package price
  * (each QR already has its amount filled in). File names are case sensitive on the server.
  * `accountName` is optional and shows under the QR.
  */
@@ -11,8 +11,7 @@ export interface QrCrop { x: number; y: number; w: number; ratio: number }
 
 export const PAY = {
   gcash: { label: 'GCash', image: (php: number) => `/pay/GCash/Gcash${php}.jpg`, accountName: '', crop: { x: 0.1946, y: 0.157, w: 0.6109, ratio: 1.945 } as QrCrop },
-  bpi: { label: 'BPI', image: (php: number) => `/pay/BPI/BPI${php}.jpg`, accountName: '', crop: { x: 0.297, y: 0.382, w: 0.406, ratio: 1.13 } as QrCrop },
-  maribank: { label: 'MariBank', image: (php: number) => `/pay/MariBank/Maribank${php}.jpg`, accountName: '', crop: { x: 0.2424, y: 0.1595, w: 0.5152, ratio: 1.2985 } as QrCrop },
+  maribank: { label: 'Bank transfer', image: (php: number) => `/pay/MariBank/Maribank${php}.jpg`, accountName: '', crop: { x: 0.2424, y: 0.1595, w: 0.5152, ratio: 1.2985 } as QrCrop },
 } as const;
 export type PayMethod = keyof typeof PAY;
 export const PAY_METHODS = Object.keys(PAY) as PayMethod[];

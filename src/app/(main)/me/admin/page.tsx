@@ -2,7 +2,8 @@
 import { refreshAccount } from '@/components/AuthSync';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Badge, Button, Chip, ConfirmSheet, EmptyState, Screen, SegmentedControl, TextField, toast } from '@/components/ui';
+import { Badge, Button, Chip, ConfirmSheet, EmptyState, Screen, TextField, toast } from '@/components/ui';
+import { AuditLog } from '@/components/admin/AuditLog';
 import { useAccountStore } from '@/stores/account-store';
 import { useHydrated } from '@/lib/hydration';
 import { refreshContent } from '@/lib/content-sync';
@@ -15,7 +16,8 @@ import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
 import { DECK_BY_ID, type DeckId } from '@/lib/game/decks';
 import type { CardCategory } from '@/types/game';
 
-type Tab = 'queue' | 'pay' | 'cards' | 'words' | 'coins' | 'mail';
+type Tab = 'queue' | 'pay' | 'audit' | 'cards' | 'words' | 'coins' | 'mail';
+const TABS: { id: Tab; label: string }[] = [{ id: 'queue', label: 'Queue' }, { id: 'pay', label: 'Payments' }, { id: 'audit', label: 'Audit log' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'mail', label: 'Mail' }];
 
 const CATEGORIES: { id: CardCategory; label: string }[] = [
   { id: 'hot_takes', label: 'Hot takes' }, { id: 'hypotheticals', label: 'Hypotheticals' }, { id: 'memories', label: 'Memories' },
@@ -348,9 +350,15 @@ export default function AdminPage() {
     <Screen title="Admin" back="/me">
       <p className="text-lg text-muted">Only admins see this screen. Changes go live for everyone.</p>
       <div className="mt-4">
-        <SegmentedControl<Tab> label="Admin section" value={tab} onChange={setTab} options={[{ id: 'queue', label: 'Queue' }, { id: 'pay', label: 'Payments' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'mail', label: 'Mail' }]} />
+        <div role="tablist" aria-label="Admin section" className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+          {TABS.map((t) => (
+            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+              ref={(el) => { if (el && tab === t.id) el.scrollIntoView({ inline: 'center', block: 'nearest' }); }}
+              className={`h-11 shrink-0 snap-start rounded-xl border-2 px-4 text-base font-extrabold ${tab === t.id ? 'border-accent bg-accent text-onaccent' : 'border-line text-muted'}`}>{t.label}</button>
+          ))}
+        </div>
       </div>
-      <div className="mt-4">{tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
+      <div className="mt-4">{tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'audit' ? <AuditLog /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
     </Screen>
   );
 }
