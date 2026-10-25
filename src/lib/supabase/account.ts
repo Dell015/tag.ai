@@ -27,7 +27,12 @@ export interface AccountData {
 }
 
 const num = (v: number | string): number => (typeof v === 'number' ? v : parseFloat(v));
-const msg = (e: { message?: string } | null | undefined): string => e?.message ?? 'Something went wrong. Try again.';
+const msg = (e: { message?: string } | null | undefined): string => {
+  const m = typeof e?.message === 'string' ? e.message.trim() : '';
+  // An empty or JSON-ish body ("{}") is not a message a player can read.
+  if (!m || /^[{[]/.test(m)) return 'Something went wrong. Try again.';
+  return m;
+};
 /** Friendly text for the errors the database raises on purpose. */
 export const friendly = (m: string): string => {
   if (/Not enough coins/i.test(m)) return 'Not enough coins.';
@@ -43,7 +48,15 @@ export async function sendEmailCode(email: string): Promise<Result> {
   const sb = getBrowserClient();
   if (!sb) return noClient;
   const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true } });
-  return error ? { ok: false, error: friendly(msg(error)) } : { ok: true };
+  if (!error) return { ok: true };
+  const status = (error as { status?: number }).status;
+  if (/rate limit|too many/i.test(error.message ?? '') || status === 429) {
+    return { ok: false, error: 'Too many tries. Wait a minute and try again.' };
+  }
+  if (!error.message || status === 500 || /^[{[]/.test(error.message.trim())) {
+    return { ok: false, error: 'We could not send the code to that email right now. Try again in a minute.' };
+  }
+  return { ok: false, error: friendly(msg(error)) };
 }
 
 export async function verifyEmailCode(email: string, token: string): Promise<Result> {
@@ -51,6 +64,46 @@ export async function verifyEmailCode(email: string, token: string): Promise<Res
   if (!sb) return noClient;
   const { error } = await sb.auth.verifyOtp({ email: email.trim(), token: token.trim(), type: 'email' });
   return error ? { ok: false, error: 'That code did not work. Check it or ask for a new one.' } : { ok: true };
+}
+
+const authText = (m: string | undefined, fallback: string): string => {
+  const t = (m ?? '').trim();
+  if (/invalid login credentials/i.test(t)) return 'Wrong email or password.';
+  if (/already registered|already been registered/i.test(t)) return 'That email already has an account. Sign in instead.';
+  if (/password should be|weak password|at least/i.test(t)) return 'Use a password with at least 8 characters.';
+  if (/rate limit|too many/i.test(t)) return 'Too many tries. Wait a minute and try again.';
+  if (/email not confirmed/i.test(t)) return 'This account is not confirmed yet. Ask for help at the table.';
+  if (!t || /^[{[]/.test(t)) return fallback;
+  return t;
+};
+
+/** Makes an account with an email and a password. Needs "Confirm email" switched off in Supabase, since no email is sent. */
+export async function signUpWithPassword(email: string, password: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.auth.signUp({ email: email.trim(), password });
+  if (error) return { ok: false, error: authText(error.message, 'Could not create the account. Try again.') };
+  // With email confirmation on, no session comes back and a mail is needed, which this app cannot send yet.
+  if (!data.session) return { ok: false, error: 'This email may already have an account. Try signing in.' };
+  return { ok: true };
+}
+
+export async function signInWithPassword(email: string, password: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
+  return error ? { ok: false, error: authText(error.message, 'Could not sign in. Try again.') } : { ok: true };
+}
+
+/** Whether the Google button is shown. Set NEXT_PUBLIC_GOOGLE_SIGNIN=on once Google is switched on in Supabase. */
+export const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === 'on';
+
+/** Sends the player to Google; they come back to /welcome with a session. */
+export async function signInWithGoogle(): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/welcome` } });
+  return error ? { ok: false, error: 'Google sign in is not available right now.' } : { ok: true };
 }
 
 export async function signOutServer(): Promise<void> {
