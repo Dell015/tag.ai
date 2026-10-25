@@ -489,7 +489,7 @@ export async function adminRestorePost(id: string): Promise<Result> {
 }
 
 export interface PaymentRequest { id: string; ref: string; price_php: number; coins: number; status: 'pending' | 'paid' | 'rejected' | 'cancelled'; created_at: string }
-export interface AdminPaymentRequest extends PaymentRequest { email: string; username: string | null }
+export interface AdminPaymentRequest extends PaymentRequest { email: string; username: string | null; receipt_path: string | null }
 
 /** Asks for a coin package. The price and coins are decided by the database, not by this screen. */
 export async function createPaymentRequest(packageId: string): Promise<Result<PaymentRequest>> {
@@ -534,4 +534,23 @@ export async function adminRejectPayment(id: string, reason: string): Promise<Re
   if (!sb) return noClient;
   const { error } = await sb.rpc('admin_reject_payment', { p_id: id, p_reason: reason || null });
   return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+/** Uploads a receipt screenshot (already a small JPEG) and attaches it to a waiting request. */
+export async function uploadReceipt(requestId: string, userId: string, blob: Blob): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const path = `${userId}/${requestId}-${Date.now()}.jpg`;
+  const up = await sb.storage.from('receipts').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+  if (up.error) return { ok: false, error: 'Could not upload the receipt. Try again, or type the code in your payment message.' };
+  const { error } = await sb.rpc('attach_receipt', { p_id: requestId, p_path: path });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+/** A short lived link to a receipt, for admins. */
+export async function receiptUrl(path: string): Promise<string | null> {
+  const sb = getBrowserClient();
+  if (!sb) return null;
+  const { data } = await sb.storage.from('receipts').createSignedUrl(path, 120);
+  return data?.signedUrl ?? null;
 }

@@ -42,3 +42,19 @@ export async function photoToAvatar(file: File, userId: string | null): Promise<
     return { ok: false, error: 'Could not read that photo.' };
   }
 }
+
+/** Shrinks a receipt screenshot to a JPEG of at most 1280px on its long side, so uploads stay small and always the same type. */
+export async function receiptJpeg(file: File, max = 1280): Promise<Blob> {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bmp.width * k);
+  canvas.height = Math.round(bmp.height * k);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('This browser cannot resize images.');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  bmp.close();
+  return new Promise((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error('Could not read that image.'))), 'image/jpeg', 0.78));
+}

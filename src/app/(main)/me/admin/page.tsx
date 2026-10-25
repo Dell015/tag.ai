@@ -8,7 +8,7 @@ import { useHydrated } from '@/lib/hydration';
 import { refreshContent } from '@/lib/content-sync';
 import {
   adminAddWord, adminApprove, adminGiveCoins, adminSendMessage, adminReportedPosts, adminRestorePost, deletePost, type ReportedPost, adminPending, adminReject, adminRemoveWord, adminRetire, adminSearchCards, adminWords,
-  adminPaymentRequests, adminCompletePayment, adminRejectPayment, type AdminPaymentRequest,
+  adminPaymentRequests, adminCompletePayment, adminRejectPayment, receiptUrl, type AdminPaymentRequest,
   type AdminCard, type PendingSuggestion,
 } from '@/lib/supabase/account';
 import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
@@ -205,6 +205,8 @@ function Payments() {
   const [rows, setRows] = useState<AdminPaymentRequest[] | null>(null);
   const [ask, setAsk] = useState<AdminPaymentRequest | null>(null);
   const [busy, setBusy] = useState(false);
+  const [shot, setShot] = useState<string | null>(null);
+  const openReceipt = async (path: string) => { const u = await receiptUrl(path); if (u) setShot(u); else toast('Could not open the receipt.', { tone: 'warn' }); };
   const load = useCallback(async () => { const r = await adminPaymentRequests(); setRows(r.ok ? r.data ?? [] : []); }, []);
   useEffect(() => { void load(); const t = setInterval(() => void load(), 20000); return () => clearInterval(t); }, [load]);
   const done = async (r: AdminPaymentRequest) => {
@@ -233,6 +235,7 @@ function Payments() {
               <p className="display text-3xl">{r.ref}</p>
               <p className="mt-1 text-lg font-bold">P{r.price_php} for {r.coins} coins</p>
               <p className="text-base text-muted">{r.username ?? 'No name'}, {r.email}, {ago(r.created_at)}</p>
+              {r.receipt_path && <button className="mt-2 text-base font-bold underline" onClick={() => void openReceipt(r.receipt_path as string)}>View receipt</button>}
               <div className="mt-3 flex gap-2">
                 <Button className="flex-1" disabled={busy} onClick={() => setAsk(r)}>Done, add coins</Button>
                 <Button variant="secondary" onClick={() => void reject(r)}>No payment</Button>
@@ -248,6 +251,12 @@ function Payments() {
             {handled.map((r) => <li key={r.id} className="py-2 text-base"><b>{r.ref}</b> {r.status}, P{r.price_php}, {r.username ?? r.email}, {ago(r.created_at)}</li>)}
           </ul>
         </>
+      )}
+      {shot && (
+        <button aria-label="Close receipt" onClick={() => setShot(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={shot} alt="Payment receipt" className="max-h-full max-w-full rounded-xl bg-white object-contain" />
+        </button>
       )}
       <ConfirmSheet open={!!ask} title={ask ? `Add ${ask.coins} coins?` : ''} body={ask ? `${ask.username ?? ask.email} paid P${ask.price_php} with code ${ask.ref}? Only tap this once the money is in your account.` : ''} confirmLabel="Add coins" onConfirm={() => { if (ask) void done(ask); }} onClose={() => setAsk(null)} />
     </div>
