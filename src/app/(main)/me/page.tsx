@@ -15,7 +15,6 @@ export default function MePage() {
   const profile = useProfileStore((s) => s.profile)!;
   const update = useProfileStore((s) => s.updateProfile);
   const saved = useProfileStore((s) => s.savedCardIds.length);
-  const isAdmin = useAccountStore((a) => a.isAdmin);
   const frameId = useShopStore((st) => st.equipped.frame);
   const unread = useInboxStore((i) => i.unread);
   const loadInbox = useInboxStore((i) => i.load);
@@ -92,7 +91,6 @@ export default function MePage() {
       <Section title="App">
         <Plate>
           <ListRow icon="sliders" tone="green" label="Settings" hint="Game defaults, playing, display" href="/me/settings" />
-          {isAdmin && <ListRow icon="sliders" tone="red" label="Admin" hint="Suggestions, cards, blocked words" href="/me/admin" />}
           <ListRow icon="info" tone="blue" label="Help" hint="How to play and FAQ" href="/help" />
         </Plate>
       </Section>

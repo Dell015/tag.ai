@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
+import { useAccountStore } from '@/stores/account-store';
 import { Icon, type IconName } from './Icon';
 
 export const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [
@@ -14,8 +15,17 @@ export const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [
   { href: '/me', label: 'Me', icon: 'user' },
 ];
 
-/** True on the five top-level screens, where the tab bar lives. */
-export const isTabPath = (path: string) => NAV_ITEMS.some((i) => i.href === path);
+/** Shown only to admins, after Me. */
+export const ADMIN_ITEM: { href: string; label: string; icon: IconName } = { href: '/me/admin', label: 'Admin', icon: 'sliders' };
+
+/** The tabs this player sees: the five everyone has, plus Admin for admins. */
+export function useNavItems() {
+  const isAdmin = useAccountStore((a) => a.isAdmin);
+  return isAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS;
+}
+
+/** True on the top-level screens, where the tab bar lives. */
+export const isTabPath = (path: string) => NAV_ITEMS.some((i) => i.href === path) || path === ADMIN_ITEM.href;
 
 const IDLE_MS = 5000;
 
@@ -25,6 +35,7 @@ const IDLE_MS = 5000;
  */
 export function BottomNav() {
   const path = usePathname();
+  const items = useNavItems();
   const [small, setSmall] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>();
 
@@ -43,7 +54,7 @@ export function BottomNav() {
   useEffect(() => { setSmall(false); }, [path]);
 
   if (!isTabPath(path)) return null;
-  const current = NAV_ITEMS.find((i) => i.href === path) ?? NAV_ITEMS[0];
+  const current = items.find((i) => i.href === path) ?? items[0];
 
   return (
     <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-30 w-full lg:hidden" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 14px)' }}>
@@ -64,8 +75,8 @@ export function BottomNav() {
               <Icon name={current.icon} size={26} />
             </motion.button>
           ) : (
-            <motion.ul key="bar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid h-full grid-cols-5 items-center px-1.5">
-              {NAV_ITEMS.map((i) => {
+            <motion.ul key="bar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }} className="grid h-full items-center px-1.5">
+              {items.map((i) => {
                 const active = path === i.href;
                 return (
                   <li key={i.href} className="flex justify-center">
