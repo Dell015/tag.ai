@@ -6,7 +6,8 @@
  * Polls every few seconds while the page is visible, and again the moment the page comes back to the front.
  */
 import { rooms, type Room } from '@/lib/data/rooms';
-import { apiAgreeRoom, apiGetRoom, apiJoinRoom, apiLeaveRoom, apiPublishRoom, type RoomReply, type RoomResult } from '@/lib/supabase/rooms';
+import { refreshAccount } from '@/components/AuthSync';
+import { apiAgreeRoom, apiContribute, apiGetRoom, apiJoinRoom, apiLeaveRoom, apiPublishRoom, type RoomReply, type RoomResult } from '@/lib/supabase/rooms';
 
 const POLL_MS = 3000;
 const PUSH_MS = 350;
@@ -21,7 +22,7 @@ export function mergeServer(local: Room, server: Room): Room {
   const guests = local.players.filter((p) => p.isGuest);
   const accounts = server.players.filter((p) => !p.isGuest);
   const agreed = Array.from(new Set([...server.agreedPlayers, ...local.agreedPlayers]));
-  return { ...local, players: [...accounts, ...guests], agreedPlayers: agreed.filter((id) => [...accounts, ...guests].some((p) => p.userId === id)) };
+  return { ...local, paid: server.paid ?? local.paid, players: [...accounts, ...guests], agreedPlayers: agreed.filter((id) => [...accounts, ...guests].some((p) => p.userId === id)) };
 }
 
 function take(reply: RoomReply, code: string) {
@@ -49,6 +50,16 @@ export async function joinOnline(raw: string): Promise<{ ok: true; code: string 
   take(res.reply, code);
   rooms.put({ ...res.reply.data, code, online: true });
   return { ok: true, code };
+}
+
+/** Put coins in the pot from your own wallet. The server takes them and caps the amount at what is left. */
+export async function contributeOnline(code: string, amount: number): Promise<{ ok: true; added: number } | { ok: false; error: string }> {
+  const res = await apiContribute(code, amount);
+  if (!res.ok) return res;
+  take(res.reply, code);
+  rooms.update(code, (r) => ({ ...r, paid: res.reply.data.paid }));
+  void refreshAccount();
+  return { ok: true, added: res.reply.added ?? amount };
 }
 
 /** Tap "I agree" for yourself from your own phone. */
@@ -118,7 +129,7 @@ export function startSync(code: string, myId: string): () => void {
             known.set(code, reply.version);
             const merged = mergeServer(local, reply.data);
             lastPushed = sig(reply.data);
-            if (sig(merged) !== sig(local)) rooms.update(code, () => merged);
+            if (sig(merged) !== sig(local) || JSON.stringify(merged.paid) !== JSON.stringify(local.paid)) rooms.update(code, () => merged);
           }
         }
       }

@@ -2,7 +2,7 @@
 import { getBrowserClient } from '@/lib/supabase/browser';
 import type { Room } from '@/lib/data/rooms';
 
-export interface RoomReply { version: number; data: Room; stale?: boolean }
+export interface RoomReply { version: number; data: Room; stale?: boolean; balance?: number; added?: number }
 export type RoomResult = { ok: true; reply: RoomReply } | { ok: false; error: string };
 
 const text = (e: { message?: string } | null | undefined): string => {
@@ -21,6 +21,7 @@ async function call(fn: string, args: Record<string, unknown>): Promise<RoomResu
 export const apiPublishRoom = (code: string, data: Room, version: number | null) =>
   call('publish_room', { p_code: code, p_data: data, p_version: version });
 export const apiJoinRoom = (code: string) => call('join_room', { p_code: code });
+export const apiContribute = (code: string, amount: number) => call('contribute_room', { p_code: code, p_amount: amount });
 export const apiAgreeRoom = (code: string) => call('agree_room', { p_code: code });
 
 /** Null when the room is gone or you are not in it. `error` is set when the call itself failed (offline). */

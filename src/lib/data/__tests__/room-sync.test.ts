@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mergeServer } from '@/lib/data/room-sync';
-import { DEFAULT_CONFIG, type Room } from '@/lib/data/rooms';
+import { DEFAULT_CONFIG, potFunded, type Room } from '@/lib/data/rooms';
 
 const p = (id: string, extra: object = {}) => ({ id, userId: id, displayName: id, avatarUrl: 'c0', turnOrder: 0, agreedToRules: false, ...extra });
 const room = (players: ReturnType<typeof p>[], agreed: string[]): Room => ({
@@ -27,5 +27,17 @@ describe('mergeServer', () => {
   it('keeps the host\'s own settings', () => {
     const local = { ...room([p('host')], []), status: 'active' as const };
     expect(mergeServer(local, room([p('host')], [])).status).toBe('active');
+  });
+});
+
+describe('pot', () => {
+  it('adds up what everyone paid', () => {
+    expect(potFunded({ ...room([p('host')], []), paid: { a: 4, b: 6 } })).toBe(10);
+    expect(potFunded(room([p('host')], []))).toBe(0);
+  });
+  it('takes the server\'s payments, never the host\'s own copy', () => {
+    const local = { ...room([p('host')], []), paid: { host: 999 } };
+    const server = { ...room([p('host')], []), paid: { host: 3 } };
+    expect(mergeServer(local, server).paid).toEqual({ host: 3 });
   });
 });

@@ -1,4 +1,4 @@
-import { rooms, type Room } from '@/lib/data/rooms';
+import { rooms, potFunded, type Room } from '@/lib/data/rooms';
 import { autoPool } from '@/lib/data/card-pool';
 import { sourceCards } from '@/lib/data/game-source';
 import { picksPool } from '@/lib/data/game-pool';
@@ -64,7 +64,10 @@ export function startGame(room: Room, trashedCardIds: string[]): boolean {
   const plan = roomPlan(room);
   const { basket, coins: total } = plan;
   const wallet = useProfileStore.getState().profile?.coins ?? 0;
-  if (!(plan.picks || plan.source ? plan.cards >= MIN_OWN_CARDS : isPotValid(total)) || wallet + 1e-9 < total) return false;
+  // Online rooms are paid by everyone from their own phones before the host can start, so the host's wallet is not touched.
+  const funded = room.online ? potFunded(room) : 0;
+  if (!(plan.picks || plan.source ? plan.cards >= MIN_OWN_CARDS : isPotValid(total))) return false;
+  if (room.online ? funded < plan.cards : wallet + 1e-9 < total) return false;
 
   // The order players tapped to agree is the order they play.
   const players = playOrder(room);
@@ -76,10 +79,10 @@ export function startGame(room: Room, trashedCardIds: string[]): boolean {
     : buildBasketQueue({ basket, ...opts }, buildLibrary());
   if (queue.cards.length === 0) return false;
   // The pot is what the cards really cost, so a small stack never over-charges.
-  const paid = plan.source || plan.picks ? queue.cards.filter((c) => c.cardType !== 'wild').length : total;
+  const paid = room.online ? funded : plan.source || plan.picks ? queue.cards.filter((c) => c.cardType !== 'wild').length : total;
 
   useGameStore.getState().initializeBasket(queue, plan.source || plan.picks ? 'barkada' : modeForBasket(basket));
-  useWalletStore.getState().apply('pot', -paid, 'Pot for a tag.ai game');
+  if (!room.online) useWalletStore.getState().apply('pot', -paid, 'Pot for a tag.ai game');
   useGameStore.getState().fundPot(paid);
   useGameStore.setState({
     turnRotation: {

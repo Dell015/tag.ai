@@ -2,12 +2,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Avatar, Button, Chip, Icon, RollNumber, Screen, Splash, Stepper } from '@/components/ui';
+import { Avatar, Button, Chip, Icon, RollNumber, Screen, Splash, Stepper, toast } from '@/components/ui';
 import { MIN_POT, formatPot } from '@/lib/game/pot';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
 import { agreeOnline } from '@/lib/data/room-sync';
-import { rooms, type RoomConfig } from '@/lib/data/rooms';
+import { PotPanel } from '@/components/lobby/PotPanel';
+import { rooms, potFunded, type RoomConfig } from '@/lib/data/rooms';
 import { MIN_OWN_CARDS, allAgreed, roomPlan, startGame } from '@/lib/data/start-game';
 import { availableSources } from '@/lib/data/game-source';
 import { picksHaveAdult, picksPool } from '@/lib/data/game-pool';
@@ -89,10 +90,13 @@ export default function SetupPage() {
   const pool = picksPool(picks, library2);
   const poolSize = pool.length;
   const hasAdult = picksHaveAdult(picks, pool);
-  const minPot = Math.min(MIN_POT, poolSize);
+  const funded = potFunded(room);
+  const online = !!room.online;
+  const minPot = Math.max(Math.min(MIN_POT, poolSize), Math.min(funded, poolSize));
   const setPicks = (next: typeof picks) => {
     const size = picksPool(next, library2).length;
-    set({ picks: next, potStyle: 'solo', source: undefined, basket: {}, playerBaskets: {}, pot: Math.min(Math.max(cfg.pot ?? MIN_POT, Math.min(MIN_POT, size)), size) });
+    if (funded > 0 && size < funded) { toast(`The pot already has ${funded} coins. Keep at least ${funded} cards.`, { tone: 'warn' }); return; }
+    set({ picks: next, potStyle: 'solo', source: undefined, basket: {}, playerBaskets: {}, pot: Math.min(Math.max(cfg.pot ?? MIN_POT, Math.min(MIN_POT, size), funded), size) });
   };
   const toggleDeck = (id: DeckId) => { haptic('tap'); setPicks({ ...picks, decks: picks.decks.includes(id) ? picks.decks.filter((x) => x !== id) : [...picks.decks, id] }); };
   const toggleSource = (x: (typeof sources)[number]) => {
@@ -105,17 +109,18 @@ export default function SetupPage() {
   const cards = plan.cards;
   const total = plan.coins;
   const wallet = profile.coins;
-  const potOk = cards >= MIN_OWN_CARDS && wallet + 1e-9 >= total;
+  // Online rooms are paid by everyone from their own wallets, so the pot must be full instead of the host's wallet being big enough.
+  const potOk = cards >= MIN_OWN_CARDS && (online ? funded >= cards : wallet + 1e-9 >= total);
   const adultBlocked = hasAdult && !adultOk;
   const accentDeck = picks.decks.length === 1 && picks.sources.length === 0 ? DECKS.find((d) => d.id === picks.decks[0]) : undefined;
   const blocked = key === 'basket'
-    ? (poolSize === 0 ? 'Pick a deck' : cards < MIN_OWN_CARDS ? `Pick more cards, at least ${MIN_OWN_CARDS}` : total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
+    ? (poolSize === 0 ? 'Pick a deck' : cards < MIN_OWN_CARDS ? `Pick more cards, at least ${MIN_OWN_CARDS}` : !online && total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
     : null;
 
   const footer = view < TOTAL ? (
     <Button size="lg" full disabled={blocked !== null} onClick={() => setStep(step + 1)}>{blocked ?? 'Next'}</Button>
   ) : isHost ? (
-    <Button size="lg" full disabled={!allAgreed(room) || !potOk || adultBlocked} onClick={start}>{!potOk ? 'Fix your cards first' : adultBlocked ? 'Confirm everyone is 18 or older' : allAgreed(room) ? 'Start game' : `Waiting for ${pending} to agree`}</Button>
+    <Button size="lg" full disabled={!allAgreed(room) || !potOk || adultBlocked} onClick={start}>{!potOk ? (cards >= MIN_OWN_CARDS && online ? `Waiting for the pot: ${funded} of ${cards}` : 'Fix your cards first') : adultBlocked ? 'Confirm everyone is 18 or older' : allAgreed(room) ? 'Start game' : `Waiting for ${pending} to agree`}</Button>
   ) : (
     <p className="pb-2 text-center text-lg text-muted">Waiting for the host to start.</p>
   );
@@ -219,8 +224,9 @@ export default function SetupPage() {
             <p className="mt-3 rounded-xl bg-raised px-3 py-2 text-base font-semibold">Coins in the pot are not refunded. Cards you do not get to play are lost, so pick the pot you really want.</p>
           </section>
 
-          <p className="mt-5 text-lg">You have <b>{formatPot(wallet)} coins</b>. When the cards run out you can add more.</p>
-          {total > wallet && (
+          {online && <div className="mt-5"><PotPanel room={room} myId={profile.id} wallet={wallet} /></div>}
+          {!online && <p className="mt-5 text-lg">You have <b>{formatPot(wallet)} coins</b>. When the cards run out you can add more.</p>}
+          {!online && total > wallet && (
             <p className="mt-2 text-lg font-bold text-danger">You are {formatPot(total - wallet)} coins short. <Link href="/shop" className="underline">Add coins</Link></p>
           )}
         </>
@@ -280,12 +286,13 @@ export default function SetupPage() {
           </section>
           <ul className="mt-5 space-y-2 text-lg">
             <li><b>{template?.name ?? 'Classic'}.</b> <span className="text-muted">{template?.summary}</span></li>
-            <li><b>Pot:</b> <span className="text-muted">{formatPot(total)} coins for {cards} cards, plus free wild cards</span></li>
+            <li><b>Pot:</b> <span className="text-muted">{formatPot(total)} coins for {cards} cards, plus free wild cards{online ? '. Paid by everyone.' : ''}</span></li>
             {cfg.nonDrinkingMode && <li><b>Non-drinking mode</b> is on.</li>}
             {cfg.customDrinkRules.map((r, i) => <li key={i}>{r}</li>)}
             {cfg.comfortFilters.length > 0 && <li><b>Skipping:</b> <span className="text-muted">{cfg.comfortFilters.join(', ')}</span></li>}
             <li className="text-muted">Anyone can skip a card. Nobody has to answer. Nobody drives.</li>
           </ul>
+          {online && <div className="mt-6"><PotPanel room={room} myId={profile.id} wallet={wallet} /></div>}
           <h3 className="mt-8 text-4xl">Tap your name to agree</h3>
           <p className="mb-3 mt-1 text-base text-muted">The order you tap is the order you play. First tap goes first. Tap again to undo.</p>
           <div className="grid grid-cols-3 gap-3">

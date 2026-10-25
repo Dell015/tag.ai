@@ -56,6 +56,8 @@ export interface Room {
   createdAt: number;
   /** True once the room lives on the server, so other phones can join it. */
   online?: boolean;
+  /** Online rooms: coins each account has put in the pot, kept by the server. */
+  paid?: Record<string, number>;
 }
 
 export interface RoomRepository {
@@ -191,6 +193,9 @@ export const rooms: RoomRepository = localRoomRepository;
 // ─── Helpers shared by the UI ────────────────────────────────────────────────
 
 export const MAX_PLAYERS = 20;
+
+/** Coins in the pot so far (online rooms). */
+export const potFunded = (room: Room): number => Object.values(room.paid ?? {}).reduce((a, b) => a + b, 0);
 
 export function nextTurnOrder(room: Room): number {
   return room.players.reduce((max, p) => Math.max(max, p.turnOrder), -1) + 1;
