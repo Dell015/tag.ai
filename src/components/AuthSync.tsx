@@ -18,7 +18,7 @@ type Slot = 'frame' | 'back' | 'theme';
 export function applyAccount(data: AccountData | null) {
   const account = useAccountStore.getState();
   if (!data) {
-    account.set({ status: 'signedOut', userId: null, email: null, needsProfile: false, isAdmin: false });
+    account.set({ status: 'signedOut', userId: null, email: null, needsProfile: false, isAdmin: false, adultConfirmed: false });
     useProfileStore.setState({ profile: null, savedCardIds: [], trashedCardIds: [] });
     useWalletStore.setState({ transactions: [] });
     useShopStore.setState({ owned: [], equipped: {} });
@@ -26,7 +26,7 @@ export function applyAccount(data: AccountData | null) {
     return;
   }
   const needsProfile = !data.profile.username;
-  account.set({ status: 'signedIn', userId: data.userId, email: data.email, needsProfile, isAdmin: data.isAdmin });
+  account.set({ status: 'signedIn', userId: data.userId, email: data.email, needsProfile, isAdmin: data.isAdmin, adultConfirmed: data.profile.adultConfirmed });
   if (needsProfile) {
     useProfileStore.setState({ profile: null });
     return;

@@ -17,6 +17,8 @@ interface AccountState {
   /** Signed in but has not picked a nickname and colour yet. */
   needsProfile: boolean;
   isAdmin: boolean;
+  /** The player has passed the age gate (profiles.is_adult_confirmed). */
+  adultConfirmed: boolean;
   set: (patch: Partial<Omit<AccountState, 'set'>>) => void;
 }
 
@@ -26,6 +28,7 @@ export const useAccountStore = create<AccountState>()((set) => ({
   email: null,
   needsProfile: false,
   isAdmin: false,
+  adultConfirmed: false,
   set: (patch) => set(patch),
 }));
 

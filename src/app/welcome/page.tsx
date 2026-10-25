@@ -7,8 +7,10 @@ import { useProfileStore, WELCOME_COINS } from '@/stores/profile-store';
 import { useHydrated } from '@/lib/hydration';
 import { supabaseConfigured } from '@/lib/supabase/config';
 import { useAccountStore } from '@/stores/account-store';
-import { completeProfile, sendEmailCode, verifyEmailCode } from '@/lib/supabase/account';
+import { completeProfile, confirmAdult, sendEmailCode, verifyEmailCode } from '@/lib/supabase/account';
 import { refreshAccount } from '@/components/AuthSync';
+import { AgeForm } from '@/components/AgeForm';
+import { ageLockLeft, lockText, setAgeLock } from '@/lib/age';
 
 function WelcomeInner() {
   const router = useRouter();
@@ -24,6 +26,9 @@ function WelcomeInner() {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [adultOk, setAdultOk] = useState(false);
+  const [lockLeft, setLockLeft] = useState(0);
+  useEffect(() => { const left = ageLockLeft(); if (left > 0) { setLockLeft(left); setStep(3); } }, []);
 
   // Signed in but no nickname yet (for example the tab was closed after the code): go straight to the name step.
   useEffect(() => {
@@ -59,12 +64,12 @@ function WelcomeInner() {
     return (
       <div className="flex min-h-dvh flex-col px-5 safe-top safe-bottom">
         <button onClick={() => setStep(0)} aria-label="Back" className="flex h-tap w-tap items-center justify-center rounded-xl border-2 border-line"><Icon name="back" /></button>
-        <h1 className="mt-5 text-6xl">Are you 18 or older?</h1>
+        <h1 className="mt-5 text-6xl">When were you born?</h1>
         <p className="mt-4 text-lg text-muted">tag.ai is a drinking game, so it is for adults only.</p>
-        <div className="mt-auto space-y-3 pt-8">
-          <Button size="lg" full onClick={() => setStep(supabaseConfigured ? 4 : 2)}>Yes, I&apos;m 18 or older</Button>
-          <Button full variant="secondary" onClick={() => setStep(3)}>No</Button>
-        </div>
+        <AgeForm
+          onAdult={() => { setAdultOk(true); setStep(supabaseConfigured ? 4 : 2); }}
+          onUnderage={() => { setAgeLock(); setLockLeft(ageLockLeft()); setStep(3); }}
+        />
       </div>
     );
   }
@@ -73,7 +78,7 @@ function WelcomeInner() {
     return (
       <div className="flex min-h-dvh flex-col justify-center px-5 safe-top safe-bottom">
         <h1 className="text-6xl">tag.ai is for adults.</h1>
-        <p className="mt-4 text-lg text-muted">Come back when you&apos;re 18.</p>
+        <p className="mt-4 text-lg text-muted">Come back when you&apos;re 18.{lockLeft > 0 && <> You can try again in {lockText(lockLeft)}.</>}</p>
       </div>
     );
   }
@@ -119,6 +124,7 @@ function WelcomeInner() {
             setBusy(true); setError('');
             const r = await verifyEmailCode(email, code);
             if (!r.ok) { setBusy(false); setError(r.error ?? 'That code did not work.'); return; }
+            if (adultOk) await confirmAdult();
             await refreshAccount();
             setBusy(false);
             if (useAccountStore.getState().needsProfile) setStep(2); else router.replace(dest);
