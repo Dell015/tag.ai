@@ -77,11 +77,11 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex min-h-[calc(100dvh-4.25rem-max(env(safe-area-inset-bottom),16px))] flex-col px-4 pb-3 safe-top">
+    <div className="flex min-h-[calc(100dvh-5.5rem-max(env(safe-area-inset-bottom),14px))] flex-col px-4 pb-3 safe-top">
       <header className="flex items-center justify-between">
         <Logo />
-        <Link href="/me" aria-label="Your profile" className="flex h-tap items-center gap-3 rounded-lg border-2 border-line pl-4 pr-1.5">
-          <span className="font-extrabold tabular-nums"><RollNumber value={profile.coins} format={formatPot} /> coins</span>
+        <Link href="/me" aria-label={`Your profile, ${formatPot(profile.coins)} coins`} className="flex h-tap items-center gap-3 rounded-lg border-2 border-line pl-4 pr-1.5">
+          <span className="inline-flex items-center gap-1.5 font-extrabold tabular-nums"><Icon name="coin" size={20} className="text-accent" /><RollNumber value={profile.coins} format={formatPot} /></span>
           <Avatar value={profile.avatar} name={profile.username} size={38} frame={frameValue} />
         </Link>
       </header>

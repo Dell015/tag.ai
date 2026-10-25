@@ -3,7 +3,7 @@ import { fillDrink } from '@/lib/game/card-kinds';
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Avatar, Badge, Button, CoinAmount, CoinStack, PAINT, Screen, SegmentedControl, Sheet, toast } from '@/components/ui';
+import { Avatar, Badge, Button, CoinCount, CoinStack, PAINT, Screen, SegmentedControl, Sheet, toast } from '@/components/ui';
 import { COIN_PACKAGES, PACK_CARDS, SHOP_ITEMS, packCardCount, packPreview, type CoinPackage, type ShopItem } from '@/lib/data/shop-catalogue';
 import { cardBack } from '@/lib/card-back';
 import { formatPot } from '@/lib/game/pot';
@@ -50,7 +50,7 @@ function ShopInner() {
   };
 
   return (
-    <Screen title="Shop" action={<span className="shrink-0 rounded-lg border-2 border-line px-3 py-1.5 text-base font-extrabold"><CoinAmount value={Number(formatPot(coins))} /></span>}>
+    <Screen title="Shop" action={<span className="shrink-0 rounded-lg border-2 border-line px-3 py-1.5 text-base font-extrabold"><CoinCount value={Number(formatPot(coins))} /></span>}>
       <div className="mb-5 mt-1"><SegmentedControl<Seg> label="Shop sections" options={SEGS} value={seg} onChange={setSeg} /></div>
 
       {seg === 'coins' && (

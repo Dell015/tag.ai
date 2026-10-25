@@ -1,7 +1,10 @@
 'use client';
-import { Avatar, AvatarPicker, CoinAmount, CoinStack, ListRow, Plate, Screen, Section, toast } from '@/components/ui';
+import { Avatar, AvatarPicker, CoinAmount, CoinStack, Icon, ListRow, Plate, Screen, Section, toast } from '@/components/ui';
+import { completeProfile } from '@/lib/supabase/account';
+import { refreshAccount } from '@/components/AuthSync';
+import { photoToAvatar } from '@/lib/avatar-photo';
 import { useProfileStore } from '@/stores/profile-store';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useShopStore } from '@/stores/shop-store';
 import { useAccountStore } from '@/stores/account-store';
 import { itemById } from '@/lib/data/shop-catalogue';
@@ -15,24 +18,53 @@ export default function MePage() {
   const [name, setName] = useState(profile.username);
   const [editing, setEditing] = useState(false);
 
-  const commit = () => {
+  const connected = useAccountStore((a) => a.status === 'signedIn');
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  /** Saves name and look. With an account it goes to the server, so it survives signing in on another phone. */
+  const save = async (next: { username?: string; avatar?: string }) => {
+    const username = next.username ?? profile.username;
+    const avatar = next.avatar ?? profile.avatar;
+    if (connected) {
+      const r = await completeProfile(username, avatar);
+      if (!r.ok) { toast(r.error ?? 'Could not save.', { tone: 'warn' }); setName(profile.username); return false; }
+      await refreshAccount();
+    } else update({ username, avatar });
+    return true;
+  };
+
+  const commit = async () => {
     const n = name.trim();
-    if (n.length >= 2 && n !== profile.username) { update({ username: n }); toast('Saved', { tone: 'ok' }); }
+    if (n.length >= 2 && n !== profile.username) { if (await save({ username: n })) toast('Saved', { tone: 'ok' }); }
     else setName(profile.username);
+  };
+
+  const pickPhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setBusy(true);
+    const r = await photoToAvatar(file, connected ? profile.id : null);
+    if (!r.ok) { setBusy(false); toast(r.error, { tone: 'warn' }); return; }
+    if (await save({ avatar: r.value })) toast('Photo saved', { tone: 'ok' });
+    setBusy(false);
   };
 
   return (
     <Screen title="Me">
       <div className="flex items-center gap-4">
-        <Avatar value={profile.avatar} name={profile.username} size={72} frame={frameId ? itemById(frameId)?.value : undefined} />
+        <button onClick={() => fileRef.current?.click()} disabled={busy} aria-label="Change your photo" className="relative shrink-0 active:scale-95">
+          <Avatar value={profile.avatar} name={profile.username} size={80} frame={frameId ? itemById(frameId)?.value : undefined} className={busy ? 'opacity-50' : undefined} />
+          <span aria-hidden className="absolute -bottom-0.5 -right-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 border-bg bg-accent text-onaccent"><Icon name="camera" size={16} /></span>
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { void pickPhoto(e.target.files?.[0]); e.target.value = ''; }} />
         <input
           value={name} maxLength={16} aria-label="Nickname"
-          onChange={(e) => setName(e.target.value)} onBlur={commit}
+          onChange={(e) => setName(e.target.value)} onBlur={() => void commit()}
           className="h-cta min-w-0 flex-1 rounded-xl border-2 border-line bg-transparent px-4 text-3xl font-extrabold focus:border-accent"
         />
       </div>
-      <button onClick={() => setEditing((v) => !v)} className="mt-4 h-tap text-base font-extrabold text-accent">{editing ? 'Done' : 'Change colour'}</button>
-      {editing && <div className="mb-2"><AvatarPicker value={profile.avatar} onChange={(a) => update({ avatar: a })} /></div>}
+      <button onClick={() => setEditing((v) => !v)} className="mt-4 h-tap text-base font-extrabold text-accent">{editing ? 'Done' : 'Or pick a colour'}</button>
+      {editing && <div className="mb-2"><AvatarPicker value={profile.avatar} onChange={(a) => void save({ avatar: a })} /></div>}
 
       <div className="mt-5 flex items-center justify-between rounded-2xl border-b-4 border-black/35 bg-[#FFC72C] px-5 py-4 text-[#181310]">
         <div>
@@ -44,7 +76,7 @@ export default function MePage() {
 
       <Section className="mt-6" title="Your stuff">
         <Plate>
-          <ListRow icon="coin" tone="yellow" label="Wallet" hint="Balance and history" href="/me/wallet" />
+          <ListRow icon="wallet" tone="yellow" label="Wallet" hint="Balance and history" href="/me/wallet" />
           <ListRow icon="heart" tone="pink" label="Saved cards" value={saved} href="/me/saved" />
           <ListRow icon="plus" tone="green" label="Suggest a card" hint="Write a card, friends like it" href="/me/suggest" />
           <ListRow icon="up" tone="orange" label="Leaderboard" hint="Sample data until accounts launch" href="/me/leaderboard" />

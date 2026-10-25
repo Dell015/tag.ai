@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn';
+import { photoSrc } from '@/lib/avatar-photo';
 
 /** Flat paint colours; the avatar is a colour plus the first letter of the name. */
 export const AVATAR_COLORS = [
@@ -14,7 +15,7 @@ export const AVATAR_COLORS = [
   { bg: '#A4D93D', fg: '#181310' },
 ];
 
-/** Avatar value is "c0".."c9". Anything else (legacy emoji, URLs) falls back to a colour from the name. */
+/** Avatar value is "c0".."c9", or a photo (see lib/avatar-photo). Anything else (legacy emoji, URLs) falls back to a colour from the name. */
 export function avatarColor(value: string | undefined | null, name = '') {
   const m = value?.match(/^c(\d+)$/);
   if (m) return AVATAR_COLORS[Number(m[1]) % AVATAR_COLORS.length];
@@ -35,7 +36,11 @@ export function Avatar({ value, name = '', size = 48, className, frame }: { valu
   const c = avatarColor(value, name);
   const initial = (name.trim()[0] ?? '?').toUpperCase();
   const fr = frame ? frameStyle(frame, size) : null;
-  const face = (
+  const photo = photoSrc(value);
+  const face = photo ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={photo} alt="" aria-hidden width={size} height={size} style={{ width: size, height: size }} className={cn('shrink-0 select-none rounded-full object-cover', className)} />
+  ) : (
     <span
       aria-hidden
       style={{ width: size, height: size, fontSize: size * 0.5, background: c.bg, color: c.fg }}

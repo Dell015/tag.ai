@@ -1,4 +1,5 @@
 'use client';
+import { refreshAccount } from '@/components/AuthSync';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge, Button, Chip, ConfirmSheet, EmptyState, Screen, SegmentedControl, TextField, toast } from '@/components/ui';
@@ -130,32 +131,34 @@ function Cards() {
 }
 
 function Coins() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [ask, setAsk] = useState(false);
   const [busy, setBusy] = useState(false);
   const n = Number(amount);
-  const valid = username.trim().length >= 2 && Number.isInteger(n) && n >= 1 && n <= 10000;
+  const valid = /^\S+@\S+\.\S+$/.test(email.trim()) && Number.isInteger(n) && n >= 1 && n <= 10000;
+  const tooMany = Number.isFinite(n) && n > 10000;
   const give = async () => {
     setBusy(true);
-    const r = await adminGiveCoins(username.trim(), n, note.trim());
+    const r = await adminGiveCoins(email.trim(), n, note.trim());
     setBusy(false);
     setAsk(false);
     if (!r.ok) { toast(r.error ?? 'Could not give coins.', { tone: 'warn' }); return; }
-    toast(`Gave ${n} coins to ${username.trim()}. They now have ${r.data}.`, { tone: 'ok' });
+    toast(`Gave ${n} coins to ${email.trim()}. They now have ${r.data}.`, { tone: 'ok' });
+    void refreshAccount();
     setAmount(''); setNote('');
   };
   return (
     <div>
-      <p className="text-base text-muted">For beta testing, before payments exist. The coins are added to the player&apos;s ledger as a top up.</p>
+      <p className="text-base text-muted">For beta testing, before payments exist. Use the email the player signed in with. The coins are added to their ledger as a top up.</p>
       <form className="mt-3 space-y-3" onSubmit={(e) => { e.preventDefault(); if (valid) setAsk(true); }}>
-        <TextField label="Username" value={username} maxLength={16} onChange={(e) => setUsername(e.target.value)} />
-        <TextField label="Coins" inputMode="numeric" value={amount} maxLength={5} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))} />
+        <TextField label="Player email" type="email" inputMode="email" autoCapitalize="none" value={email} maxLength={120} onChange={(e) => setEmail(e.target.value)} />
+        <TextField label="Coins" inputMode="numeric" helper="Whole number, 1 to 10000." error={tooMany ? 'Most you can give at once is 10000.' : null} value={amount} maxLength={5} onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))} />
         <TextField label="Note (optional)" value={note} maxLength={80} onChange={(e) => setNote(e.target.value)} />
         <Button full type="submit" disabled={!valid || busy}>Give coins</Button>
       </form>
-      <ConfirmSheet open={ask} title={`Give ${n} coins?`} body={`${username.trim()} will get ${n} coins. This cannot be taken back from here.`} confirmLabel="Give coins" onConfirm={() => void give()} onClose={() => setAsk(false)} />
+      <ConfirmSheet open={ask} title={`Give ${n} coins?`} body={`${email.trim()} will get ${n} coins. This cannot be taken back from here.`} confirmLabel="Give coins" onConfirm={() => void give()} onClose={() => setAsk(false)} />
     </div>
   );
 }

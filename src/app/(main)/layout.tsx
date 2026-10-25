@@ -12,7 +12,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-dvh">
       {/* Room for the fixed tab bar on the five top-level screens only. */}
-      <div className={cn('min-h-dvh', isTabPath(path) && 'pb-[calc(4.25rem+max(env(safe-area-inset-bottom),16px))]')}>{children}</div>
+      <div className={cn('min-h-dvh', isTabPath(path) && 'pb-[calc(5.5rem+max(env(safe-area-inset-bottom),14px))]')}>{children}</div>
       <BottomNav />
     </div>
   );

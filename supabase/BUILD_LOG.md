@@ -41,3 +41,6 @@ Cards and topics are read from the database after sign in (CLAUDE.md D40). Real 
 007_welcome_30 applied 2026-10-25: welcome gift trigger now gives 30 coins.
 
 008_admin_give_coins applied 2026-10-25: admin-only RPC that adds coins through the ledger. Checked: admin gives 25, zero/fraction/unknown username refused, non-admin refused.
+
+- 009_admin_give_coins_email: admin_give_coins now takes target_email (looked up in auth.users). Applied and tested (admin ok, unknown email rejected).
+- 010_profile_photos: public avatars bucket (JPEG, 200KB), own-folder insert/update/delete policies, profiles.avatar accepts photo paths, complete_profile updated. Applied.
