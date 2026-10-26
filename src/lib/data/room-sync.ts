@@ -20,7 +20,11 @@ const sig = (r: Room) => JSON.stringify([r.status, r.players, r.agreedPlayers, r
 /** The host's room with the server's view of who joined and who agreed folded in. */
 export function mergeServer(local: Room, server: Room): Room {
   const guests = local.players.filter((p) => p.isGuest);
-  const accounts = server.players.filter((p) => !p.isGuest);
+  // The host owns the seat order, so players already on the host's phone keep their seat number.
+  const accounts = server.players.filter((p) => !p.isGuest).map((p) => {
+    const mine = local.players.find((l) => l.userId === p.userId);
+    return mine ? { ...p, turnOrder: mine.turnOrder } : p;
+  });
   const agreed = Array.from(new Set([...server.agreedPlayers, ...local.agreedPlayers]));
   return { ...local, paid: server.paid ?? local.paid, players: [...accounts, ...guests], agreedPlayers: agreed.filter((id) => [...accounts, ...guests].some((p) => p.userId === id)) };
 }

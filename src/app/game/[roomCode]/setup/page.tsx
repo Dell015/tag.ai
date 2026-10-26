@@ -8,6 +8,7 @@ import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
 import { agreeOnline } from '@/lib/data/room-sync';
 import { PotPanel } from '@/components/lobby/PotPanel';
+import { SeatCircle } from '@/components/lobby/SeatCircle';
 import { rooms, potFunded, type RoomConfig } from '@/lib/data/rooms';
 import { MIN_OWN_CARDS, allAgreed, roomPlan, startGame } from '@/lib/data/start-game';
 import { availableSources } from '@/lib/data/game-source';
@@ -21,10 +22,10 @@ import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
 
 
-type StepKey = 'basket' | 'topics' | 'drinks' | 'house';
-const STEPS: StepKey[] = ['basket', 'topics', 'house'];
+type StepKey = 'basket' | 'topics' | 'seats' | 'drinks' | 'house';
+const STEPS: StepKey[] = ['basket', 'topics', 'seats', 'house'];
 const TOTAL = STEPS.length;
-const TITLES: Record<StepKey, string> = { basket: 'Pick your decks', topics: 'Skip these topics', drinks: 'Drink rules', house: 'House rules' };
+const TITLES: Record<StepKey, string> = { basket: 'Pick your decks', topics: 'Skip these topics', seats: 'Who sits where', drinks: 'Drink rules', house: 'House rules' };
 
 function Row({ selected, onClick, children }: { selected?: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -47,6 +48,7 @@ export default function SetupPage() {
   const { status, room } = useRoom(code);
   const trashed = useProfileStore((s) => s.trashedCardIds);
   const [step, setStep] = useState(1);
+  const [seatOrder, setSeatOrder] = useState<string[]>([]);
   const [word, setWord] = useState('');
   const [rule, setRule] = useState('');
   const [adultOk, setAdultOk] = useState(false);
@@ -113,12 +115,15 @@ export default function SetupPage() {
   const potOk = cards >= MIN_OWN_CARDS && (online ? funded >= cards : wallet + 1e-9 >= total);
   const adultBlocked = hasAdult && !adultOk;
   const accentDeck = picks.decks.length === 1 && picks.sources.length === 0 ? DECKS.find((d) => d.id === picks.decks[0]) : undefined;
-  const blocked = key === 'basket'
+  const seated = seatOrder.filter((id) => room.players.some((p) => p.userId === id));
+  const commitSeats = () => rooms.update(code, (r) => ({ ...r, players: r.players.map((p) => ({ ...p, turnOrder: seated.indexOf(p.userId) })) }));
+  const next = () => { if (key === 'seats') commitSeats(); setStep(step + 1); };
+  const blocked = key === 'seats' ? (seated.length < room.players.length ? 'Give everyone a seat' : null) : key === 'basket'
     ? (poolSize === 0 ? 'Pick a deck' : cards < MIN_OWN_CARDS ? `Pick more cards, at least ${MIN_OWN_CARDS}` : !online && total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
     : null;
 
   const footer = view < TOTAL ? (
-    <Button size="lg" full disabled={blocked !== null} onClick={() => setStep(step + 1)}>{blocked ?? 'Next'}</Button>
+    <Button size="lg" full disabled={blocked !== null} onClick={next}>{blocked ?? 'Next'}</Button>
   ) : isHost ? (
     <Button size="lg" full disabled={!allAgreed(room) || !potOk || adultBlocked} onClick={start}>{!potOk ? (cards >= MIN_OWN_CARDS && online ? `Waiting for the pot: ${funded} of ${cards}` : 'Fix your cards first') : adultBlocked ? 'Confirm everyone is 18 or older' : allAgreed(room) ? 'Start game' : `Waiting for ${pending} to agree`}</Button>
   ) : (
@@ -278,6 +283,13 @@ export default function SetupPage() {
         </>
       )}
 
+      {key === 'seats' && (
+        <>
+          <p className="-mt-2 mb-5 text-base text-muted">Tap names in the order people sit around the table, going clockwise. The first seat plays first.</p>
+          <SeatCircle players={room.players} order={seated} onChange={setSeatOrder} />
+        </>
+      )}
+
       {key === 'house' && (
         <>
           <section data-mode={accentDeck?.mode} className="rounded-card bg-accent p-5 text-onaccent">
@@ -294,7 +306,7 @@ export default function SetupPage() {
           </ul>
           {online && <div className="mt-6"><PotPanel room={room} myId={profile.id} wallet={wallet} /></div>}
           <h3 className="mt-8 text-4xl">Tap your name to agree</h3>
-          <p className="mb-3 mt-1 text-base text-muted">The order you tap is the order you play. First tap goes first. Tap again to undo.</p>
+          <p className="mb-3 mt-1 text-base text-muted">Everyone taps their own name to say yes to the rules. Tap again to undo.</p>
           <div className="grid grid-cols-3 gap-3">
             {[...room.players].sort((a, b) => a.turnOrder - b.turnOrder).map((p) => {
               const ok = room.agreedPlayers.includes(p.userId);
@@ -303,7 +315,7 @@ export default function SetupPage() {
                 <button key={p.userId} disabled={!canTap} onClick={() => { haptic('success'); agree(p.userId); }} aria-pressed={ok}
                   className={cn('relative flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-colors active:scale-95', ok ? 'border-ok bg-ok/15' : 'border-line', !canTap && 'opacity-50')}>
                   <Avatar value={p.avatarUrl} name={p.displayName} size={56} />
-                  {ok && <span className="sign absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-ok text-sm text-bg" aria-label={`Plays number ${room.agreedPlayers.indexOf(p.userId) + 1}`}>{room.agreedPlayers.indexOf(p.userId) + 1}</span>}
+                  {ok && <span className="sign absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-ok text-bg" aria-label="Agreed"><Icon name="check" size={16} /></span>}
                   <span className="w-full truncate text-center text-base font-bold">{p.displayName}</span>
                 </button>
               );

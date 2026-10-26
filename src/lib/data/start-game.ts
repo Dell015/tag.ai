@@ -25,10 +25,9 @@ export function allAgreed(room: Room): boolean {
   return room.players.length >= 2 && room.players.every((p) => room.agreedPlayers.includes(p.userId));
 }
 
-/** Players in the order they tapped to agree (everyone has agreed by the time a game starts). */
+/** Players in the seat order the host arranged (turnOrder), numbered from 0. */
 export function playOrder(room: Room) {
-  const at = (id: string) => { const i = room.agreedPlayers.indexOf(id); return i < 0 ? room.players.length : i; };
-  return [...room.players].sort((a, b) => at(a.userId) - at(b.userId) || a.turnOrder - b.turnOrder).map((p, i) => ({ ...p, turnOrder: i }));
+  return [...room.players].sort((a, b) => a.turnOrder - b.turnOrder).map((p, i) => ({ ...p, turnOrder: i }));
 }
 
 /** What the table bought: cards per deck, and what they cost in coins. */

@@ -14,8 +14,10 @@ describe('allAgreed', () => {
 });
 
 describe('playOrder', () => {
-  it('follows the order players tapped to agree', () => {
-    const order = playOrder(room(['a', 'b', 'c'], ['c', 'a', 'b']));
+  it('follows the seats the host arranged, not who agreed first', () => {
+    const r = room(['a', 'b', 'c'], ['c', 'a', 'b']);
+    const seated = { ...r, players: r.players.map((x) => ({ ...x, turnOrder: { c: 0, a: 1, b: 2 }[x.userId] as number })) };
+    const order = playOrder(seated);
     expect(order.map((x) => x.userId)).toEqual(['c', 'a', 'b']);
     expect(order.map((x) => x.turnOrder)).toEqual([0, 1, 2]);
   });

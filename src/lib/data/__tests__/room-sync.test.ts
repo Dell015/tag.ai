@@ -30,6 +30,16 @@ describe('mergeServer', () => {
   });
 });
 
+describe('seats', () => {
+  it('keeps the seat order the host set', () => {
+    const local = room([p('host', { turnOrder: 1 }), p('friend', { turnOrder: 0 })], []);
+    const server = room([p('host', { turnOrder: 0 }), p('friend', { turnOrder: 1 })], []);
+    const merged = mergeServer(local, server);
+    expect(merged.players.find((x) => x.userId === 'friend')?.turnOrder).toBe(0);
+    expect(merged.players.find((x) => x.userId === 'host')?.turnOrder).toBe(1);
+  });
+});
+
 describe('pot', () => {
   it('adds up what everyone paid', () => {
     expect(potFunded({ ...room([p('host')], []), paid: { a: 4, b: 6 } })).toBe(10);
