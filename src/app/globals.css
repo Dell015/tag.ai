@@ -105,6 +105,8 @@ h1, h2, h3, .display {
 :focus-visible { outline: 3px solid rgb(var(--accent)); outline-offset: 3px; border-radius: 6px; }
 
 .safe-top    { padding-top: max(env(safe-area-inset-top), 14px); }
+/* Tab screens already have the top bar, which handles the notch. */
+[data-topbar] .safe-top { padding-top: 0.5rem; }
 .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 16px); }
 
 /* Game surfaces: long-press and drag must not select text. */

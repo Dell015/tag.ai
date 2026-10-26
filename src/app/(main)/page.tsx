@@ -1,12 +1,9 @@
 'use client';
 import { ADULT_TOPIC } from '@/lib/adult';
-import { formatPot } from '@/lib/game/pot';
 import { useSettingsStore } from '@/stores/settings-store';
-import { useShopStore } from '@/stores/shop-store';
-import { itemById } from '@/lib/data/shop-catalogue';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Avatar, CoinStack, stackFor, Dealt, Icon, RollNumber } from '@/components/ui';
+import { Dealt, Icon } from '@/components/ui';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
@@ -18,7 +15,7 @@ import { useTalkStore } from '@/stores/talk-store';
 import { useEffect, useState } from 'react';
 
 const TIPS = [
-  'Add friends by name. They do not need an account.',
+  'Friends without the app can be added by name. Friends with it join by code or QR.',
   'Skip is always allowed. Nobody has to answer.',
   'Wild cards are free. They never use coins from the pot.',
   'Pick how many cards to buy from each deck. Cheap decks last longer.',
@@ -38,8 +35,6 @@ export default function HomePage() {
     } catch { setResume(null); }
   }, [phase, profile.id]);
 
-  const frameId = useShopStore((st) => st.equipped.frame);
-  const frameValue = frameId ? itemById(frameId)?.value : undefined;
 
   const [tip, setTip] = useState<string | null>(null);
   const [coach, setCoach] = useState(false);
@@ -72,21 +67,14 @@ export default function HomePage() {
   const rows: { key: string; title: string; sub: string; hot?: boolean; href?: string; onClick?: () => void }[] = [
     ...(resume ? [{ key: 'resume', title: 'Resume game', sub: `Card ${cardNo} of ${cardTotal}`, hot: true, href: `/game/${resume}/play` }] : []),
     ...(talking ? [{ key: 'resume-talk', title: 'Resume topics', sub: `Topic ${Math.min(topicNo, topicTotal)} of ${topicTotal}`, hot: !resume, href: '/talk/play' }] : []),
-    { key: 'game', title: 'Drinking game', sub: 'Cards, dares and shots. Add friends by name.', onClick: host },
+    { key: 'game', title: 'Drinking game', sub: 'Cards, dares and shots. Play together on one phone or online.', onClick: host },
     { key: 'talk', title: 'Topic deck', sub: 'Just talk. Debates, dilemmas and stories.', href: '/talk' },
     { key: 'join', title: 'Join a room', sub: 'Got a code or a QR from a friend?', href: '/join' },
   ];
 
   return (
     <div className="mx-auto flex overflow-x-clip min-h-[calc(100dvh-5.5rem-max(env(safe-area-inset-bottom),14px))] max-w-md flex-col px-4 pb-3 safe-top lg:grid lg:min-h-dvh lg:max-w-5xl lg:grid-cols-2 lg:content-center lg:gap-x-16 lg:px-10">
-      <header className="flex items-center justify-end lg:hidden">
-        <Link href="/me" aria-label={`Your profile, ${formatPot(profile.coins)} coins`} className="flex h-tap items-center gap-3 rounded-lg border-2 border-line pl-4 pr-1.5">
-          <span className="inline-flex items-center gap-1.5 font-extrabold tabular-nums"><CoinStack count={stackFor(profile.coins)} size={28} /><RollNumber value={profile.coins} format={formatPot} /></span>
-          <Avatar value={profile.avatar} name={profile.username} size={38} frame={frameValue} />
-        </Link>
-      </header>
-
-      <section className="mt-6 lg:col-start-1 lg:row-start-1 lg:self-end">
+      <section className="mt-2 lg:col-start-1 lg:row-start-1 lg:self-end">
         <p className="text-lg text-muted">Kumusta, {profile.username}.</p>
         <h1 className="mt-3 text-[3.4rem] leading-[0.9] lg:text-[5rem]">Who&apos;s drinking<br />tonight?</h1>
       </section>
