@@ -46,7 +46,16 @@ export function makeView(nonDrinking = false): GameView {
     rule: s.activeRule ? fillDrink(s.activeRule, nonDrinking) : null,
     phase: s.sessionPhase === 'end' ? 'end' : 'playing',
     mode: s.gameMode,
+    ahead: aheadOf(s),
   };
+}
+
+/** Who is up next, by deck and heat only, so nobody sees the words early. */
+function aheadOf(s: ReturnType<typeof useGameStore.getState>): GameView['ahead'] {
+  const next = s.cardQueue.slice(s.currentCardIndex + 1, s.currentCardIndex + 6).filter((c) => c.cardType !== 'wild');
+  if (next.length === 0) return undefined;
+  const levels = next.map((c) => c.intensity);
+  return { decks: Array.from(new Set(next.map((c) => c.deckId).filter((d): d is string => !!d))).slice(0, 6), low: Math.min(...levels), high: Math.max(...levels), count: next.length };
 }
 
 /** Starts the game from the host's phone: builds the cards here, then the server records them and names the game phone. */

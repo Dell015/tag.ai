@@ -1,4 +1,4 @@
-import { rooms, potFunded, type Room } from '@/lib/data/rooms';
+import { rooms, potFunded, skipTopics, type Room } from '@/lib/data/rooms';
 import { autoPool } from '@/lib/data/card-pool';
 import { sourceCards } from '@/lib/data/game-source';
 import { picksPool } from '@/lib/data/game-pool';
@@ -13,6 +13,9 @@ import { buildBasketQueue, buildPoolQueue, modeForBasket } from '@/lib/game/card
 
 /** A stack needs at least this many cards to be played. */
 export const MIN_OWN_CARDS = 5;
+
+/** The longest game one pot can pay for. */
+export const MAX_CARDS = 500;
 
 export const LAST_ROOM_KEY = 'tagai-last-room';
 
@@ -41,7 +44,9 @@ export function roomPlan(room: Room) {
   const picks = room.config.picks;
   if (picks) {
     const pool = picksPool(picks, buildLibrary());
-    const cards = Math.min(room.config.pot ?? MIN_POT, pool.length);
+    // The pot decides the length. When it pays for more cards than exist, the stack is shuffled again (buildStack).
+    const pot = room.online ? potFunded(room) : room.config.pot ?? MIN_POT;
+    const cards = pool.length === 0 ? 0 : Math.max(0, Math.min(pot, MAX_CARDS));
     const label = [...picks.decks.map((id) => DECK_BY_ID[id]?.name ?? id), ...picks.sources.map((s) => s.name)].join(' + ');
     return { picks, pool, source: undefined, basket: {} as Basket, cards, coins: cards, label };
   }
@@ -70,7 +75,7 @@ export function startGame(room: Room, trashedCardIds: string[], opts2: { keepSta
 
   // The order players tapped to agree is the order they play.
   const players = playOrder(room);
-  const opts = { comfortFilters: room.config.comfortFilters, trashedCardIds, playerCount: players.length, fitPlayers: true };
+  const opts = { comfortFilters: skipTopics(room), trashedCardIds, playerCount: players.length, fitPlayers: true };
   const queue = plan.picks
     ? buildPoolQueue({ pool: plan.pool, count: plan.cards, ...opts })
     : plan.source

@@ -5,6 +5,7 @@ import { refreshAccount } from '@/components/AuthSync';
 import { photoToAvatar } from '@/lib/avatar-photo';
 import { useProfileStore } from '@/stores/profile-store';
 import { useEffect, useRef, useState } from 'react';
+import { useNotifications } from '@/hooks/use-notifications';
 import { useInboxStore } from '@/stores/inbox-store';
 import { supabaseConfigured } from '@/lib/supabase/config';
 import { useShopStore } from '@/stores/shop-store';
@@ -17,6 +18,7 @@ export default function MePage() {
   const saved = useProfileStore((s) => s.savedCardIds.length);
   const frameId = useShopStore((st) => st.equipped.frame);
   const unread = useInboxStore((i) => i.unread);
+  const { requests } = useNotifications();
   const loadInbox = useInboxStore((i) => i.load);
   useEffect(() => { if (supabaseConfigured) void loadInbox(); }, [loadInbox]);
   const [name, setName] = useState(profile.username);
@@ -80,12 +82,12 @@ export default function MePage() {
 
       <Section className="mt-6" title="Your stuff">
         <Plate>
-          <ListRow icon="mail" tone="blue" label="Inbox" hint={unread ? `${unread} new` : 'Updates and gifts'} value={unread || undefined} href="/me/inbox" />
+          <ListRow icon="mail" tone="blue" label="Notifications" hint={unread ? `${unread} new` : 'Invites, updates and gifts'} value={unread || undefined} href="/me/inbox" />
           <ListRow icon="wallet" tone="yellow" label="Wallet" hint="Balance and history" href="/me/wallet" />
           <ListRow icon="heart" tone="pink" label="Saved cards" value={saved} href="/me/saved" />
           <ListRow icon="plus" tone="green" label="Suggest a card" hint="Write a card, friends like it" href="/me/suggest" />
           <ListRow icon="up" tone="orange" label="Leaderboard" hint="Sample data until accounts launch" href="/me/leaderboard" />
-          {connected && <ListRow icon="users" tone="green" label="Friends" hint="See who is online, invite them to a room" href="/me/friends" />}
+          {connected && <ListRow icon="users" tone="green" label="Friends" hint={requests ? `${requests} new ${requests === 1 ? 'request' : 'requests'}` : 'See who is online, invite them to a room'} value={requests || undefined} href="/me/friends" />}
           <ListRow icon="users" tone="blue" label="Invite friends" hint="You and a friend each get 5 coins" href="/me/referral" />
         </Plate>
       </Section>

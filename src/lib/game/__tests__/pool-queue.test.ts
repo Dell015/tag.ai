@@ -17,9 +17,9 @@ describe('buildPoolQueue (own stacks, liked cards, packs)', () => {
     expect(q.cards.some((c) => c.cardType === 'wild')).toBe(true);
     expect(real.reduce((a, c) => a + cardCost(c), 0)).toBe(10);
   });
-  it('a small stack gives a shorter game', () => {
+  it('a small stack is shuffled again, so the pot still pays for every card', () => {
     const q = buildPoolQueue({ pool: Array.from({ length: 6 }, (_, i) => card(i)), count: 30, ...opts });
-    expect(q.cards.filter((c) => c.cardType !== 'wild').length).toBeLessThanOrEqual(6);
+    expect(q.cards.filter((c) => c.cardType !== 'wild').length).toBe(30);
   });
   it('leaves trashed cards out', () => {
     const pool = Array.from({ length: 12 }, (_, i) => card(i));

@@ -6,12 +6,12 @@ import { Avatar, Button, Chip, Icon, RollNumber, Screen, Splash, Stepper, toast 
 import { MIN_POT, formatPot } from '@/lib/game/pot';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
-import { agreeOnline } from '@/lib/data/room-sync';
+import { agreeOnline, setSkipsOnline } from '@/lib/data/room-sync';
 import { startGameOnline } from '@/lib/data/game-sync';
 import { PotPanel } from '@/components/lobby/PotPanel';
 import { SeatCircle } from '@/components/lobby/SeatCircle';
-import { rooms, potFunded, type RoomConfig } from '@/lib/data/rooms';
-import { MIN_OWN_CARDS, allAgreed, roomPlan, startGame } from '@/lib/data/start-game';
+import { rooms, potFunded, skipTopics, type RoomConfig } from '@/lib/data/rooms';
+import { MAX_CARDS, MIN_OWN_CARDS, allAgreed, roomPlan, startGame } from '@/lib/data/start-game';
 import { availableSources } from '@/lib/data/game-source';
 import { picksHaveAdult, picksPool } from '@/lib/data/game-pool';
 import { DECKS, DECK_GROUPS, DECK_BY_ID, deckPool, type DeckId } from '@/lib/game/decks';
@@ -23,10 +23,10 @@ import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
 
 
-type StepKey = 'basket' | 'topics' | 'seats' | 'drinks' | 'house';
-const STEPS: StepKey[] = ['basket', 'topics', 'seats', 'house'];
+type StepKey = 'basket' | 'pot' | 'seats' | 'drinks' | 'house';
+const STEPS: StepKey[] = ['basket', 'pot', 'seats', 'house'];
 const TOTAL = STEPS.length;
-const TITLES: Record<StepKey, string> = { basket: 'Pick your decks', topics: 'Skip these topics', seats: 'Who sits where', drinks: 'Drink rules', house: 'House rules' };
+const TITLES: Record<StepKey, string> = { basket: 'Pick your decks', pot: 'The pot', seats: 'Who sits where', drinks: 'Drink rules', house: 'House rules' };
 
 function Row({ selected, onClick, children }: { selected?: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -83,10 +83,17 @@ export default function SetupPage() {
   const key = STEPS[view - 1];
   const template = DRINK_RULE_TEMPLATES.find((t) => t.id === cfg.drinkRuleTemplate);
   const pending = room.players.filter((p) => !room.agreedPlayers.includes(p.userId)).length;
-  const customTopics = cfg.comfortFilters.filter((f) => !(PRESET_TOPICS as readonly string[]).includes(f));
 
-  const toggleTopic = (t: string) => set({ comfortFilters: cfg.comfortFilters.includes(t) ? cfg.comfortFilters.filter((x) => x !== t) : [...cfg.comfortFilters, t] });
-  const addWord = () => { const w = word.trim(); if (w && !cfg.comfortFilters.includes(w)) set({ comfortFilters: [...cfg.comfortFilters, w] }); setWord(''); };
+  // Online, everyone keeps their own list on the server and the game skips all of them. Offline there is one list.
+  const myTopics = room.online ? room.skips?.[profile.id] ?? [] : cfg.comfortFilters;
+  const saveTopics = (next: string[]) => {
+    if (room.online) { rooms.update(code, (r) => ({ ...r, skips: { ...(r.skips ?? {}), [profile.id]: next } })); void setSkipsOnline(code, next); }
+    else set({ comfortFilters: next });
+  };
+  const toggleTopic = (t: string) => saveTopics(myTopics.includes(t) ? myTopics.filter((x) => x !== t) : [...myTopics, t]);
+  const addWord = () => { const w = word.trim(); if (w && !myTopics.includes(w)) saveTopics([...myTopics, w]); setWord(''); };
+  const allTopics = skipTopics(room);
+  const customTopics = myTopics.filter((f) => !(PRESET_TOPICS as readonly string[]).includes(f));
   const addRule = () => { const r = rule.trim(); if (r && cfg.customDrinkRules.length < MAX_CUSTOM_RULES) set({ customDrinkRules: [...cfg.customDrinkRules, r] }); setRule(''); };
   const accountPlayers = room.players.filter((p) => !p.isGuest);
   const phoneId = accountPlayers.some((p) => p.userId === phone) ? phone : profile.id;
@@ -112,38 +119,43 @@ export default function SetupPage() {
   const hasAdult = picksHaveAdult(picks, pool);
   const funded = potFunded(room);
   const online = !!room.online;
-  const minPot = Math.max(Math.min(MIN_POT, poolSize), Math.min(funded, poolSize));
   const setPicks = (next: typeof picks) => {
-    const size = picksPool(next, library2).length;
-    if (funded > 0 && size < funded) { toast(`The pot already has ${funded} coins. Keep at least ${funded} cards.`, { tone: 'warn' }); return; }
-    set({ picks: next, potStyle: 'solo', source: undefined, basket: {}, playerBaskets: {}, pot: Math.min(Math.max(cfg.pot ?? MIN_POT, Math.min(MIN_POT, size), funded), size) });
+    set({ picks: next, potStyle: 'solo', source: undefined, basket: {}, playerBaskets: {}, pot: cfg.pot ?? MIN_POT });
   };
-  const toggleDeck = (id: DeckId) => { haptic('tap'); setPicks({ ...picks, decks: picks.decks.includes(id) ? picks.decks.filter((x) => x !== id) : [...picks.decks, id] }); };
+  const allDecks = DECKS.filter((d) => d.ready && d.id !== 'chaos').map((d) => d.id);
+  const toggleDeck = (id: DeckId) => {
+    haptic('tap');
+    // Shuffle everything ticks every deck (and unticks them all); changing one deck afterwards drops it again.
+    if (id === 'chaos') { setPicks({ ...picks, decks: picks.decks.includes('chaos') ? picks.decks.filter((x) => x !== 'chaos' && !allDecks.includes(x)) : ['chaos', ...allDecks] }); return; }
+    const on = picks.decks.includes(id);
+    setPicks({ ...picks, decks: (on ? picks.decks.filter((x) => x !== id) : [...picks.decks, id]).filter((x) => x !== 'chaos') });
+  };
   const toggleSource = (x: (typeof sources)[number]) => {
     haptic('tap');
     const on = picks.sources.some((p) => p.kind === x.kind && p.id === x.id);
     setPicks({ ...picks, sources: on ? picks.sources.filter((p) => !(p.kind === x.kind && p.id === x.id)) : [...picks.sources, { kind: x.kind, id: x.id, name: x.name }] });
   };
-  const setPot = (n: number) => { haptic('tap'); set({ pot: Math.max(minPot, Math.min(poolSize, n)) }); };
+  const setPot = (n: number) => { haptic('tap'); set({ pot: Math.max(MIN_POT, Math.min(MAX_CARDS, n)) }); };
   const plan = roomPlan(room);
   const cards = plan.cards;
   const total = plan.coins;
   const wallet = profile.coins;
   // Online rooms are paid by everyone from their own wallets, so the pot must be full instead of the host's wallet being big enough.
-  const potOk = cards >= MIN_OWN_CARDS && (online ? funded >= cards : wallet + 1e-9 >= total);
+  const potOk = cards >= MIN_OWN_CARDS && (online ? !!room.potConfirmed && funded >= MIN_POT : wallet + 1e-9 >= total);
   const adultBlocked = hasAdult && !adultOk;
   const accentDeck = picks.decks.length === 1 && picks.sources.length === 0 ? DECKS.find((d) => d.id === picks.decks[0]) : undefined;
   const seated = seatOrder.filter((id) => room.players.some((p) => p.userId === id));
   const commitSeats = () => rooms.update(code, (r) => ({ ...r, players: r.players.map((p) => ({ ...p, turnOrder: seated.indexOf(p.userId) })) }));
   const next = () => { if (key === 'seats') commitSeats(); setStep(step + 1); };
   const blocked = key === 'seats' ? (seated.length < room.players.length ? 'Give everyone a seat' : null) : key === 'basket'
-    ? (poolSize === 0 ? 'Pick a deck' : cards < MIN_OWN_CARDS ? `Pick more cards, at least ${MIN_OWN_CARDS}` : !online && total > wallet ? 'Not enough coins' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
+    ? (poolSize === 0 ? 'Pick a deck' : adultBlocked ? 'Confirm everyone is 18 or older' : null)
+    : key === 'pot' ? (online ? (room.potConfirmed ? null : 'Confirm the pot to go on') : total > wallet ? 'Not enough coins' : null)
     : null;
 
   const footer = view < TOTAL ? (
     <Button size="lg" full disabled={blocked !== null} onClick={next}>{blocked ?? 'Next'}</Button>
   ) : isHost ? (
-    <Button size="lg" full disabled={busy || !allAgreed(room) || !potOk || adultBlocked} onClick={() => void start()}>{!potOk ? (cards >= MIN_OWN_CARDS && online ? `Waiting for the pot: ${funded} of ${cards}` : 'Fix your cards first') : adultBlocked ? 'Confirm everyone is 18 or older' : allAgreed(room) ? 'Start game' : `Waiting for ${pending} to agree`}</Button>
+    <Button size="lg" full disabled={busy || !allAgreed(room) || !potOk || adultBlocked} onClick={() => void start()}>{!potOk ? (online ? (room.potConfirmed ? `The pot needs at least ${MIN_POT} coins` : 'Confirm the pot first') : 'Fix your cards first') : adultBlocked ? 'Confirm everyone is 18 or older' : allAgreed(room) ? 'Start game' : `Waiting for ${pending} to agree`}</Button>
   ) : (
     <p className="pb-2 text-center text-lg text-muted">Waiting for the host to start.</p>
   );
@@ -161,7 +173,7 @@ export default function SetupPage() {
 
       {key === 'basket' && (
         <>
-          <p className="-mt-2 mb-5 text-base text-muted">Tick every deck you want in the game. Cards that appear in more than one are only used once. Then set the pot: 1 coin is 1 card.</p>
+          <p className="-mt-2 mb-5 text-base text-muted">Tick every deck you want in the game. Cards that appear in more than one are only used once. Next you set the pot: 1 coin is 1 card.</p>
 
           <div className="space-y-7">
             <section>
@@ -232,40 +244,30 @@ export default function SetupPage() {
             </button>
           )}
 
-          <section className="mt-8 rounded-2xl border-2 border-line p-4">
-            <h3 className="text-3xl">The pot</h3>
-            <p className="mt-1 text-base text-muted">{poolSize === 0 ? 'Pick a deck first.' : `${poolSize} different cards to play from. The pot decides how many you get.`}</p>
-            <div className="mt-4 flex items-center justify-center gap-4">
-              <button aria-label="Fewer coins" disabled={poolSize === 0 || cards <= minPot} onClick={() => setPot(cards - 5)} className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-line text-3xl font-extrabold disabled:opacity-40">-</button>
-              <div className="min-w-[7rem] text-center"><span className="display block text-6xl leading-none tabular-nums"><RollNumber value={cards} format={formatPot} /></span><span className="text-base font-semibold text-muted">coins, {cards} cards</span></div>
-              <button aria-label="More coins" disabled={poolSize === 0 || cards >= poolSize} onClick={() => setPot(cards + 5)} className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-line text-3xl font-extrabold disabled:opacity-40">+</button>
-            </div>
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {[10, 20, 30, 50].filter((n) => n <= poolSize).map((n) => <Chip key={n} selected={cards === n} onClick={() => setPot(n)}>{n}</Chip>)}
-            </div>
-            {cards > 0 && <p className="mt-4 text-center text-lg font-bold">About {formatDuration(cards)} of play.</p>}
-            <p className="mt-3 rounded-xl bg-raised px-3 py-2 text-base font-semibold">Coins in the pot are not refunded. Cards you do not get to play are lost, so pick the pot you really want.</p>
-          </section>
-
-          {online && <div className="mt-5"><PotPanel room={room} myId={profile.id} wallet={wallet} /></div>}
-          {!online && <p className="mt-5 text-lg">You have <b>{formatPot(wallet)} coins</b>. When the cards run out you can add more.</p>}
-          {!online && total > wallet && (
-            <p className="mt-2 text-lg font-bold text-danger">You are {formatPot(total - wallet)} coins short. <Link href="/shop" className="underline">Add coins</Link></p>
-          )}
         </>
       )}
 
-      {key === 'topics' && (
+      {key === 'pot' && (
         <>
-          <p className="mb-5 text-lg text-muted">Cards about these are left out. Nobody has to explain why.</p>
-          <div className="flex flex-wrap gap-2">
-            {PRESET_TOPICS.map((t) => <Chip key={t} selected={cfg.comfortFilters.includes(t)} onClick={() => toggleTopic(t)}>{t}</Chip>)}
-            {customTopics.map((w) => <Chip key={w} selected onClick={() => toggleTopic(w)}>{w}<Icon name="close" size={16} /></Chip>)}
-          </div>
-          <form className="mt-6 flex gap-2" onSubmit={(e) => { e.preventDefault(); addWord(); }}>
-            <input value={word} onChange={(e) => setWord(e.target.value)} maxLength={24} placeholder="Add a word, like ex" aria-label="Custom word" className={input} />
-            <Button type="submit" variant="secondary" disabled={!word.trim()}>Add</Button>
-          </form>
+          <p className="mb-4 text-base text-muted">{poolSize} different cards to play from, no repeats. {cards > poolSize && poolSize > 0 ? `The pot is bigger, so the stack is shuffled again after ${poolSize} cards. ` : ''}Wild cards are free on top.</p>
+          {online ? (
+            <PotPanel room={room} myId={profile.id} wallet={wallet} isHost={isHost} />
+          ) : (
+            <section className="rounded-2xl border-2 border-line p-4">
+              <div className="flex items-center justify-center gap-4">
+                <button aria-label="Fewer coins" disabled={cards <= MIN_POT} onClick={() => setPot(cards - 5)} className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-line text-3xl font-extrabold disabled:opacity-40">-</button>
+                <div className="min-w-[7rem] text-center"><span className="display block text-6xl leading-none tabular-nums"><RollNumber value={cards} format={formatPot} /></span><span className="text-base font-semibold text-muted">coins, {cards} cards</span></div>
+                <button aria-label="More coins" disabled={cards >= MAX_CARDS} onClick={() => setPot(cards + 5)} className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-line text-3xl font-extrabold disabled:opacity-40">+</button>
+              </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {[10, 20, 30, 50, 100].map((n) => <Chip key={n} selected={cards === n} onClick={() => setPot(n)}>{n}</Chip>)}
+              </div>
+              {cards > 0 && <p className="mt-4 text-center text-lg font-bold">About {formatDuration(cards)} of play.</p>}
+              <p className="mt-3 rounded-xl bg-raised px-3 py-2 text-base font-semibold">Coins in the pot are not refunded. Cards you do not get to play are lost, so pick the pot you really want.</p>
+              <p className="mt-4 text-lg">You have <b>{formatPot(wallet)} coins</b>. When the cards run out you can add more.</p>
+              {total > wallet && <p className="mt-2 text-lg font-bold text-danger">You are {formatPot(total - wallet)} coins short. <Link href="/shop" className="underline">Add coins</Link></p>}
+            </section>
+          )}
         </>
       )}
 
@@ -311,18 +313,53 @@ export default function SetupPage() {
       {key === 'house' && (
         <>
           <section data-mode={accentDeck?.mode} className="rounded-card bg-accent p-5 text-onaccent">
-            <div className="display text-5xl">{cards ? plan.label : 'No cards bought'}</div>
-            <div className="mt-1 text-lg font-bold">{cards} cards, {formatDuration(cards)}</div>
+            <div className="text-lg font-bold">{cards} cards, about {formatDuration(cards)}</div>
+            <ul aria-label="Decks in this game" className="-mx-1 mt-3 flex snap-x gap-3 overflow-x-auto px-1 pb-2">
+              {[...picks.decks.filter((id) => id !== 'chaos' || picks.decks.length === 1).filter((id) => !(picks.decks.includes('chaos') && id !== 'chaos')).map((id) => ({ key: id, name: DECK_BY_ID[id]?.name ?? id, mark: id === 'adult' ? '18+' : '?' })),
+                ...picks.sources.map((x) => ({ key: `${x.kind}-${x.id}`, name: x.name, mark: '?' }))].map((c, i) => (
+                <li key={c.key} className="w-24 shrink-0 snap-start">
+                  <div style={{ transform: `rotate(${(i % 3 - 1) * 3}deg)` }} className="sign flex h-32 w-full items-end justify-end rounded-lg border-[3px] border-[#0c0a08] bg-onaccent/15 p-2 text-3xl leading-none">{c.mark}</div>
+                  <div className="mt-1 truncate text-sm font-bold">{c.name}</div>
+                </li>
+              ))}
+            </ul>
+            {picks.decks.includes('chaos') && <p className="text-base font-bold">Every deck is in</p>}
           </section>
           <ul className="mt-5 space-y-2 text-lg">
             <li><b>{template?.name ?? 'Classic'}.</b> <span className="text-muted">{template?.summary}</span></li>
             <li><b>Pot:</b> <span className="text-muted">{formatPot(total)} coins for {cards} cards, plus free wild cards{online ? '. Paid by everyone.' : ''}</span></li>
             {cfg.nonDrinkingMode && <li><b>Non-drinking mode</b> is on.</li>}
             {cfg.customDrinkRules.map((r, i) => <li key={i}>{r}</li>)}
-            {cfg.comfortFilters.length > 0 && <li><b>Skipping:</b> <span className="text-muted">{cfg.comfortFilters.join(', ')}</span></li>}
             <li className="text-muted">Anyone can skip a card. Nobody has to answer. Nobody drives.</li>
           </ul>
-          {online && <div className="mt-6"><PotPanel room={room} myId={profile.id} wallet={wallet} /></div>}
+
+          <section className="mt-7" aria-label="Play order">
+            <h3 className="text-3xl">Who plays when</h3>
+            <ol className="mt-3 flex flex-wrap gap-3">
+              {[...room.players].sort((a, b) => a.turnOrder - b.turnOrder).map((p, i) => (
+                <li key={p.userId} className="flex w-16 flex-col items-center gap-1">
+                  <span className="relative"><Avatar value={p.avatarUrl} name={p.displayName} size={48} /><span className="sign absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs text-onaccent">{i + 1}</span></span>
+                  <span className="w-full truncate text-center text-sm font-bold">{p.userId === profile.id ? 'You' : p.displayName}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className="mt-7" aria-label="Skip these topics">
+            <h3 className="text-3xl">Skip these topics</h3>
+            <p className="mb-3 mt-1 text-base text-muted">Cards about these are left out for everyone. Nobody has to explain why.{online ? ' Everyone picks on their own phone.' : ''}</p>
+            <div className="flex flex-wrap gap-2">
+              {PRESET_TOPICS.map((t) => <Chip key={t} selected={myTopics.includes(t)} onClick={() => toggleTopic(t)}>{t}</Chip>)}
+              {customTopics.map((w) => <Chip key={w} selected onClick={() => toggleTopic(w)}>{w}<Icon name="close" size={16} /></Chip>)}
+            </div>
+            <form className="mt-4 flex gap-2" onSubmit={(e) => { e.preventDefault(); addWord(); }}>
+              <input value={word} onChange={(e) => setWord(e.target.value)} maxLength={24} placeholder="Add a word, like ex" aria-label="Custom word" className={input} />
+              <Button type="submit" variant="secondary" disabled={!word.trim()}>Add</Button>
+            </form>
+            {online && allTopics.length > 0 && <p className="mt-3 text-base"><b>Left out in this game:</b> <span className="text-muted">{allTopics.join(', ')}</span></p>}
+          </section>
+
+          {online && !isHost && <div className="mt-7"><PotPanel room={room} myId={profile.id} wallet={wallet} isHost={false} /></div>}
           {online && isHost && accountPlayers.length > 1 && (
             <section className="mt-8" aria-label="Which phone runs the game">
               <h3 className="text-4xl">Which phone runs the game?</h3>

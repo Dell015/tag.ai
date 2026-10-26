@@ -57,7 +57,7 @@ export default function LobbyPage() {
           {mine ? (
             <Link href={`/game/${code}/play`} className="mt-2 block"><Button size="lg" full>Continue the game</Button></Link>
           ) : (
-            <LiveView room={room} myId={profile.id} onClaimed={() => router.push(`/game/${code}/play`)} />
+            <LiveView room={room} myId={profile.id} />
           )}
         </Screen>
       );
@@ -112,6 +112,7 @@ export default function LobbyPage() {
             avatar={p.avatarUrl}
             isHost={p.userId === room.hostId}
             isGuest={p.isGuest}
+            viewerIsHost={isHost}
             isYou={p.userId === profile.id}
             onRemove={isHost && p.userId !== room.hostId ? () => rooms.update(code, (r) => withoutPlayer(r, p.userId)) : undefined}
           />

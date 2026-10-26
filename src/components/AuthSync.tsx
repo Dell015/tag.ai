@@ -68,11 +68,17 @@ export function AuthSync() {
     const { data: sub } = sb.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') void refreshAccount();
     });
-    // Friends see you as online while the app is open (at most one ping a minute).
-    const ping = () => { if (document.visibilityState === 'visible' && useAccountStore.getState().status === 'signedIn') void sb.rpc('touch_presence' as never); };
-    ping();
-    const beat = setInterval(ping, 60000);
-    return () => { sub.subscription.unsubscribe(); clearInterval(beat); };
+    // Friends see you as online while the app is open. Supabase calls only run when awaited, so this one is awaited.
+    const ping = async () => {
+      if (document.visibilityState !== 'visible' || useAccountStore.getState().status !== 'signedIn') return;
+      await sb.rpc('touch_presence' as never);
+    };
+    void ping();
+    const beat = setInterval(() => void ping(), 45000);
+    const unsubAccount = useAccountStore.subscribe((st, prev) => { if (st.status === 'signedIn' && prev.status !== 'signedIn') void ping(); });
+    const onVisible = () => void ping();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { sub.subscription.unsubscribe(); clearInterval(beat); unsubAccount(); document.removeEventListener('visibilitychange', onVisible); };
   }, [hydrated]);
   return null;
 }

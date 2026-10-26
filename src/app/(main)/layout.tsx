@@ -1,6 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { BottomNav, isTabPath } from '@/components/ui/BottomNav';
+import { TopBar } from '@/components/ui/TopBar';
 import { SideNav } from '@/components/ui/SideNav';
 import { Splash } from '@/components/ui/Splash';
 import { useRequireProfile } from '@/lib/use-profile';
@@ -16,6 +17,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <SideNav />
       <div className="lg:pl-64">
         {/* Phone: room for the floating tab bar on the five top-level screens only. */}
+        {isTabPath(path) && <TopBar />}
         <div className={cn('min-h-dvh', isTabPath(path) && 'pb-[calc(5.5rem+max(env(safe-area-inset-bottom),14px))] lg:pb-0')}>{children}</div>
       </div>
       <BottomNav />

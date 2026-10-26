@@ -373,6 +373,102 @@ export function spreadOut(cards: QueuedCard[], random: () => number = Math.rando
   return out;
 }
 
+// ─── Wild cards in a fair mix, and the stack builder ────────────────────────
+
+/** `n` wild cards where every kind comes round before any repeats, and the same kind never comes twice in a row. */
+export function makeWilds(n: number, random: () => number = Math.random): QueuedCard[] {
+  const out: QueuedCard[] = [];
+  let bag: WildCardType[] = [];
+  for (let i = 0; i < n; i++) {
+    if (bag.length === 0) {
+      bag = shuffle(WILD_CARD_TYPES, random);
+      // The first kind of a new round must not repeat the last kind of the old one.
+      if (out.length && bag[0] === out[out.length - 1].wildCardType) bag.push(bag.shift()!);
+    }
+    const type = bag.shift()!;
+    out.push({ id: nextWildId(), text: '', cardType: 'wild', intensity: 0, category: 'hot_takes', wildCardType: type, topics: [] });
+  }
+  return out;
+}
+
+const words = (t: string) => new Set(t.toLowerCase().replace(/\{[a-z]+\}/g, 'x').replace(/[^a-z0-9 ]/g, '').split(/\s+/).filter((w) => w.length > 2));
+
+/** Drops cards that say nearly the same thing as one already kept (same id, same text, or 80% the same words). */
+export function dedupeCards(cards: QueuedCard[]): QueuedCard[] {
+  const kept: { card: QueuedCard; w: Set<string> }[] = [];
+  const ids = new Set<string>();
+  for (const card of cards) {
+    if (ids.has(card.id)) continue;
+    const w = words(card.text);
+    let same = false;
+    if (w.size >= 4) {
+      for (const k of kept) {
+        if (k.w.size < 4) continue;
+        let inter = 0;
+        w.forEach((x) => { if (k.w.has(x)) inter++; });
+        if (inter / (w.size + k.w.size - inter) >= 0.8) { same = true; break; }
+      }
+    }
+    if (same) continue;
+    ids.add(card.id);
+    kept.push({ card, w });
+  }
+  return kept.map((k) => k.card);
+}
+
+export interface StackConfig {
+  pool: QueuedCard[];
+  /** How many cards the pot pays for (wild cards come on top, free). */
+  count: number;
+  mode?: GameMode;
+  comfortFilters: string[];
+  trashedCardIds: string[];
+  playerCount: number;
+  fitPlayers?: boolean;
+  /** Cards to leave out until everything else has been played (cards already seen). They come back after the stack is used up. */
+  avoid?: string[];
+}
+
+/** What can be played at all: duplicates out, filtered topics out, trashed cards out, cards that do not fit the table out. */
+export function eligibleCards(cfg: Pick<StackConfig, 'pool' | 'comfortFilters' | 'trashedCardIds' | 'playerCount' | 'fitPlayers' | 'mode'>): QueuedCard[] {
+  const filters = expandComfortFilters(cfg.comfortFilters);
+  const trashed = new Set(cfg.trashedCardIds);
+  return dedupeCards(cfg.pool).filter((c) =>
+    !isCardFiltered(c, filters) && !trashed.has(c.id)
+    && (cfg.fitPlayers === false || cfg.playerCount <= 0 || fitsPlayers(c, cfg.playerCount))
+    && (cfg.mode !== 'family' || c.intensity <= 2));
+}
+
+/**
+ * The stack for one game: every eligible card once, shuffled, as many as the pot pays for. When the pot pays for more
+ * cards than exist, the stack is shuffled again and carries on, so no card shows twice until all of them have shown.
+ * A buffer (20% extra) covers trashed cards. Free wild cards are mixed in.
+ */
+export function buildStack(cfg: StackConfig, random: () => number = Math.random): BasketQueue {
+  const mode = cfg.mode ?? 'barkada';
+  const eligible = eligibleCards(cfg);
+  const mix = blendModes([mode]);
+  if (eligible.length === 0 || cfg.count <= 0) return { cards: [], buffer: [], modes: [mode], asked: cfg.count, target: 0 };
+
+  const need = cfg.count + Math.ceil(cfg.count * 0.2);
+  const fresh = cfg.avoid?.length ? eligible.filter((c) => !cfg.avoid!.includes(c.id)) : eligible;
+  const out: QueuedCard[] = [];
+  let first = true;
+  while (out.length < need) {
+    // The first round uses only unseen cards (when asked); after that every card is back in.
+    const round = spreadOut(first && fresh.length > 0 ? fresh : eligible, random);
+    first = false;
+    // A reshuffle must not start with the card that just finished the last round.
+    if (out.length && round.length > 1 && round[0].id === out[out.length - 1].id) round.push(round.shift()!);
+    out.push(...round.slice(0, need - out.length));
+  }
+  const cards = out.slice(0, cfg.count);
+  const buffer = out.slice(cfg.count);
+  const wildCount = Math.max(1, Math.floor(cards.length / mix.wildCardFrequency.base));
+  const queue = insertWildCards(cards, makeWilds(wildCount, random), mix.wildCardFrequency.base, mix.wildCardFrequency.variance, random);
+  return { cards: queue, buffer, modes: [mode], asked: cfg.count, target: queue.length };
+}
+
 // ─── Basket builder: cards bought per deck ───────────────────────────────────
 
 export interface BasketQueueConfig {
@@ -421,7 +517,7 @@ export function buildBasketQueue(config: BasketQueueConfig, library: QueuedCard[
   const mix = blendModes(modes.length ? modes : ['barkada']);
   const base = spreadOut(cards);
   const wildCount = base.length === 0 ? 0 : Math.max(1, Math.floor(base.length / mix.wildCardFrequency.base));
-  const wilds = Array.from({ length: wildCount }, () => generateWildCard());
+  const wilds = makeWilds(wildCount);
   const queue = insertWildCards(base, wilds, mix.wildCardFrequency.base, mix.wildCardFrequency.variance);
   return { cards: queue, buffer: shuffle(buffer), modes, asked: basketCards(config.basket), target: queue.length };
 }
@@ -430,18 +526,8 @@ export function buildBasketQueue(config: BasketQueueConfig, library: QueuedCard[
  * Builds a queue from one fixed pool of cards (a player's stack, liked cards or an owned pack):
  * `count` cards, no card twice, then free wild cards. Cards cost the flat 1 coin.
  */
-export function buildPoolQueue(config: { pool: QueuedCard[]; count: number; mode?: GameMode; comfortFilters: string[]; trashedCardIds: string[]; playerCount: number; fitPlayers?: boolean }): BasketQueue {
-  const mode = config.mode ?? 'barkada';
-  const built = buildCardQueue(
-    { gameMode: mode, cardCountTarget: config.count, comfortFilters: config.comfortFilters, trashedCardIds: config.trashedCardIds, playerCount: config.playerCount, fitPlayers: config.fitPlayers, noWild: true },
-    config.pool,
-  );
-  const mix = blendModes([mode]);
-  const base = spreadOut(built.cards);
-  const wildCount = base.length === 0 ? 0 : Math.max(1, Math.floor(base.length / mix.wildCardFrequency.base));
-  const wilds = Array.from({ length: wildCount }, () => generateWildCard());
-  const queue = insertWildCards(base, wilds, mix.wildCardFrequency.base, mix.wildCardFrequency.variance);
-  return { cards: queue, buffer: shuffle(built.buffer), modes: [mode], asked: config.count, target: queue.length };
+export function buildPoolQueue(config: { pool: QueuedCard[]; count: number; mode?: GameMode; comfortFilters: string[]; trashedCardIds: string[]; playerCount: number; fitPlayers?: boolean; avoid?: string[] }): BasketQueue {
+  return buildStack(config);
 }
 
 /** The game mode that rules heat for a basket: Family only when it is the only deck. */

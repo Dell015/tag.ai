@@ -58,6 +58,10 @@ export interface Room {
   online?: boolean;
   /** Online rooms: coins each account has put in the pot, kept by the server. */
   paid?: Record<string, number>;
+  /** Online rooms: the host confirmed the shared pot. After that coins can be added but not taken back. */
+  potConfirmed?: boolean;
+  /** Online rooms: topics each account wants left out, by user id (server-owned). */
+  skips?: Record<string, string[]>;
   /** Online rooms, while a game runs: the account whose phone plays it (server-owned). */
   gamePhone?: string;
   /** What the game phone last reported, for everyone else to watch (server-owned). */
@@ -79,6 +83,8 @@ export interface GameView {
   rule: string | null;
   phase: 'playing' | 'end';
   mode: string;
+  /** The next few cards, without their words: which decks they come from and how intense they are. */
+  ahead?: { decks: string[]; low: number; high: number; count: number };
 }
 
 export interface RoomRepository {
@@ -216,6 +222,9 @@ export const rooms: RoomRepository = localRoomRepository;
 export const MAX_PLAYERS = 20;
 
 /** Coins in the pot so far (online rooms). */
+/** Every topic anyone wants left out: the host's own list plus what each phone chose. */
+export const skipTopics = (room: Room): string[] =>
+  Array.from(new Set([...room.config.comfortFilters, ...Object.values(room.skips ?? {}).flat()]));
 export const potFunded = (room: Room): number => Object.values(room.paid ?? {}).reduce((a, b) => a + b, 0);
 
 export function nextTurnOrder(room: Room): number {

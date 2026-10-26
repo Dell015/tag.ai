@@ -36,10 +36,14 @@ export interface UndoSnapshot {
   crownImmunityRemaining: number;
   sessionPhase: 'lobby' | 'setup' | 'play' | 'end';
   pot: number;
+  /** Whose turn it was, so going back still works when players were added or moved. */
+  playerId?: string;
   kind: 'dismiss' | 'trash' | 'skip' | 'again';
 }
 
 export interface GameState {
+  /** The last few card moves, newest last. In memory only. */
+  history: UndoSnapshot[];
   // Queue state
   cardQueue: QueuedCard[];
   bufferCards: QueuedCard[];
@@ -90,6 +94,8 @@ export interface GameState {
   trashCard: () => void;
   heartCard: () => void;
   undoLastCard: () => void;
+  /** Goes back to the previous card (up to 5 times): its player, heat and count come back. Not saved with the game. */
+  prevCard: () => boolean;
   advanceToNextCard: () => void;
   dismissPassPrompt: () => void;
   adjustHeat: (delta: number) => void;
@@ -123,12 +129,14 @@ type CardAction = 'dismiss' | 'trash' | 'skip' | 'again';
 
 const INITIAL: Pick<
   GameState,
+  | 'history'
   | 'cardQueue' | 'bufferCards' | 'currentCardIndex' | 'cardsPlayed' | 'cardCountTarget'
   | 'gameMode' | 'skippedCount' | 'heartedCount' | 'peakHeat' | 'heatLevel'
   | 'consecutiveSkips' | 'heatSpikeRemaining' | 'preSpikeHeat' | 'turnRotation'
   | 'crownImmunityRemaining' | 'currentCardState' | 'showPassPrompt' | 'sessionPhase'
   | 'undoSnapshot' | 'pot' | 'potStart' | 'potRefunded' | 'activeRule'
 > = {
+  history: [],
   activeRule: null,
   cardQueue: [],
   bufferCards: [],
@@ -154,6 +162,10 @@ const INITIAL: Pick<
   potRefunded: 0,
 };
 
+function currentPlayerIdOf(t: TurnState): string | undefined {
+  return [...t.players].sort((a, b) => a.turnOrder - b.turnOrder)[t.currentIndex % Math.max(1, t.players.length)]?.id;
+}
+
 function snapshot(state: GameState, kind: CardAction): UndoSnapshot {
   return {
     cardQueue: state.cardQueue,
@@ -168,6 +180,7 @@ function snapshot(state: GameState, kind: CardAction): UndoSnapshot {
     crownImmunityRemaining: state.crownImmunityRemaining,
     sessionPhase: state.sessionPhase,
     pot: state.pot,
+    playerId: currentPlayerIdOf(state.turnRotation),
     kind,
   };
 }
@@ -230,6 +243,7 @@ function resolveCard(state: GameState, action: CardAction): Partial<GameState> {
     showPassPrompt: !shouldEnd && !keepTurn,
     pot: round3(Math.max(0, state.pot - (state.cardQueue[state.currentCardIndex] ? cardCost(state.cardQueue[state.currentCardIndex]) : 0))),
     undoSnapshot: snapshot(state, action),
+    history: [...state.history.slice(-4), snapshot(state, action)],
   };
 }
 
@@ -343,7 +357,37 @@ export const useGameStore = create<GameState>()(
           currentCardState: 'revealed',
           showPassPrompt: false,
           undoSnapshot: null,
+          history: get().history.slice(0, -1),
         });
+      },
+
+      prevCard: () => {
+        const st = get();
+        const snap = st.history[st.history.length - 1];
+        if (!snap) return false;
+        const card = (snap.kind === 'trash' ? snap.cardQueue : st.cardQueue)[snap.currentCardIndex];
+        const sorted = [...st.turnRotation.players].sort((a, b) => a.turnOrder - b.turnOrder);
+        const at = snap.playerId ? sorted.findIndex((p) => p.id === snap.playerId) : -1;
+        set({
+          ...(snap.kind === 'trash' ? { cardQueue: snap.cardQueue, bufferCards: snap.bufferCards } : {}),
+          currentCardIndex: snap.currentCardIndex,
+          cardsPlayed: snap.cardsPlayed,
+          heatLevel: snap.heatLevel,
+          consecutiveSkips: snap.consecutiveSkips,
+          heatSpikeRemaining: snap.heatSpikeRemaining,
+          preSpikeHeat: snap.preSpikeHeat,
+          crownImmunityRemaining: snap.crownImmunityRemaining,
+          skippedCount: Math.max(0, st.skippedCount - (snap.kind === 'skip' ? 1 : 0)),
+          // The coin for that card goes back into the pot; replaying it charges again.
+          pot: round3(st.pot + (card ? cardCost(card) : 0)),
+          turnRotation: { ...st.turnRotation, players: sorted, currentIndex: at >= 0 ? at : st.turnRotation.currentIndex },
+          sessionPhase: 'play',
+          currentCardState: 'revealed',
+          showPassPrompt: false,
+          undoSnapshot: null,
+          history: st.history.slice(0, -1),
+        });
+        return true;
       },
 
       /** Legacy: moves one card forward without any scoring. */

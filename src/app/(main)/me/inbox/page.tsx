@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Button, EmptyState, Screen, Spot, toast } from '@/components/ui';
+import { Avatar, Button, EmptyState, Screen, Spot, toast } from '@/components/ui';
+import { answerFriend, listFriends, type Friend } from '@/lib/supabase/friends';
 import { supabaseConfigured } from '@/lib/supabase/config';
 import { claimMessage, markInboxRead } from '@/lib/supabase/account';
 import { refreshAccount } from '@/components/AuthSync';
@@ -20,6 +21,15 @@ const when = (t: number) => {
 export default function InboxPage() {
   const { messages, loaded, load, patch, markAllRead } = useInboxStore();
   const [busy, setBusy] = useState<string | null>(null);
+  const [requests, setRequests] = useState<Friend[]>([]);
+  const loadRequests = async () => { const r = await listFriends(); if (r.ok) setRequests((r.data ?? []).filter((f) => f.relation === 'incoming')); };
+  useEffect(() => { if (supabaseConfigured) void loadRequests(); }, []);
+  const answer = async (f: Friend, accept: boolean) => {
+    const r = await answerFriend(f.id, accept);
+    if (!r.ok) { toast(r.error, { tone: 'warn' }); return; }
+    toast(accept ? `You and ${f.username} are friends now.` : 'Request declined.', { tone: 'ok' });
+    void loadRequests();
+  };
   // Which messages were unread when the page opened, so the dot stays while you read them.
   const fresh = useRef<Set<string>>(new Set());
 
@@ -43,13 +53,29 @@ export default function InboxPage() {
   };
 
   return (
-    <Screen title="Inbox" back="/me">
+    <Screen title="Notifications" back="/me">
       {!supabaseConfigured ? (
         <EmptyState art={<Spot name="bubble" />} title="No inbox here." body="Messages from tag.ai arrive once you are signed in with your email." />
-      ) : loaded && messages.length === 0 ? (
-        <EmptyState art={<Spot name="bubble" />} title="Nothing yet." body="Updates and coin gifts from tag.ai show up here." />
+      ) : loaded && messages.length === 0 && requests.length === 0 ? (
+        <EmptyState art={<Spot name="bubble" />} title="Nothing yet." body="Friend requests, room invites and coin gifts show up here." />
       ) : (
-        <ul className="mt-2 space-y-3">
+        <>
+        {requests.length > 0 && (
+          <section aria-label="Friend requests" className="mt-2">
+            <h2 className="mb-2 text-3xl">Friend requests</h2>
+            <ul className="space-y-3">
+              {requests.map((f) => (
+                <li key={f.id} className="flex items-center gap-3 rounded-2xl border-2 border-b-4 border-line/60 bg-panel p-3">
+                  <Avatar value={f.avatar} name={f.username} size={48} />
+                  <span className="min-w-0 flex-1 truncate text-xl font-bold">{f.username}</span>
+                  <Button size="md" onClick={() => void answer(f, true)}>Accept</Button>
+                  <Button size="md" variant="secondary" onClick={() => void answer(f, false)}>Decline</Button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        <ul className="mt-5 space-y-3">
           {messages.map((m) => (
             <li key={m.id} className="rounded-2xl border-2 border-b-4 border-line/60 bg-panel p-4">
               <div className="flex items-start justify-between gap-3">
@@ -71,6 +97,7 @@ export default function InboxPage() {
             </li>
           ))}
         </ul>
+        </>
       )}
     </Screen>
   );

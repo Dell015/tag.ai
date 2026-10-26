@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Screen, Splash } from '@/components/ui';
+import { Button, Icon, Screen, Splash } from '@/components/ui';
+import { QrScanner } from '@/components/lobby/QrScanner';
 import { useAccountStore } from '@/stores/account-store';
 import { useProfileStore } from '@/stores/profile-store';
 import { useHydrated } from '@/lib/hydration';
@@ -20,6 +21,7 @@ export default function JoinPage() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const tried = useRef(false);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     const c = (new URLSearchParams(window.location.search).get('code') ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
@@ -61,6 +63,8 @@ export default function JoinPage() {
   return (
     <Screen title="Join a room" back="/">
       <p className="text-lg text-muted">Ask the host for the 6 character code, or scan their QR code with your camera.</p>
+      <Button size="lg" full variant="secondary" className="mt-5" onClick={() => setScanning(true)}><Icon name="scan" size={22} />Scan a QR code</Button>
+      <QrScanner open={scanning} onClose={() => setScanning(false)} onCode={(c) => { setScanning(false); setCode(c); void join(c); }} />
       <form className="mt-6" onSubmit={(e) => { e.preventDefault(); if (code.length === 6 && !busy) void join(code); }}>
         <label htmlFor="room-code" className="mb-2 block text-base font-bold text-muted">Room code</label>
         <input id="room-code" value={code} autoFocus autoCapitalize="characters" autoComplete="off" spellCheck={false} inputMode="text" maxLength={6}

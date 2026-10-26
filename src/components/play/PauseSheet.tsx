@@ -4,9 +4,10 @@ import { Avatar, Button, Icon, Sheet } from '@/components/ui';
 import { MAX_PLAYERS, type Room } from '@/lib/data/rooms';
 import { DRINK_RULE_TEMPLATES } from '@/lib/game/setup-options';
 import { formatPot } from '@/lib/game/pot';
+import { InviteCode } from '@/components/lobby/InviteCode';
 import { FOCUS_RULES, type FocusKind } from '@/lib/game/mid-game';
 
-export function PauseSheet({ open, onClose, room, players, onRemovePlayer, onEnd, pot, onTopUp, onFocus, onAddPlayer, onMove, onTools, onReport, others = [], onPass }: {
+export function PauseSheet({ open, onClose, room, players, onRemovePlayer, onEnd, pot, onTopUp, onFocus, onAddPlayer, onMove, onTools, onReport, others = [], onPass, currentIndex = 0, newIds = [] }: {
   open: boolean; onClose: () => void; room: Room | null;
   players: { id: string; name: string; avatarUrl: string }[];
   pot: number; onTopUp: () => void;
@@ -17,6 +18,8 @@ export function PauseSheet({ open, onClose, room, players, onRemovePlayer, onEnd
   /** Online rooms: other accounts the game can be handed to. */
   others?: { id: string; name: string; avatarUrl: string }[];
   onPass?: (id: string) => void;
+  /** Whose turn it is now (index in `players`), and who joined after the game began. */
+  currentIndex?: number; newIds?: string[];
 }) {
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [count, setCount] = useState<number | null>(null);
@@ -79,17 +82,33 @@ export function PauseSheet({ open, onClose, room, players, onRemovePlayer, onEnd
         <li>Anyone can skip. Nobody has to answer.</li>
       </ul>
 
-      <h3 className="mb-1 mt-8 text-3xl">Players</h3>
+      {room?.online && (
+        <section className="mt-8" aria-label="Invite someone">
+          <h3 className="mb-3 text-3xl">Someone wants to join?</h3>
+          <InviteCode code={room.code} size={104} />
+          <p className="mt-2 text-sm text-muted">They can add to the pot but cannot change the rules. They play last, and you can move them below.</p>
+        </section>
+      )}
+
+      <h3 className="mb-1 mt-8 text-3xl">Play order</h3>
+      <p className="mb-2 text-base text-muted">Use the arrows to move someone earlier or later.</p>
       <ul>
-        {players.map((p, i) => (
-          <li key={p.id} className="flex items-center gap-2 border-b-2 border-line/60 py-2">
+        {players.map((p, i) => {
+          const tag = i === currentIndex ? 'Plays now' : i === (currentIndex + 1) % players.length ? 'Plays next' : null;
+          return (
+          <li key={p.id} className={`flex items-center gap-2 border-b-2 border-line/60 py-2 ${i === currentIndex ? 'rounded-lg bg-accent/10' : ''}`}>
+            <span className="sign flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-line text-sm">{i + 1}</span>
             <Avatar value={p.avatarUrl} name={p.name} size={44} />
-            <span className="min-w-0 flex-1 truncate text-xl font-bold">{p.name}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-xl font-bold">{p.name}</span>
+              <span className="flex gap-2 text-sm font-bold">{tag && <span className="text-accent">{tag}</span>}{newIds.includes(p.id) && <span className="text-ok">New</span>}</span>
+            </span>
             <button aria-label={`Move ${p.name} earlier`} disabled={i === 0} onClick={() => onMove(p.id, -1)} className="flex h-tap w-11 items-center justify-center text-muted disabled:opacity-25"><Icon name="chevron" size={20} className="-rotate-90" /></button>
             <button aria-label={`Move ${p.name} later`} disabled={i === players.length - 1} onClick={() => onMove(p.id, 1)} className="flex h-tap w-11 items-center justify-center text-muted disabled:opacity-25"><Icon name="chevron" size={20} className="rotate-90" /></button>
             {players.length > 2 && <button aria-label={`Remove ${p.name}`} onClick={() => onRemovePlayer(p.id)} className="flex h-tap w-11 items-center justify-center text-muted"><Icon name="close" size={20} /></button>}
           </li>
-        ))}
+          );
+        })}
       </ul>
       {players.length < MAX_PLAYERS && (
         <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (name.trim()) { onAddPlayer(name.trim()); setName(''); } }}>
