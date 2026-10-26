@@ -17,7 +17,8 @@ async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<F
   return { ok: true, data: data as T };
 }
 
-export const listFriends = () => rpc<Friend[]>('list_friends');
+/** Also marks you as online first, so whoever looks at the list is counted as here. */
+export const listFriends = async () => { await rpc('touch_presence'); return rpc<Friend[]>('list_friends'); };
 /** `sent` when a request was made, `accepted` when they had already asked you. */
 export const requestFriend = (name: string) => rpc<'sent' | 'accepted'>('friend_request', { p_name: name });
 export const answerFriend = (id: string, accept: boolean) => rpc<null>('respond_friend', { p_id: id, p_accept: accept });
