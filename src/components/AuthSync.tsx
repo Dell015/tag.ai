@@ -1,4 +1,5 @@
 'use client';
+import { REF_KEY, claimReferral } from '@/lib/supabase/referral';
 import { useEffect } from 'react';
 import { supabaseConfigured } from '@/lib/supabase/config';
 import { getBrowserClient } from '@/lib/supabase/browser';
@@ -72,10 +73,18 @@ export function AuthSync() {
     const ping = async () => {
       if (document.visibilityState !== 'visible' || useAccountStore.getState().status !== 'signedIn') return;
       await sb.rpc('touch_presence' as never);
+      // Arrived through an invite link: tell the server who invited this player, once the profile exists.
+      try {
+        const ref = window.localStorage.getItem(REF_KEY);
+        if (ref && !useAccountStore.getState().needsProfile) {
+          window.localStorage.removeItem(REF_KEY);
+          await claimReferral(ref);
+        }
+      } catch { /* private mode */ }
     };
     void ping();
     const beat = setInterval(() => void ping(), 45000);
-    const unsubAccount = useAccountStore.subscribe((st, prev) => { if (st.status === 'signedIn' && prev.status !== 'signedIn') void ping(); });
+    const unsubAccount = useAccountStore.subscribe((st, prev) => { if ((st.status === 'signedIn' && prev.status !== 'signedIn') || (prev.needsProfile && !st.needsProfile)) void ping(); });
     const onVisible = () => void ping();
     document.addEventListener('visibilitychange', onVisible);
     return () => { sub.subscription.unsubscribe(); clearInterval(beat); unsubAccount(); document.removeEventListener('visibilitychange', onVisible); };

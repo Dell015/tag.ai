@@ -1,10 +1,11 @@
 'use client';
 import { QRCodeSVG } from 'qrcode.react';
+import { appOrigin } from '@/lib/app-url';
 import { Button, toast } from '@/components/ui';
 
 /** The room code and QR, so someone standing next to you can join (also while the game is running). */
 export function InviteCode({ code, size = 112 }: { code: string; size?: number }) {
-  const link = `${typeof window === 'undefined' ? '' : window.location.origin}/join?code=${code}`;
+  const link = `${appOrigin()}/join?code=${code}`;
   const share = async () => {
     try {
       if (navigator.share) { await navigator.share({ title: 'Join my game on Tag.ai', text: `Room code ${code}`, url: link }); return; }

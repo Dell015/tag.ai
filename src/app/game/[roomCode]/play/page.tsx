@@ -1,4 +1,6 @@
 'use client';
+import { rewardReferral } from '@/lib/supabase/referral';
+import { refreshAccount } from '@/components/AuthSync';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -99,6 +101,14 @@ export default function PlayPage() {
       if (left > 0) applyCoins('refund', left, 'Unused pot returned');
     }
   }, [ended, recap, g, applyCoins, room?.online]);
+
+  // A player who joined through an invite link earns the invite reward once they have played a game.
+  const rewardAsked = useRef(false);
+  useEffect(() => {
+    if (!ended || rewardAsked.current) return;
+    rewardAsked.current = true;
+    void rewardReferral().then((paid) => { if (paid) { toast('Invite reward: 30 coins', { tone: 'ok' }); void refreshAccount(); } });
+  }, [ended]);
 
   // Mark the room as ended once, so the lobby doesn't offer "resume".
   useEffect(() => {

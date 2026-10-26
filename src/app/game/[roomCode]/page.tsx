@@ -1,4 +1,5 @@
 'use client';
+import { appOrigin } from '@/lib/app-url';
 import { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import Link from 'next/link';
@@ -26,7 +27,7 @@ export default function LobbyPage() {
   const account = useAccountStore((s) => s.status);
   const [publishing, setPublishing] = useState(false);
   const [origin, setOrigin] = useState('');
-  useEffect(() => { setOrigin(window.location.origin); }, []);
+  useEffect(() => { setOrigin(appOrigin()); }, []);
 
   if (!ready || !profile || status === 'loading') return <Splash />;
 
