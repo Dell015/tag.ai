@@ -58,7 +58,7 @@ export function roomPlan(room: Room) {
  * Builds the card queue on the host's phone from the basket, sets turn order, and flips the room
  * to `active`. Gameplay is local-first (CLAUDE.md section 3), so nothing else needs the network.
  */
-export function startGame(room: Room, trashedCardIds: string[]): boolean {
+export function startGame(room: Room, trashedCardIds: string[], opts2: { keepStatus?: boolean } = {}): boolean {
   if (!allAgreed(room)) return false;
   const plan = roomPlan(room);
   const { basket, coins: total } = plan;
@@ -89,7 +89,8 @@ export function startGame(room: Room, trashedCardIds: string[]): boolean {
       currentIndex: 0,
     },
   });
-  rooms.update(room.code, (r) => ({ ...r, status: 'active' }));
+  // Online rooms get their status from the server (start_game), never from this phone.
+  if (!opts2.keepStatus) rooms.update(room.code, (r) => ({ ...r, status: 'active' }));
   try { window.localStorage.setItem(LAST_ROOM_KEY, room.code); } catch { /* ignore */ }
   return true;
 }

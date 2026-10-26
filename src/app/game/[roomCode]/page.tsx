@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Button, ConfirmSheet, Icon, Screen, Splash } from '@/components/ui';
 import { PlayerRow } from '@/components/lobby/PlayerRow';
+import { LiveView } from '@/components/lobby/LiveView';
+import { FriendInviteSheet } from '@/components/lobby/FriendInviteSheet';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
 import { rooms, withPlayer, withoutPlayer, MAX_PLAYERS } from '@/lib/data/rooms';
@@ -20,6 +22,7 @@ export default function LobbyPage() {
   const { status, room } = useRoom(code);
   const [guest, setGuest] = useState('');
   const [leaving, setLeaving] = useState(false);
+  const [inviting, setInviting] = useState(false);
   const account = useAccountStore((s) => s.status);
   const [publishing, setPublishing] = useState(false);
   const [origin, setOrigin] = useState('');
@@ -46,6 +49,19 @@ export default function LobbyPage() {
   };
 
   if (room.status === 'active') {
+    // Online: the game runs on one phone. That phone continues; every other phone watches.
+    if (room.online && room.gamePhone) {
+      const mine = room.gamePhone === profile.id;
+      return (
+        <Screen title="Game on" back="/">
+          {mine ? (
+            <Link href={`/game/${code}/play`} className="mt-2 block"><Button size="lg" full>Continue the game</Button></Link>
+          ) : (
+            <LiveView room={room} myId={profile.id} onClaimed={() => router.push(`/game/${code}/play`)} />
+          )}
+        </Screen>
+      );
+    }
     return (
       <Screen title="Game on" back="/">
         <p className="text-lg text-muted">{isHost ? 'Your game is running.' : "The game is being played on the host's phone."}</p>
@@ -126,13 +142,17 @@ export default function LobbyPage() {
               <div className="min-w-0 flex-1">
                 <p className="text-base font-bold text-muted">Room code</p>
                 <p className="sign text-4xl tracking-[0.18em]" aria-label={`Room code ${code.split('').join(' ')}`}>{code}</p>
-                <Button size="md" variant="secondary" className="mt-2" onClick={share}>Share link</Button>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button size="md" variant="secondary" onClick={share}>Share link</Button>
+                  <Button size="md" variant="secondary" onClick={() => setInviting(true)}>Invite a friend</Button>
+                </div>
               </div>
             </div>
           ) : account === 'signedIn' ? (
             <>
               <p className="text-lg font-bold">Friends with the app can join from their own phones.</p>
-              <p className="mb-3 mt-1 text-base text-muted">You get a code and a QR to share. They sign up in a minute if they do not have an account.</p>
+              <p className="mt-1 text-base text-muted">You get a code and a QR to share. They sign up in a minute if they do not have an account. Everyone then adds to the pot from their own wallet.</p>
+              <p className="mb-3 mt-1 text-base text-muted">Playing on one phone? Skip this. Add friends by name above and you pay the pot.</p>
               <Button size="lg" full onClick={invite} disabled={publishing}>{publishing ? 'Opening the room' : 'Invite friends'}</Button>
             </>
           ) : (
@@ -144,6 +164,7 @@ export default function LobbyPage() {
           )}
         </section>
       )}
+      <FriendInviteSheet open={inviting} onClose={() => setInviting(false)} code={code} inRoom={room.players.map((p) => p.userId)} />
       <ConfirmSheet open={leaving} title="Leave this game?" body={isHost ? (room.online ? "The room closes for everyone, and the people you added are removed." : "Everyone you added will be removed.") : "You leave this room. You can join again with the code."} confirmLabel="Leave game" danger
         onConfirm={leave} onClose={() => setLeaving(false)} />
     </Screen>

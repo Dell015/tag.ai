@@ -6,7 +6,7 @@ import { DRINK_RULE_TEMPLATES } from '@/lib/game/setup-options';
 import { formatPot } from '@/lib/game/pot';
 import { FOCUS_RULES, type FocusKind } from '@/lib/game/mid-game';
 
-export function PauseSheet({ open, onClose, room, players, onRemovePlayer, onEnd, pot, onTopUp, onFocus, onAddPlayer, onMove, onTools, onReport }: {
+export function PauseSheet({ open, onClose, room, players, onRemovePlayer, onEnd, pot, onTopUp, onFocus, onAddPlayer, onMove, onTools, onReport, others = [], onPass }: {
   open: boolean; onClose: () => void; room: Room | null;
   players: { id: string; name: string; avatarUrl: string }[];
   pot: number; onTopUp: () => void;
@@ -14,6 +14,9 @@ export function PauseSheet({ open, onClose, room, players, onRemovePlayer, onEnd
   onAddPlayer: (name: string) => void; onMove: (id: string, dir: -1 | 1) => void;
   onTools: () => void; onReport: () => void;
   onRemovePlayer: (id: string) => void; onEnd: () => void;
+  /** Online rooms: other accounts the game can be handed to. */
+  others?: { id: string; name: string; avatarUrl: string }[];
+  onPass?: (id: string) => void;
 }) {
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [count, setCount] = useState<number | null>(null);
@@ -48,6 +51,22 @@ export function PauseSheet({ open, onClose, room, players, onRemovePlayer, onEnd
 
       <h3 className="mb-3 mt-8 text-3xl">Pot <span className="text-xl text-muted">{formatPot(pot)} coins left</span></h3>
       <Button variant="secondary" full onClick={onTopUp}>Top up the pot</Button>
+
+      {others.length > 0 && onPass && (
+        <>
+          <h3 className="mb-1 mt-8 text-3xl">Pass the game phone</h3>
+          <p className="mb-3 text-base text-muted">The game moves to their phone, right where you stopped. This phone then watches.</p>
+          <ul>
+            {others.map((p) => (
+              <li key={p.id} className="flex items-center gap-3 border-b-2 border-line/60 py-2">
+                <Avatar value={p.avatarUrl} name={p.name} size={44} />
+                <span className="min-w-0 flex-1 truncate text-xl font-bold">{p.name}</span>
+                <Button variant="secondary" size="md" onClick={() => onPass(p.id)}>Pass</Button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <h3 className="mb-3 mt-8 text-3xl">Tools</h3>
       <Button variant="secondary" full onClick={onTools}>Timer, coin flip, dice and more</Button>

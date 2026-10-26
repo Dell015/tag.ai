@@ -7,7 +7,7 @@
  */
 import { rooms, type Room } from '@/lib/data/rooms';
 import { refreshAccount } from '@/components/AuthSync';
-import { apiAgreeRoom, apiContribute, apiGetRoom, apiJoinRoom, apiLeaveRoom, apiPublishRoom, type RoomReply, type RoomResult } from '@/lib/supabase/rooms';
+import { apiAddToPot, apiAgreeRoom, apiContribute, apiGetRoom, apiJoinRoom, apiLeaveRoom, apiPublishRoom, type RoomReply, type RoomResult } from '@/lib/supabase/rooms';
 
 const POLL_MS = 3000;
 const PUSH_MS = 350;
@@ -15,7 +15,7 @@ const PUSH_MS = 350;
 const known = new Map<string, number>();
 const active = new Map<string, () => void>();
 
-const sig = (r: Room) => JSON.stringify([r.status, r.players, r.agreedPlayers, r.config]);
+const sig = (r: Room) => JSON.stringify([r.players, r.agreedPlayers, r.config]);
 
 /** The host's room with the server's view of who joined and who agreed folded in. */
 export function mergeServer(local: Room, server: Room): Room {
@@ -25,8 +25,20 @@ export function mergeServer(local: Room, server: Room): Room {
     const mine = local.players.find((l) => l.userId === p.userId);
     return mine ? { ...p, turnOrder: mine.turnOrder } : p;
   });
-  const agreed = Array.from(new Set([...server.agreedPlayers, ...local.agreedPlayers]));
-  return { ...local, paid: server.paid ?? local.paid, players: [...accounts, ...guests], agreedPlayers: agreed.filter((id) => [...accounts, ...guests].some((p) => p.userId === id)) };
+  // When the server sent the room back to the lobby (a new round), nobody has agreed yet.
+  const fresh = server.status === 'lobby' && local.status !== 'lobby';
+  const agreed = Array.from(new Set([...server.agreedPlayers, ...(fresh ? [] : local.agreedPlayers)]));
+  return {
+    ...local,
+    // The status, the pot and the game phone belong to the server.
+    status: server.status,
+    paid: server.paid ?? local.paid,
+    gamePhone: server.gamePhone,
+    gameView: server.gameView,
+    gameAge: server.gameAge,
+    players: [...accounts, ...guests],
+    agreedPlayers: agreed.filter((id) => [...accounts, ...guests].some((p) => p.userId === id)),
+  };
 }
 
 function take(reply: RoomReply, code: string) {
@@ -59,6 +71,16 @@ export async function joinOnline(raw: string): Promise<{ ok: true; code: string 
 /** Put coins in the pot from your own wallet. The server takes them and caps the amount at what is left. */
 export async function contributeOnline(code: string, amount: number): Promise<{ ok: true; added: number } | { ok: false; error: string }> {
   const res = await apiContribute(code, amount);
+  if (!res.ok) return res;
+  take(res.reply, code);
+  rooms.update(code, (r) => ({ ...r, paid: res.reply.data.paid }));
+  void refreshAccount();
+  return { ok: true, added: res.reply.added ?? amount };
+}
+
+/** Put coins in the pot during the game. The game phone folds them into its pot on its next look at the room. */
+export async function addToPotOnline(code: string, amount: number): Promise<{ ok: true; added: number } | { ok: false; error: string }> {
+  const res = await apiAddToPot(code, amount);
   if (!res.ok) return res;
   take(res.reply, code);
   rooms.update(code, (r) => ({ ...r, paid: res.reply.data.paid }));
@@ -133,7 +155,7 @@ export function startSync(code: string, myId: string): () => void {
             known.set(code, reply.version);
             const merged = mergeServer(local, reply.data);
             lastPushed = sig(reply.data);
-            if (sig(merged) !== sig(local) || JSON.stringify(merged.paid) !== JSON.stringify(local.paid)) rooms.update(code, () => merged);
+            if (sig(merged) !== sig(local) || JSON.stringify([merged.status, merged.paid, merged.gamePhone, merged.gameView, merged.gameAge]) !== JSON.stringify([local.status, local.paid, local.gamePhone, local.gameView, local.gameAge])) rooms.update(code, () => merged);
           }
         }
       }

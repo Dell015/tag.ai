@@ -1,7 +1,7 @@
 'use client';
 import { fillDrink } from '@/lib/game/card-kinds';
 import { useEffect } from 'react';
-import { Button, toast } from '@/components/ui';
+import { Button, NumberStepper, toast } from '@/components/ui';
 import { InstallSheet } from './InstallSheet';
 import { categoryLabel } from '@/components/library/common';
 import { formatPot } from '@/lib/game/pot';
@@ -10,7 +10,7 @@ import type { QueuedCard } from '@/lib/game/escalation-engine';
 import type { GameMode } from '@/types/game';
 
 export function Recap({ mode, deckName, played, skipped, hearted, peak, potStart, potRefunded, more, saved, onAgain, onHome }: {
-  mode: GameMode; deckName: string; played: number; skipped: number; hearted: number; peak: number; potStart: number; potRefunded: number; more?: { cards: number; cost: number; wallet: number; onBuy: () => void }; saved: QueuedCard[]; onAgain: () => void; onHome: () => void;
+  mode: GameMode; deckName: string; played: number; skipped: number; hearted: number; peak: number; potStart: number; potRefunded: number; more?: { cards: number; cost: number; wallet: number; onBuy: () => void; /** Online: the money is the shared pot, not a wallet. */ pot?: boolean; onCount?: (n: number) => void; onAdd?: () => void }; saved: QueuedCard[]; onAgain: () => void; onHome: () => void;
 }) {
   useEffect(() => { try { window.localStorage.setItem('tagai-games-finished', '1'); } catch { /* ignore */ } }, []);
   const stats = [
@@ -66,9 +66,20 @@ export function Recap({ mode, deckName, played, skipped, hearted, peak, potStart
 
       <p className="mt-8 text-muted">Get home safe.</p>
       <div className="mt-auto space-y-3 pt-8">
+        {more && more.onCount && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border-2 border-line p-3">
+            <span className="text-lg font-bold">More cards</span>
+            <NumberStepper label="more cards" value={more.cards} min={5} max={50} step={5} onChange={more.onCount} />
+          </div>
+        )}
         {more && (more.wallet >= more.cost
           ? <Button size="lg" full onClick={more.onBuy}>Keep going: {more.cards} more cards for {more.cost} coins</Button>
-          : <p className="text-center text-lg text-muted">Want {more.cards} more cards? You need {more.cost} coins, you have {formatPot(more.wallet)}.</p>)}
+          : (
+            <>
+              <p className="text-center text-lg text-muted">{more.pot ? `${more.cards} more cards need ${more.cost} coins in the pot. It has ${formatPot(more.wallet)}.` : `Want ${more.cards} more cards? You need ${more.cost} coins, you have ${formatPot(more.wallet)}.`}</p>
+              {more.onAdd && <Button size="lg" full onClick={more.onAdd}>Add coins to the pot</Button>}
+            </>
+          ))}
         <Button size="lg" full variant={more && more.wallet >= more.cost ? 'secondary' : 'primary'} onClick={onAgain}>Play again</Button>
         <div className="grid grid-cols-2 gap-3">
           <Button variant="secondary" onClick={share}>Share recap</Button>

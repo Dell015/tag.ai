@@ -38,3 +38,30 @@ export async function apiLeaveRoom(code: string): Promise<void> {
   if (!sb) return;
   await sb.rpc('leave_room' as never, { p_code: code } as never);
 }
+
+export const apiStartGame = (code: string, phone: string, queue: unknown, state: unknown, view: unknown) =>
+  call('start_game', { p_code: code, p_phone: phone, p_queue: queue, p_state: state, p_view: view });
+export const apiTransferGame = (code: string, to: string) => call('transfer_game', { p_code: code, p_to: to });
+export const apiClaimGame = (code: string) => call('claim_game', { p_code: code });
+export const apiFinishGame = (code: string, status: 'ended' | 'lobby') => call('finish_game', { p_code: code, p_status: status });
+
+/** Reports progress. `refused` is true when someone else now runs the game. */
+export async function apiPushGame(code: string, view: unknown, state?: unknown, queue?: unknown): Promise<{ ok: boolean; refused?: boolean }> {
+  const sb = getBrowserClient();
+  if (!sb) return { ok: false };
+  const { error } = await sb.rpc('push_game' as never, { p_code: code, p_view: view, p_state: state ?? null, p_queue: queue ?? null } as never);
+  if (!error) return { ok: true };
+  const e = error as { code?: string; message?: string };
+  return { ok: false, refused: e.code === '42501' || /not running/i.test(e.message ?? '') };
+}
+
+export async function apiGetGameState(code: string): Promise<{ state: Record<string, unknown>; queue: { cardQueue: unknown[]; bufferCards: unknown[] }; seq: number } | null> {
+  const sb = getBrowserClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('get_game_state' as never, { p_code: code } as never);
+  if (error || !data) return null;
+  return data as never;
+}
+
+/** Add coins to the pot while the game is running (any player in the room). */
+export const apiAddToPot = (code: string, amount: number) => call('add_to_pot', { p_code: code, p_amount: amount });

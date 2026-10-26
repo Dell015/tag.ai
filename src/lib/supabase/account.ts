@@ -395,16 +395,16 @@ export async function removeStackCardRemote(id: string, cardId: string): Promise
   return error ? { ok: false, error: msg(error) } : { ok: true };
 }
 
-export interface InboxMessage { id: string; title: string; body: string; coins: number; at: number; read: boolean; claimed: boolean }
-interface MessageRow { id: string; title: string; body: string; coins: number; created_at: string; read_at: string | null; claimed_at: string | null }
+export interface InboxMessage { id: string; title: string; body: string; coins: number; at: number; read: boolean; claimed: boolean; link?: string }
+interface MessageRow { id: string; title: string; body: string; coins: number; created_at: string; read_at: string | null; claimed_at: string | null; link?: string | null }
 
 /** The signed-in player's inbox, newest first. */
 export async function fetchInbox(): Promise<Result<InboxMessage[]>> {
   const sb = getBrowserClient();
   if (!sb) return noClient;
-  const { data, error } = await sb.from('messages').select('id,title,body,coins,created_at,read_at,claimed_at').order('created_at', { ascending: false }).limit(50);
+  const { data, error } = await sb.from('messages').select('id,title,body,coins,created_at,read_at,claimed_at,link').order('created_at', { ascending: false }).limit(50);
   if (error) return { ok: false, error: msg(error) };
-  return { ok: true, data: ((data ?? []) as MessageRow[]).map((m) => ({ id: m.id, title: m.title, body: m.body, coins: m.coins, at: Date.parse(m.created_at), read: !!m.read_at, claimed: !!m.claimed_at })) };
+  return { ok: true, data: ((data ?? []) as MessageRow[]).map((m) => ({ id: m.id, title: m.title, body: m.body, coins: m.coins, at: Date.parse(m.created_at), read: !!m.read_at, claimed: !!m.claimed_at, link: m.link ?? undefined })) };
 }
 
 export async function markInboxRead(): Promise<Result> {

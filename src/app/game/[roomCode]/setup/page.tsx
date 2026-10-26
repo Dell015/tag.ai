@@ -7,6 +7,7 @@ import { MIN_POT, formatPot } from '@/lib/game/pot';
 import { useRoom } from '@/hooks/use-room';
 import { useRequireProfile } from '@/lib/use-profile';
 import { agreeOnline } from '@/lib/data/room-sync';
+import { startGameOnline } from '@/lib/data/game-sync';
 import { PotPanel } from '@/components/lobby/PotPanel';
 import { SeatCircle } from '@/components/lobby/SeatCircle';
 import { rooms, potFunded, type RoomConfig } from '@/lib/data/rooms';
@@ -53,6 +54,9 @@ export default function SetupPage() {
   const [rule, setRule] = useState('');
   const [adultOk, setAdultOk] = useState(false);
   const starting = useRef(false);
+  const [busy, setBusy] = useState(false);
+  /** Online: the account whose phone runs the game. Defaults to the host. */
+  const [phone, setPhone] = useState('');
   const library = useMemo(() => buildLibrary(), []);
   const pools = useMemo(() => Object.fromEntries(DECKS.map((d) => [d.id, deckPool(d, library).length])) as Record<DeckId, number>, [library]);
 
@@ -84,7 +88,21 @@ export default function SetupPage() {
   const toggleTopic = (t: string) => set({ comfortFilters: cfg.comfortFilters.includes(t) ? cfg.comfortFilters.filter((x) => x !== t) : [...cfg.comfortFilters, t] });
   const addWord = () => { const w = word.trim(); if (w && !cfg.comfortFilters.includes(w)) set({ comfortFilters: [...cfg.comfortFilters, w] }); setWord(''); };
   const addRule = () => { const r = rule.trim(); if (r && cfg.customDrinkRules.length < MAX_CUSTOM_RULES) set({ customDrinkRules: [...cfg.customDrinkRules, r] }); setRule(''); };
-  const start = () => { starting.current = true; if (startGame(room, trashed)) router.push(`/game/${code}/play`); else starting.current = false; };
+  const accountPlayers = room.players.filter((p) => !p.isGuest);
+  const phoneId = accountPlayers.some((p) => p.userId === phone) ? phone : profile.id;
+  const start = async () => {
+    starting.current = true;
+    if (room.online) {
+      setBusy(true);
+      const res = await startGameOnline(room, trashed, phoneId);
+      setBusy(false);
+      if (!res.ok) { starting.current = false; toast(res.error, { tone: 'warn' }); return; }
+      // The host phone plays unless the host handed the game to someone else.
+      router.push(phoneId === profile.id ? `/game/${code}/play` : `/game/${code}`);
+      return;
+    }
+    if (startGame(room, trashed)) router.push(`/game/${code}/play`); else starting.current = false;
+  };
 
   const library2 = library;
   const picks = cfg.picks ?? { decks: [], sources: [] };
@@ -125,7 +143,7 @@ export default function SetupPage() {
   const footer = view < TOTAL ? (
     <Button size="lg" full disabled={blocked !== null} onClick={next}>{blocked ?? 'Next'}</Button>
   ) : isHost ? (
-    <Button size="lg" full disabled={!allAgreed(room) || !potOk || adultBlocked} onClick={start}>{!potOk ? (cards >= MIN_OWN_CARDS && online ? `Waiting for the pot: ${funded} of ${cards}` : 'Fix your cards first') : adultBlocked ? 'Confirm everyone is 18 or older' : allAgreed(room) ? 'Start game' : `Waiting for ${pending} to agree`}</Button>
+    <Button size="lg" full disabled={busy || !allAgreed(room) || !potOk || adultBlocked} onClick={() => void start()}>{!potOk ? (cards >= MIN_OWN_CARDS && online ? `Waiting for the pot: ${funded} of ${cards}` : 'Fix your cards first') : adultBlocked ? 'Confirm everyone is 18 or older' : allAgreed(room) ? 'Start game' : `Waiting for ${pending} to agree`}</Button>
   ) : (
     <p className="pb-2 text-center text-lg text-muted">Waiting for the host to start.</p>
   );
@@ -305,6 +323,21 @@ export default function SetupPage() {
             <li className="text-muted">Anyone can skip a card. Nobody has to answer. Nobody drives.</li>
           </ul>
           {online && <div className="mt-6"><PotPanel room={room} myId={profile.id} wallet={wallet} /></div>}
+          {online && isHost && accountPlayers.length > 1 && (
+            <section className="mt-8" aria-label="Which phone runs the game">
+              <h3 className="text-4xl">Which phone runs the game?</h3>
+              <p className="mb-3 mt-1 text-base text-muted">Cards show on that phone. The other phones can watch live or close the app. You can pass the game on later from the pause menu.</p>
+              <div className="grid grid-cols-3 gap-3">
+                {accountPlayers.map((p) => (
+                  <button key={p.userId} onClick={() => { haptic('tap'); setPhone(p.userId); }} aria-pressed={p.userId === phoneId}
+                    className={cn('flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-colors active:scale-95', p.userId === phoneId ? 'border-accent bg-accent/15' : 'border-line')}>
+                    <Avatar value={p.avatarUrl} name={p.displayName} size={56} />
+                    <span className="w-full truncate text-center text-base font-bold">{p.userId === profile.id ? 'This phone' : p.displayName}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
           <h3 className="mt-8 text-4xl">Tap your name to agree</h3>
           <p className="mb-3 mt-1 text-base text-muted">Everyone taps their own name to say yes to the rules. Tap again to undo.</p>
           <div className="grid grid-cols-3 gap-3">

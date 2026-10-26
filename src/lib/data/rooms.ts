@@ -58,6 +58,27 @@ export interface Room {
   online?: boolean;
   /** Online rooms: coins each account has put in the pot, kept by the server. */
   paid?: Record<string, number>;
+  /** Online rooms, while a game runs: the account whose phone plays it (server-owned). */
+  gamePhone?: string;
+  /** What the game phone last reported, for everyone else to watch (server-owned). */
+  gameView?: GameView | null;
+  /** Seconds since the game phone last reported. */
+  gameAge?: number;
+}
+
+/** A small picture of the game for the phones that are only watching. */
+export interface GameView {
+  card: { text: string; kind: string; deck?: string; wild?: boolean } | null;
+  revealed: boolean;
+  player: string;
+  next: string;
+  played: number;
+  total: number;
+  heat: number;
+  pot: number;
+  rule: string | null;
+  phase: 'playing' | 'end';
+  mode: string;
 }
 
 export interface RoomRepository {

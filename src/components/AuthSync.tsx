@@ -68,7 +68,11 @@ export function AuthSync() {
     const { data: sub } = sb.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') void refreshAccount();
     });
-    return () => sub.subscription.unsubscribe();
+    // Friends see you as online while the app is open (at most one ping a minute).
+    const ping = () => { if (document.visibilityState === 'visible' && useAccountStore.getState().status === 'signedIn') void sb.rpc('touch_presence' as never); };
+    ping();
+    const beat = setInterval(ping, 60000);
+    return () => { sub.subscription.unsubscribe(); clearInterval(beat); };
   }, [hydrated]);
   return null;
 }

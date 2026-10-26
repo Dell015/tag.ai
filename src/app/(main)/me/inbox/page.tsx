@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Button, EmptyState, Screen, Spot, toast } from '@/components/ui';
 import { supabaseConfigured } from '@/lib/supabase/config';
 import { claimMessage, markInboxRead } from '@/lib/supabase/account';
@@ -59,6 +60,9 @@ export default function InboxPage() {
                 <span className="shrink-0 pt-0.5 text-xs font-bold text-muted">{when(m.at)}</span>
               </div>
               {m.body && <p className="mt-2 whitespace-pre-wrap text-base text-muted">{m.body}</p>}
+              {m.link && (
+                <Link href={m.link} className="mt-3 block"><Button full>Join the room</Button></Link>
+              )}
               {m.coins > 0 && (
                 <Button className={cn('mt-3', m.claimed && 'pointer-events-none')} full variant={m.claimed ? 'secondary' : 'primary'} disabled={m.claimed || busy === m.id} onClick={() => void claim(m.id, m.coins)}>
                   {m.claimed ? `Claimed ${m.coins} coins` : `Claim ${m.coins} coins`}

@@ -26,7 +26,7 @@ describe('mergeServer', () => {
   });
   it('keeps the host\'s own settings', () => {
     const local = { ...room([p('host')], []), status: 'active' as const };
-    expect(mergeServer(local, room([p('host')], [])).status).toBe('active');
+    expect(mergeServer(local, room([p('host')], [])).status).toBe('lobby'); // the server owns the status
   });
 });
 
@@ -49,5 +49,21 @@ describe('pot', () => {
     const local = { ...room([p('host')], []), paid: { host: 999 } };
     const server = { ...room([p('host')], []), paid: { host: 3 } };
     expect(mergeServer(local, server).paid).toEqual({ host: 3 });
+  });
+});
+
+describe('game phone', () => {
+  it('takes status, game phone and view from the server', () => {
+    const local = room([p('a', { turnOrder: 0 }), p('b', { turnOrder: 1 })], ['a']);
+    const server = { ...room([p('a', { turnOrder: 0 }), p('b', { turnOrder: 1 })], ['a', 'b']), status: 'active' as const, gamePhone: 'b', gameView: null, gameAge: 3 };
+    const m = mergeServer(local, server);
+    expect(m.status).toBe('active');
+    expect(m.gamePhone).toBe('b');
+    expect(m.gameAge).toBe(3);
+  });
+  it('clears agreements when the server sends the room back to the lobby', () => {
+    const local = { ...room([p('a', { turnOrder: 0 }), p('b', { turnOrder: 1 })], ['a', 'b']), status: 'active' as const };
+    const server = room([p('a', { turnOrder: 0 }), p('b', { turnOrder: 1 })], []);
+    expect(mergeServer(local, server).agreedPlayers).toEqual([]);
   });
 });

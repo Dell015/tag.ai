@@ -30,11 +30,13 @@ import { ToolsSheet } from '@/components/play/ToolsSheet';
 import { cardCost } from '@/lib/game/pot';
 import { roomPlan } from '@/lib/data/start-game';
 import { sourceCards } from '@/lib/data/game-source';
-import { withPlayer } from '@/lib/data/rooms';
+import { withPlayer, potFunded } from '@/lib/data/rooms';
+import { addToPotOnline } from '@/lib/data/room-sync';
 import { FOCUS_RULES } from '@/lib/game/mid-game';
 import { formatPot, isLow } from '@/lib/game/pot';
 import { useWalletStore } from '@/stores/wallet-store';
 import { cn } from '@/lib/cn';
+import { finishGame, startPublisher, takeOverGame, transferGame } from '@/lib/data/game-sync';
 import { fillDrink } from '@/lib/game/card-kinds';
 
 export default function PlayPage() {
@@ -89,47 +91,84 @@ export default function PlayPage() {
   useEffect(() => {
     if (ended && !settled.current && g.pot > 0) {
       settled.current = true;
+      // Online pots belong to everyone who paid and there are no refunds after the start, so only offline games hand coins back.
+      if (room?.online) return;
       const left = g.settlePot();
       if (left > 0) applyCoins('refund', left, 'Unused pot returned');
     }
-  }, [ended, g, applyCoins]);
+  }, [ended, g, applyCoins, room?.online]);
 
   // Mark the room as ended once, so the lobby doesn't offer "resume".
   useEffect(() => {
-    if (ended && room && room.status === 'active') rooms.update(code, (r) => ({ ...r, status: 'ended' }));
+    // Online rooms stay 'active' on the server through the recap, so more cards can still be added; leaving the recap ends them.
+    if (!ended || !room || room.online || room.status !== 'active') return;
+    rooms.update(code, (r) => ({ ...r, status: 'ended' }));
   }, [ended, room, code]);
+
+  // Online: only the game phone plays. It reports every move so the others can watch, and carries on from the saved game when it just took over.
+  const online = !!room?.online;
+  const iRun = online ? room?.gamePhone === profile?.id : room?.hostId === profile?.id;
+  const [loadingGame, setLoadingGame] = useState(false);
+  const loaded = useRef(false);
+  useEffect(() => {
+    if (!online || !iRun || loaded.current || !profile) return;
+    loaded.current = true;
+    if (useGameStore.getState().cardQueue.length > 0) return;
+    setLoadingGame(true);
+    void takeOverGame(code).then((ok) => { setLoadingGame(false); if (!ok) toast('Could not load the game. Check your connection.', { tone: 'warn' }); });
+  }, [online, iRun, code, profile]);
+  // Online: the pot is what everyone paid. Coins added by anyone (also from the watching phones) show up here.
+  const funded = room ? potFunded(room) : 0;
+  useEffect(() => {
+    if (!online || !iRun || g.cardQueue.length === 0) return;
+    const extra = funded - g.potStart;
+    if (extra > 0) { g.topUpPot(extra); setEmpty(false); toast(`${extra} coins added to the pot`, { tone: 'ok' }); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, iRun, funded, g.potStart, g.cardQueue.length]);
+  const nonDrinking = !!room?.config.nonDrinkingMode;
+  useEffect(() => {
+    if (!online || !iRun) return;
+    return startPublisher(code, nonDrinking, () => { g.resetGame(); toast('Another phone is running the game now.', {}); router.replace(`/game/${code}`); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, iRun, code, nonDrinking]);
 
   const plan = room ? roomPlan(room) : undefined;
   const moreDeck = room && !room.config.source && !plan?.picks ? Object.entries(roomPlan(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] : undefined;
-  const moreCost = MORE_CARDS * (moreDeck ? DECK_BY_ID[moreDeck as DeckId]?.price ?? 1 : 1);
+  const [moreCount, setMoreCount] = useState<number>(MORE_CARDS);
+  const moreCost = moreCount * (moreDeck ? DECK_BY_ID[moreDeck as DeckId]?.price ?? 1 : 1);
   /** Pay as you go: 10 more cards from the same stacks for 10 coins, then the game carries on. */
   const buyMore = () => {
     if (!room) return;
     const src = room.config.source;
     const pool = plan?.picks ? plan.pool : undefined;
     const deck = Object.entries(roomPlan(room).basket).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0] as DeckId | undefined;
-    if ((!deck && !src && !pool) || wallet < moreCost) return;
+    if ((!deck && !src && !pool)) return;
+    // Online: the cards are paid from the shared pot, so anyone can add coins first. Offline: from this wallet.
+    if (room.online ? g.pot + 1e-9 < moreCost : wallet < moreCost) { if (room.online) { toast(`The pot needs ${moreCost} coins for ${moreCount} more cards. Add coins first.`, {}); setTopUp(true); } return; }
     const seen = [...g.cardQueue, ...g.bufferCards].map((c) => c.id);
     const opts = { comfortFilters: room.config.comfortFilters, trashedCardIds: [...useProfileStore.getState().trashedCardIds, ...seen], playerCount: g.turnRotation.players.length, fitPlayers: true };
-    const built = pool ? buildPoolQueue({ pool, count: MORE_CARDS, ...opts }) : src ? buildPoolQueue({ pool: sourceCards(src), count: MORE_CARDS, ...opts }) : buildBasketQueue({ basket: { [deck as DeckId]: MORE_CARDS }, ...opts }, buildLibrary());
+    const built = pool ? buildPoolQueue({ pool, count: moreCount, ...opts }) : src ? buildPoolQueue({ pool: sourceCards(src), count: moreCount, ...opts }) : buildBasketQueue({ basket: { [deck as DeckId]: moreCount }, ...opts }, buildLibrary());
     const n = built.cards.filter((c) => c.cardType !== 'wild').length;
     const price = built.cards.filter((c) => c.cardType !== 'wild').reduce((a, c) => a + cardCost(c), 0);
     if (n === 0) { toast('No new cards left in this deck. Start again with another deck.', {}); return; }
-    if (!applyCoins('pot', -price, `${n} more cards`)) { toast('Not enough coins', {}); return; }
-    g.topUpPot(price);
+    // Online: the coins are already in the shared pot and are charged as the cards are played. Offline: this wallet pays now.
+    if (!room.online) {
+      if (!applyCoins('pot', -price, `${n} more cards`)) { toast('Not enough coins', {}); return; }
+      g.topUpPot(price);
+    }
     g.extendQueue(built.cards, built.buffer);
     settled.current = false;
-    rooms.update(code, (r) => ({ ...r, status: 'active' }));
+    if (!room.online) rooms.update(code, (r) => ({ ...r, status: 'active' }));
   };
 
   if (!ready || !profile || status === 'loading') return <Splash />;
 
-  const isHost = room?.hostId === profile.id;
-  if (status === 'missing' || !room || !isHost || (g.cardQueue.length === 0 && !ended)) {
+  if (loadingGame || (online && iRun && g.cardQueue.length === 0 && !loaded.current)) return <Splash />;
+  if (status === 'missing' || !room || !iRun || (g.cardQueue.length === 0 && !ended)) {
     return (
       <div className="flex min-h-dvh flex-col items-start justify-center gap-4 px-5">
         <h1 className="text-6xl">No game running here</h1>
-        <p className="text-muted">The game is played on the host&apos;s phone. Head back to the lobby to start one.</p>
+        <p className="text-muted">The game is played on one phone. Head back to the lobby to see where it is.</p>
         <Link href={`/game/${code}`} className="w-full max-w-xs"><Button full>Go to lobby</Button></Link>
       </div>
     );
@@ -139,12 +178,16 @@ export default function PlayPage() {
     return (
       <Recap
         potStart={g.potStart} potRefunded={g.potRefunded}
-        more={{ cards: MORE_CARDS, cost: moreCost, wallet, onBuy: buyMore }}
+        more={{ cards: moreCount, cost: moreCost, wallet: room.online ? g.pot : wallet, pot: room.online, onBuy: buyMore, onCount: setMoreCount, onAdd: room.online ? () => setTopUp(true) : undefined }}
         saved={hearted.map((id) => g.cardQueue.find((c) => c.id === id)).filter((c): c is NonNullable<typeof c> => !!c)}
         mode={g.gameMode} deckName={roomPlan(room).label} played={g.cardsPlayed} skipped={g.skippedCount} hearted={g.heartedCount} peak={g.peakHeat}
-        onHome={() => { g.resetGame(); router.replace('/'); }}
+        onHome={() => { g.resetGame(); if (room.online) void finishGame(code, 'ended'); router.replace('/'); }}
         onAgain={() => {
           g.resetGame();
+          if (room.online) {
+            void finishGame(code, 'lobby').then(() => router.replace(`/game/${code}${room.hostId === profile.id ? '/setup' : ''}`));
+            return;
+          }
           rooms.update(code, (r) => ({ ...r, status: 'lobby', agreedPlayers: [] }));
           router.replace(`/game/${code}/setup`);
         }}
@@ -266,12 +309,27 @@ export default function PlayPage() {
         onReport={() => { if (card) { try { const k = 'tagai-reports'; const l = JSON.parse(window.localStorage.getItem(k) ?? '[]'); l.push({ id: card.id, at: Date.now() }); window.localStorage.setItem(k, JSON.stringify(l)); } catch { /* ignore */ } toast('Thanks. We will look at this card.', { tone: 'ok' }); } }}
         onRemovePlayer={(id) => { g.removePlayerFromTurns(id); rooms.update(code, (r) => ({ ...r, players: r.players.filter((p) => p.userId !== id) })); }}
         onEnd={() => { setPause(false); g.endGame(); }}
+        others={online ? room.players.filter((p) => !p.isGuest && p.userId !== profile.id).map((p) => ({ id: p.userId, name: p.displayName, avatarUrl: p.avatarUrl })) : []}
+        onPass={async (to) => {
+          const res = await transferGame(code, to);
+          if (!res.ok) { toast(res.error, { tone: 'warn' }); return; }
+          setPause(false);
+          rooms.update(code, (r) => ({ ...r, gamePhone: to, gameView: res.reply.data.gameView ?? null }));
+          router.replace(`/game/${code}`);
+        }}
       />
       <ToolsSheet open={tools} onClose={() => setTools(false)} players={g.turnRotation.players.map((p) => p.name)} />
       <TopUpSheet open={topUp} onClose={() => setTopUp(false)} wallet={wallet} pot={g.pot}
         cardsLeft={Math.max(0, g.cardCountTarget - g.cardsPlayed)}
         costLeft={g.cardQueue.slice(g.currentCardIndex).reduce((a, c) => a + cardCost(c), 0)}
-        onAdd={(n) => { if (applyCoins('topup', -n, 'Added to the pot')) { g.topUpPot(n); setEmpty(false); toast(`Added ${n} to the pot`, { tone: 'ok' }); } }} />
+        onAdd={(n) => {
+          if (room.online) {
+            // The server takes the coins; this phone's pot follows from the shared total (see the effect above).
+            void addToPotOnline(code, n).then((r) => toast(r.ok ? `Added ${r.added} to the pot` : r.error, { tone: r.ok ? 'ok' : 'warn' }));
+            return;
+          }
+          if (applyCoins('topup', -n, 'Added to the pot')) { g.topUpPot(n); setEmpty(false); toast(`Added ${n} to the pot`, { tone: 'ok' }); }
+        }} />
       <Sheet open={empty && !topUp} onClose={() => undefined} title="Pot is empty">
         <p className="-mt-2 mb-6 text-lg text-muted">The game is paused. Add coins to keep going, or end it here.</p>
         <div className="space-y-3 pb-2">
