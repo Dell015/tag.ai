@@ -9,7 +9,7 @@ import { useProfileStore, WELCOME_COINS } from '@/stores/profile-store';
 import { useHydrated } from '@/lib/hydration';
 import { supabaseConfigured } from '@/lib/supabase/config';
 import { useAccountStore } from '@/stores/account-store';
-import { codeLoginEnabled, completeProfile, confirmAdult, googleEnabled, sendEmailCode, signInWithGoogle, signInWithPassword, signUpWithPassword, verifyEmailCode } from '@/lib/supabase/account';
+import { codeLoginEnabled, completeProfile, confirmAdult, googleAvailable, sendEmailCode, signInWithGoogle, signInWithPassword, signUpWithPassword, verifyEmailCode } from '@/lib/supabase/account';
 import { refreshAccount } from '@/components/AuthSync';
 import { AgeForm } from '@/components/AgeForm';
 import { ageLockLeft, lockText, setAgeLock } from '@/lib/age';
@@ -20,6 +20,8 @@ function WelcomeInner() {
   const [next, setNext] = useState<string | null>(null);
   useEffect(() => { setNext(new URLSearchParams(window.location.search).get('next')); }, []);
   const hydrated = useHydrated();
+  const [googleEnabled, setGoogleEnabled] = useState(false);
+  useEffect(() => { void googleAvailable().then(setGoogleEnabled); }, []);
   const existing = useProfileStore((s) => s.profile);
   const createProfile = useProfileStore((s) => s.createProfile);
   const [name, setName] = useState('');
@@ -175,7 +177,7 @@ function WelcomeInner() {
             <GoogleButton disabled={busy} onClick={async () => {
               setError('');
               try { if (adultOk) sessionStorage.setItem('tagai-adult-ok', '1'); } catch { /* private mode */ }
-              const r = await signInWithGoogle();
+              const r = await signInWithGoogle(next ?? undefined);
               if (!r.ok) setError(r.error ?? 'Google sign in is not available right now.');
             }} />
             <Divider>or use your email</Divider>

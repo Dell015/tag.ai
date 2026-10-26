@@ -105,14 +105,30 @@ export async function signInWithPassword(email: string, password: string): Promi
 /** Whether the email code option is shown. Set NEXT_PUBLIC_CODE_SIGNIN=on once sign in emails can reach everyone (verified domain in Resend). */
 export const codeLoginEnabled = process.env.NEXT_PUBLIC_CODE_SIGNIN === 'on';
 
-/** Whether the Google button is shown. Set NEXT_PUBLIC_GOOGLE_SIGNIN=on once Google is switched on in Supabase. */
-export const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN === 'on';
+/** Forces the Google button on (on) or off (off). Left unset, the app asks Supabase whether Google is switched on. */
+const GOOGLE_FLAG = process.env.NEXT_PUBLIC_GOOGLE_SIGNIN;
+export const googleEnabled = GOOGLE_FLAG === 'on';
+
+let googleAsk: Promise<boolean> | undefined;
+/** True when Google sign in is enabled for this project. Asks Supabase once, so the button shows up as soon as the provider is switched on. */
+export function googleAvailable(): Promise<boolean> {
+  if (GOOGLE_FLAG === 'on') return Promise.resolve(true);
+  if (GOOGLE_FLAG === 'off') return Promise.resolve(false);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return Promise.resolve(false);
+  googleAsk ??= fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j: { external?: { google?: boolean } } | null) => !!j?.external?.google)
+    .catch(() => false);
+  return googleAsk;
+}
 
 /** Sends the player to Google; they come back to /welcome with a session. */
-export async function signInWithGoogle(): Promise<Result> {
+export async function signInWithGoogle(next?: string): Promise<Result> {
   const sb = getBrowserClient();
   if (!sb) return noClient;
-  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/welcome` } });
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/welcome${next && next.startsWith('/') ? `?next=${encodeURIComponent(next)}` : ''}` } });
   return error ? { ok: false, error: 'Google sign in is not available right now.' } : { ok: true };
 }
 
