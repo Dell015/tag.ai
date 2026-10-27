@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge, Button, Chip, ConfirmSheet, EmptyState, Screen, TextField, toast } from '@/components/ui';
 import { Select } from '@/components/ui/Select';
+import { CardReview } from '@/components/admin/CardReview';
 import { AuditLog } from '@/components/admin/AuditLog';
 import { useAccountStore } from '@/stores/account-store';
 import { useHydrated } from '@/lib/hydration';
@@ -17,8 +18,8 @@ import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
 import { DECK_BY_ID, type DeckId } from '@/lib/game/decks';
 import type { CardCategory } from '@/types/game';
 
-type Tab = 'queue' | 'pay' | 'audit' | 'cards' | 'words' | 'coins' | 'mail';
-const TABS: { id: Tab; label: string }[] = [{ id: 'queue', label: 'Queue' }, { id: 'pay', label: 'Payments' }, { id: 'audit', label: 'Audit log' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'mail', label: 'Mail' }];
+type Tab = 'review' | 'queue' | 'pay' | 'audit' | 'cards' | 'words' | 'coins' | 'mail';
+const TABS: { id: Tab; label: string }[] = [{ id: 'review', label: 'Review cards' }, { id: 'queue', label: 'Queue' }, { id: 'pay', label: 'Payments' }, { id: 'audit', label: 'Audit log' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'mail', label: 'Mail' }];
 
 const CATEGORIES: { id: CardCategory; label: string }[] = [
   { id: 'hot_takes', label: 'Hot takes' }, { id: 'hypotheticals', label: 'Hypotheticals' }, { id: 'memories', label: 'Memories' },
@@ -340,7 +341,7 @@ export default function AdminPage() {
   const hydrated = useHydrated();
   const status = useAccountStore((a) => a.status);
   const isAdmin = useAccountStore((a) => a.isAdmin);
-  const [tab, setTab] = useState<Tab>('queue');
+  const [tab, setTab] = useState<Tab>('review');
 
   useEffect(() => {
     if (hydrated && (status === 'signedOut' || status === 'off' || (status === 'signedIn' && !isAdmin))) router.replace('/me');
@@ -353,7 +354,7 @@ export default function AdminPage() {
       <div className="mt-4">
         <Select label="Section" value={tab} onChange={(e) => setTab(e.target.value as Tab)} options={TABS} />
       </div>
-      <div className="mt-4">{tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'audit' ? <AuditLog /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
+      <div className="mt-4">{tab === 'review' ? <CardReview /> : tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'audit' ? <AuditLog /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
     </Screen>
   );
 }

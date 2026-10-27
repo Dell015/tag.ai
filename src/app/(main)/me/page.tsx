@@ -86,7 +86,7 @@ export default function MePage() {
           <ListRow icon="wallet" tone="yellow" label="Wallet" hint="Balance and history" href="/me/wallet" />
           <ListRow icon="heart" tone="pink" label="Saved cards" value={saved} href="/me/saved" />
           <ListRow icon="plus" tone="green" label="Suggest a card" hint="Write a card, friends like it" href="/me/suggest" />
-          <ListRow icon="up" tone="orange" label="Leaderboard" hint="Sample data until accounts launch" href="/me/leaderboard" />
+          <ListRow icon="up" tone="orange" label="Leaderboard" hint="Most cheered cards and card makers" href="/me/leaderboard" />
           {connected && <ListRow icon="users" tone="green" label="Friends" hint={requests ? `${requests} new ${requests === 1 ? 'request' : 'requests'}` : 'See who is online, invite them to a room'} value={requests || undefined} href="/me/friends" />}
           <ListRow icon="users" tone="blue" label="Invite friends" hint="You and a friend each get 30 coins" href="/me/referral" />
         </Plate>

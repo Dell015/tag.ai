@@ -329,6 +329,50 @@ export async function adminRetire(ids: string[]): Promise<Result<number>> {
   return error ? { ok: false, error: msg(error) } : { ok: true, data: data as number };
 }
 
+
+export interface ReviewCard { id: string; text: string; kind: string; deckId: string | null; adult: boolean; intensity: number; category: string; source: string; packId: string | null }
+
+/** The next cards waiting for a decision (oldest first) and how many are left in total. */
+export async function adminReviewQueue(limit = 10): Promise<Result<{ total: number; cards: ReviewCard[] }>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_review_queue', { p_limit: limit });
+  if (error) return { ok: false, error: msg(error) };
+  const d = data as { total: number; cards: ReviewCard[] };
+  return { ok: true, data: { total: d.total, cards: d.cards ?? [] } };
+}
+
+export async function adminApproveCards(ids: string[]): Promise<Result<number>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_approve_cards', { card_ids: ids });
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: data as number };
+}
+
+export async function adminUndoReview(id: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('admin_undo_review', { p_card: id });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+/** Cards already reviewed: 'removed' (kept safe, out of every game) or 'approved' (in play). Newest decision first. */
+export async function adminReviewedCards(which: 'removed' | 'approved', limit = 50): Promise<Result<{ total: number; cards: ReviewCard[] }>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_reviewed_cards', { p_status: which, p_limit: limit });
+  if (error) return { ok: false, error: msg(error) };
+  const d = data as { total: number; cards: ReviewCard[] };
+  return { ok: true, data: { total: d.total, cards: d.cards ?? [] } };
+}
+
+export async function adminRestoreCard(id: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('admin_restore_card', { p_card: id });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
 /** Gives coins to a player by email (admins only; the database refuses anyone else). Returns their new balance. */
 export async function adminGiveCoins(email: string, amount: number, note: string): Promise<Result<number>> {
   const sb = getBrowserClient();
