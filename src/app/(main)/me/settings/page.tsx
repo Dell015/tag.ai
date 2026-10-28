@@ -3,12 +3,11 @@ import { useAccountStore } from '@/stores/account-store';
 import { signOutServer } from '@/lib/supabase/account';
 import { useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
-import { Button, Chip, ConfirmSheet, ListRow, Plate, Screen, Section, SegmentedControl, Sheet, TextField, Toggle, toast } from '@/components/ui';
+import { Button, Chip, ConfirmSheet, ListRow, Plate, Screen, Section, SegmentedControl, Sheet, TextField, Toggle } from '@/components/ui';
 import { PRESET_TOPICS, normalizeTopic } from '@/lib/game/comfort-filters';
 import { DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
 import { useSettingsStore, type MotionPref, type TextSize } from '@/stores/settings-store';
 import { useProfileStore } from '@/stores/profile-store';
-import { useGameStore } from '@/stores/game-store';
 import { useWalletStore } from '@/stores/wallet-store';
 
 const BUILD = 'a1';
@@ -41,38 +40,13 @@ export default function SettingsPage() {
   const signOut = useProfileStore((p) => p.signOut);
   const connected = useAccountStore((a) => a.status === 'signedIn');
   const trashedCount = useProfileStore((p) => p.trashedCardIds.length);
-  const resetGame = useGameStore((g) => g.resetGame);
   const [word, setWord] = useState('');
   const [rule, setRule] = useState('');
-  const [ask, setAsk] = useState<null | 'profile' | 'game' | 'all'>(null);
-  const [taps, setTaps] = useState(0);
+  const [ask, setAsk] = useState<null | 'profile'>(null);
   const [sheet, setSheet] = useState<null | 'topics' | 'rules'>(null);
 
   const customTopics = s.skipTopics.filter((t) => !(PRESET_TOPICS as readonly string[]).includes(t) && t !== '18+ Cards');
   const toggleTopic = (t: string) => s.set('skipTopics', s.skipTopics.includes(t) ? s.skipTopics.filter((x) => x !== t) : [...s.skipTopics, t]);
-
-  const exportData = () => {
-    const p = useProfileStore.getState();
-    const data = { exportedAt: new Date().toISOString(), profile: p.profile, savedCardIds: p.savedCardIds, trashedCardIds: p.trashedCardIds, settings: useSettingsStore.getState() };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'tagai-data.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toast('Data exported', { tone: 'ok' });
-  };
-
-  const wipe = () => {
-    try { Object.keys(window.localStorage).filter((k) => k.startsWith('tagai')).forEach((k) => window.localStorage.removeItem(k)); } catch { /* ignore */ }
-    window.location.href = '/welcome';
-  };
-
-  const versionTap = () => {
-    const n = taps + 1;
-    setTaps(n);
-    if (n === 5 && !s.hiddenUnlocked) { s.set('hiddenUnlocked', true); toast('Hidden options unlocked', { tone: 'ok' }); }
-  };
 
   return (
     <Screen title="Settings" back="/me">
@@ -120,19 +94,15 @@ export default function SettingsPage() {
         <ListRow icon="trash" tone="orange" label="Trashed cards" hint="Cards you will not see again. Undo them here." value={trashedCount} href="/me/settings/trashed" />
       </Group>
 
-      <Group title="Your data">
-        <ListRow label="Export my data" hint="Saves your name, settings and saved cards to a file." onClick={exportData} />
-        <ListRow label="Clear game in progress" hint="Ends the game on this phone." danger onClick={() => setAsk('game')} />
+      <Group title="Account">
         <ListRow label={connected ? 'Sign out' : 'Reset profile'} hint={connected ? 'Your coins and cards stay in your account.' : 'Removes your name and coins from this phone.'} danger onClick={() => setAsk('profile')} />
-        <ListRow label="Clear all local data" hint="Erases settings and everything saved on this phone." danger onClick={() => setAsk('all')} />
-        {s.hiddenUnlocked && <ToggleRow k="testPurchases" label="Test purchases" hint="For testing. Lets you add test coins in the Shop." />}
       </Group>
 
       <Group title="About">
         <ListRow label="Terms" href="/legal/terms" />
         <ListRow label="Privacy" href="/legal/privacy" />
         <ListRow label="Send feedback" hint="Opens your mail app." onClick={() => { window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=TagAi%20feedback`; }} />
-        <ListRow label="Version" value={`0.1 (${BUILD})`} onClick={versionTap} />
+        <ListRow label="Version" value={`0.1 (${BUILD})`} />
       </Group>
 
 
@@ -165,9 +135,7 @@ export default function SettingsPage() {
           )}
       </Sheet>
 
-      <ConfirmSheet open={ask === 'game'} title="Clear the game in progress?" body="The current game on this phone ends and cannot be resumed." confirmLabel="Clear game" danger onConfirm={() => { const left = useGameStore.getState().settlePot(); if (left > 0) useWalletStore.getState().apply('refund', left, 'Unused pot returned'); resetGame(); toast('Game cleared', {}); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'profile'} title={connected ? 'Sign out?' : 'Reset your profile?'} body={connected ? 'Your coins and saved cards stay in your account. Sign in again with your email to get them back.' : 'Your name, coins, saved and trashed cards on this phone are removed.'} confirmLabel={connected ? 'Sign out' : 'Reset profile'} danger onConfirm={() => { if (connected) { void signOutServer().then(() => router.replace('/welcome')); return; } useWalletStore.getState().clear(); signOut(); router.replace('/welcome'); }} onClose={() => setAsk(null)} />
-      <ConfirmSheet open={ask === 'all'} title="Clear all local data?" body="Everything TagAi saved on this phone is erased, including settings. Your account is not deleted." confirmLabel="Clear everything" danger onConfirm={wipe} onClose={() => setAsk(null)} />
     </Screen>
   );
 }
