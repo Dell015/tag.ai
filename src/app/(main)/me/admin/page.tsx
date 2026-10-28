@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge, Button, Chip, ConfirmSheet, EmptyState, Screen, TextField, toast } from '@/components/ui';
 import { Select } from '@/components/ui/Select';
+import { adminCodes, adminCreateCode, adminSetCodeActive, type AdminCode } from '@/lib/supabase/codes';
 import { CardReview } from '@/components/admin/CardReview';
 import { AuditLog } from '@/components/admin/AuditLog';
 import { useAccountStore } from '@/stores/account-store';
@@ -18,8 +19,8 @@ import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
 import { DECK_BY_ID, type DeckId } from '@/lib/game/decks';
 import type { CardCategory } from '@/types/game';
 
-type Tab = 'review' | 'queue' | 'pay' | 'audit' | 'cards' | 'words' | 'coins' | 'mail';
-const TABS: { id: Tab; label: string }[] = [{ id: 'review', label: 'Review cards' }, { id: 'queue', label: 'Queue' }, { id: 'pay', label: 'Payments' }, { id: 'audit', label: 'Audit log' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'mail', label: 'Mail' }];
+type Tab = 'review' | 'queue' | 'pay' | 'audit' | 'cards' | 'words' | 'coins' | 'codes' | 'mail';
+const TABS: { id: Tab; label: string }[] = [{ id: 'review', label: 'Review cards' }, { id: 'queue', label: 'Queue' }, { id: 'pay', label: 'Payments' }, { id: 'audit', label: 'Audit log' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'codes', label: 'Codes' }, { id: 'mail', label: 'Mail' }];
 
 const CATEGORIES: { id: CardCategory; label: string }[] = [
   { id: 'hot_takes', label: 'Hot takes' }, { id: 'hypotheticals', label: 'Hypotheticals' }, { id: 'memories', label: 'Memories' },
@@ -300,6 +301,61 @@ function Coins() {
   );
 }
 
+function Codes() {
+  const [items, setItems] = useState<AdminCode[] | null>(null);
+  const [code, setCode] = useState('');
+  const [value, setValue] = useState('');
+  const [uses, setUses] = useState('');
+  const [days, setDays] = useState('');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(async () => { const r = await adminCodes(); setItems(r.ok ? r.data ?? [] : []); }, []);
+  useEffect(() => { void load(); }, [load]);
+  const v = Number(value);
+  const valid = Number.isInteger(v) && v >= 1 && v <= 10000;
+  const create = async () => {
+    setBusy(true);
+    const r = await adminCreateCode({ code: code.trim(), value: v, maxUses: uses ? Number(uses) : null, days: days ? Number(days) : null, note: note.trim() });
+    setBusy(false);
+    if (!r.ok) { toast(r.error ?? 'Could not create.', { tone: 'warn' }); return; }
+    toast(`Code ${r.data} created`, { tone: 'ok' });
+    setCode(''); setValue(''); setUses(''); setDays(''); setNote('');
+    void load();
+  };
+  const toggle = async (c: AdminCode) => {
+    const r = await adminSetCodeActive(c.code, !c.active);
+    if (!r.ok) { toast(r.error ?? 'Failed.', { tone: 'warn' }); return; }
+    void load();
+  };
+  return (
+    <div>
+      <p className="text-base text-muted">Voucher codes give coins. Leave the code empty to make a random one. Leave uses and days empty for no limit.</p>
+      <form className="mt-3 space-y-3" onSubmit={(e) => { e.preventDefault(); if (valid) void create(); }}>
+        <TextField label="Code (optional)" autoCapitalize="characters" value={code} maxLength={24} onChange={(e) => setCode(e.target.value.toUpperCase())} />
+        <TextField label="Coins" inputMode="numeric" value={value} maxLength={5} onChange={(e) => setValue(e.target.value.replace(/\D/g, ''))} />
+        <div className="grid grid-cols-2 gap-3">
+          <TextField label="Max uses" inputMode="numeric" value={uses} maxLength={5} onChange={(e) => setUses(e.target.value.replace(/\D/g, ''))} />
+          <TextField label="Valid for (days)" inputMode="numeric" value={days} maxLength={4} onChange={(e) => setDays(e.target.value.replace(/\D/g, ''))} />
+        </div>
+        <TextField label="Note (optional)" value={note} maxLength={120} onChange={(e) => setNote(e.target.value)} />
+        <Button full type="submit" disabled={!valid || busy}>Create code</Button>
+      </form>
+      <ul className="mt-6 space-y-2">
+        {(items ?? []).map((c) => (
+          <li key={c.code} className="flex items-center justify-between gap-3 rounded-2xl border-2 border-line/60 bg-panel p-3">
+            <div className="min-w-0">
+              <p className="text-lg font-extrabold tracking-wide">{c.code} <span className="text-base font-bold text-muted">{c.value} coins</span></p>
+              <p className="text-sm text-muted">{c.used}{c.maxUses ? ` of ${c.maxUses}` : ''} used{c.expiresAt ? `, ends ${new Date(c.expiresAt).toLocaleDateString()}` : ''}{c.note ? `, ${c.note}` : ''}</p>
+            </div>
+            <Button variant={c.active ? 'secondary' : 'primary'} onClick={() => void toggle(c)}>{c.active ? 'Turn off' : 'Turn on'}</Button>
+          </li>
+        ))}
+        {items && items.length === 0 && <li className="text-base text-muted">No codes yet.</li>}
+      </ul>
+    </div>
+  );
+}
+
 function Words() {
   const [words, setWords] = useState<string[] | null>(null);
   const [word, setWord] = useState('');
@@ -354,7 +410,7 @@ export default function AdminPage() {
       <div className="mt-4">
         <Select label="Section" value={tab} onChange={(e) => setTab(e.target.value as Tab)} options={TABS} />
       </div>
-      <div className="mt-4">{tab === 'review' ? <CardReview /> : tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'audit' ? <AuditLog /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'mail' ? <Mail /> : <Words />}</div>
+      <div className="mt-4">{tab === 'review' ? <CardReview /> : tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'audit' ? <AuditLog /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'codes' ? <Codes /> : tab === 'mail' ? <Mail /> : <Words />}</div>
     </Screen>
   );
 }

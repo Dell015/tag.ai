@@ -23,7 +23,12 @@ export default function ReferralPage() {
     <Screen title="Invite friends" back="/me">
       {!signedIn && <p className="mb-3 text-base text-muted">Sign in to earn coins for invites. Your link works once you have an account.</p>}
       <p className="text-2xl font-extrabold">You and your friend each get {REFERRAL_COINS} coins when they play their first game.</p>
-      <div className="mt-6 break-all rounded-xl border-2 border-line p-4 text-xl font-bold">{link}</div>
+      <div className="mt-6 rounded-xl border-2 border-line p-4">
+        <p className="text-sm font-bold text-muted">Your code</p>
+        <p className="display text-5xl tracking-widest">{stats?.code ?? '......'}</p>
+        <p className="mt-1 text-base text-muted">A friend can type it under Me, Redeem a code. Or send the link:</p>
+        <p className="mt-2 break-all text-lg font-bold">{link}</p>
+      </div>
       <div className="mt-3 grid grid-cols-2 gap-3">
         <Button variant="secondary" onClick={copy}>Copy link</Button>
         <Button onClick={share}>Share</Button>

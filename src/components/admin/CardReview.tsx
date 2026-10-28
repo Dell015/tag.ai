@@ -1,10 +1,10 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { Badge, Button, EmptyState, toast } from '@/components/ui';
+import { Badge, Button, EmptyState, Sheet, toast } from '@/components/ui';
 import { refreshContent } from '@/lib/content-sync';
 import {
-  adminApprove, adminApproveCards, adminRestoreCard, adminReviewedCards, adminPending, adminReject, adminRetire, adminReviewQueue, adminUndoReview,
+  adminApprove, adminApproveCards, adminRemoveCard, adminRestoreCard, adminRetire, adminReviewedCards, adminPending, adminReject, adminReviewQueue, adminSendBack, adminUndoReview,
   type PendingSuggestion, type ReviewCard,
 } from '@/lib/supabase/account';
 import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
@@ -13,11 +13,13 @@ import { cardTextClass } from '@/lib/card-text';
 import { cn } from '@/lib/cn';
 
 /** One card to decide on: a player suggestion (not a card yet) or a card that is waiting for its first review. */
-interface Item { id: string; text: string; kind: string; deckId: string | null; adult: boolean; by?: string; suggestion: boolean; heat?: number }
+interface Item { id: string; text: string; kind: string; deckId: string | null; adult: boolean; by?: string; suggestion: boolean; heat?: number; note?: string | null }
 interface Done { item: Item; action: 'approve' | 'remove' }
 
 const fromSuggestion = (s: PendingSuggestion): Item => ({ id: s.id, text: s.text, kind: s.kind, deckId: s.deckId, adult: s.deckId === 'adult', by: s.authorName, suggestion: true });
-const fromCard = (c: ReviewCard): Item => ({ id: c.id, text: c.text, kind: c.kind, deckId: c.deckId, adult: c.adult, suggestion: false, heat: c.intensity });
+const fromCard = (c: ReviewCard): Item => ({ id: c.id, text: c.text, kind: c.kind, deckId: c.deckId, adult: c.adult, suggestion: false, heat: c.intensity, note: c.note });
+/** Quick reasons for removing a card. Tapping one adds it to the note. */
+const REASONS = ['Confusing', 'Too similar to another card', 'Not fun', 'Too harsh or unsafe', 'Wrong deck', 'Needs rewriting'];
 const deckName = (id: string | null) => (id && DECK_BY_ID[id as DeckId]?.name) || 'No deck';
 
 function ReviewCards() {
@@ -28,6 +30,8 @@ function ReviewCards() {
   const [last, setLast] = useState<Done | null>(null);
   const [count, setCount] = useState({ approved: 0, removed: 0 });
   const busyRef = useRef(false);
+  const [asking, setAsking] = useState(false);
+  const [reason, setReason] = useState('');
 
   const load = useCallback(async () => {
     const [p, q] = await Promise.all([adminPending(), adminReviewQueue(10)]);
@@ -41,12 +45,12 @@ function ReviewCards() {
 
   const current = items?.[0];
 
-  const decide = useCallback(async (action: 'approve' | 'remove') => {
+  const decide = useCallback(async (action: 'approve' | 'remove', why = '') => {
     if (!current || busyRef.current) return;
     busyRef.current = true; setBusy(true);
     const r = current.suggestion
-      ? action === 'approve' ? await adminApprove(current.id) : await adminReject(current.id, '')
-      : action === 'approve' ? await adminApproveCards([current.id]) : await adminRetire([current.id]);
+      ? action === 'approve' ? await adminApprove(current.id) : await adminReject(current.id, why)
+      : action === 'approve' ? await adminApproveCards([current.id]) : await adminRemoveCard(current.id, why);
     busyRef.current = false; setBusy(false);
     if (!r.ok) { toast(r.error ?? 'Could not save. Try again.', { tone: 'warn' }); return; }
     setLast({ item: current, action });
@@ -58,6 +62,10 @@ function ReviewCards() {
     if (action === 'remove' && !current.suggestion) void refreshContent(true);
     if (action === 'approve' && current.suggestion) void refreshContent(true);
   }, [current, items, load]);
+
+  /** Remove asks for a reason first, so the card can be rewritten later. */
+  const askRemove = useCallback(() => { if (current && !busyRef.current) { setReason(''); setAsking(true); } }, [current]);
+  const confirmRemove = async () => { setAsking(false); await decide('remove', reason); setReason(''); };
 
   const undo = async () => {
     if (!last || last.item.suggestion || busyRef.current) return;
@@ -76,12 +84,13 @@ function ReviewCards() {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+      if (asking) return;
       if (e.key === 'ArrowRight') void decide('approve');
-      else if (e.key === 'ArrowLeft') void decide('remove');
+      else if (e.key === 'ArrowLeft') askRemove();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [decide]);
+  }, [decide, askRemove, asking]);
 
   const x = useMotionValue(0);
   const tilt = useTransform(x, [-200, 0, 200], [-8, 0, 8]);
@@ -116,7 +125,7 @@ function ReviewCards() {
           dragSnapToOrigin
           dragElastic={0.6}
           style={{ x, rotate: tilt }}
-          onDragEnd={(_, info) => { if (info.offset.x > 110) void decide('approve'); else if (info.offset.x < -110) void decide('remove'); }}
+          onDragEnd={(_, info) => { if (info.offset.x > 110) void decide('approve'); else if (info.offset.x < -110) askRemove(); }}
           className="relative flex min-h-[18rem] touch-pan-y flex-col justify-between rounded-card bg-accent p-5 text-onaccent"
         >
           <motion.span style={{ opacity: okOpacity }} className="absolute right-4 top-4 rounded-lg border-4 border-current px-3 py-1 text-xl font-extrabold">Keep</motion.span>
@@ -132,13 +141,31 @@ function ReviewCards() {
         {current.suggestion ? <Badge tone="accent">New suggestion{current.by ? ` from ${current.by}` : ''}</Badge> : <Badge tone="line">In play now</Badge>}
         {current.adult && <Badge tone="line">18+</Badge>}
       </p>
+      {current.note && <p className="mt-2 rounded-xl border-2 border-line px-3 py-2 text-base"><b>Removed before:</b> <span className="text-muted">{current.note}</span></p>}
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <Button size="lg" variant="danger" disabled={busy} onClick={() => void decide('remove')}>Remove</Button>
+        <Button size="lg" variant="danger" disabled={busy} onClick={askRemove}>Remove</Button>
         <Button size="lg" disabled={busy} onClick={() => void decide('approve')}>{current.suggestion ? 'Approve' : 'Keep'}</Button>
       </div>
       <Button full variant="secondary" className="mt-3" disabled={busy || !last || last.item.suggestion} onClick={() => void undo()}>Undo the last one</Button>
-      <p className="mt-3 text-sm text-muted">Swipe the card, or use the left and right arrow keys. Remove takes the card out of every game. Cards you have not reviewed yet stay in play.</p>
+      <p className="mt-3 text-sm text-muted">Swipe the card, or use the left and right arrow keys. Remove takes the card out of every game and asks why, so it can be rewritten later. Cards you have not reviewed yet stay in play.</p>
+
+      <Sheet open={asking} onClose={() => setAsking(false)} title="Why remove this card?">
+        <p className="-mt-3 mb-3 text-base text-muted">{current.suggestion ? 'The player sees this reason.' : 'Saved with the card, so it can be rewritten and sent back to review.'}</p>
+        <div className="flex flex-wrap gap-2">
+          {REASONS.map((r) => (
+            <button key={r} type="button" onClick={() => setReason((t) => (t.includes(r) ? t : t ? `${t}. ${r}` : r))}
+              className="rounded-full border-2 border-line px-3 py-1.5 text-base font-bold active:translate-y-px">{r}</button>
+          ))}
+        </div>
+        <label htmlFor="remove-reason" className="mb-1.5 mt-4 block text-base font-bold text-muted">Reason (optional)</label>
+        <textarea id="remove-reason" value={reason} maxLength={280} rows={3} onChange={(e) => setReason(e.target.value)} placeholder="Say what is wrong, or how to fix it."
+          className="w-full resize-none rounded-xl border-2 border-line bg-transparent p-3 text-lg placeholder:text-muted/50 focus:border-accent" />
+        <div className="mt-4 space-y-3 pb-2">
+          <Button size="lg" variant="danger" full disabled={busy} onClick={() => void confirmRemove()}>Remove card</Button>
+          <Button full variant="secondary" onClick={() => setAsking(false)}>Cancel</Button>
+        </div>
+      </Sheet>
     </div>
   );
 }
@@ -151,6 +178,12 @@ function History({ which }: { which: 'removed' | 'approved' }) {
     if (r.ok) { setData(r.data!); setError(null); } else setError(r.error ?? 'Could not load.');
   }, [which]);
   useEffect(() => { setData(null); void load(); }, [load]);
+  const sendBack = async (ids?: string[]) => {
+    const r = await adminSendBack(ids);
+    if (!r.ok) { toast(r.error ?? 'Could not save.', { tone: 'warn' }); return; }
+    toast(`${r.data} ${r.data === 1 ? 'card' : 'cards'} back in Review.`, { tone: 'ok' });
+    void load(); void refreshContent(true);
+  };
   const act = async (c: ReviewCard) => {
     const r = which === 'removed' ? await adminRestoreCard(c.id) : await adminRetire([c.id]);
     if (!r.ok) { toast(r.error ?? 'Could not save.', { tone: 'warn' }); return; }
@@ -163,6 +196,9 @@ function History({ which }: { which: 'removed' | 'approved' }) {
   return (
     <div>
       <p className="mb-2 text-base font-bold text-muted">{data.total} {which === 'removed' ? 'removed' : 'approved'}{data.total > data.cards.length ? `, showing the latest ${data.cards.length}` : ''}</p>
+      {which === 'removed' && data.cards.some((c) => c.note) && (
+        <Button full variant="secondary" className="mb-3" onClick={() => void sendBack()}>Send every card with a reason back to Review</Button>
+      )}
       <ul>
         {data.cards.map((c) => (
           <li key={c.id} data-deck={c.deckId ?? undefined} className="flex items-start gap-3 border-b-2 border-line/60 py-3">
@@ -170,8 +206,12 @@ function History({ which }: { which: 'removed' | 'approved' }) {
             <div className="min-w-0 flex-1">
               <p className="text-lg">{c.text}</p>
               <p className="mt-1 text-base text-muted">{KIND_META[c.kind as CardKind]?.label ?? c.kind}, {deckName(c.deckId)}</p>
+              {which === 'removed' && c.note && <p className="mt-1 text-base"><b>Reason:</b> <span className="text-muted">{c.note}</span></p>}
             </div>
-            <Button variant={which === 'removed' ? 'secondary' : 'danger'} onClick={() => void act(c)}>{which === 'removed' ? 'Put back' : 'Remove'}</Button>
+            <div className="flex shrink-0 flex-col gap-2">
+              <Button variant={which === 'removed' ? 'secondary' : 'danger'} onClick={() => void act(c)}>{which === 'removed' ? 'Put back' : 'Remove'}</Button>
+              {which === 'removed' && <Button variant="ghost" onClick={() => void sendBack([c.id])}>To Review</Button>}
+            </div>
           </li>
         ))}
       </ul>

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion, useDragControls, useMotionValue, useTransform } from 'framer-motion';
 import type { QueuedCard } from '@/lib/game/escalation-engine';
 import { WILD_CARD_DEFINITIONS, wildDescription } from '@/lib/game/wild-cards';
 import { WildExtras, TimerChip, dareSeconds } from './WildExtras';
@@ -50,6 +50,7 @@ export function PlayCard({ card, revealed, onReveal, onDone, onRule, nonDrinking
   const backId = useShopStore((st) => st.equipped.back);
   const back = cardBack(backId ? itemById(backId)?.value : undefined);
   const x = useMotionValue(0);
+  const controls = useDragControls();
   const rotate = useTransform(x, [-200, 200], [-7, 7]);
   const doneOpacity = useTransform(x, [20, SWIPE], [0, 1]);
   const nextOpacity = useTransform(x, [-SWIPE, -20], [1, 0]);
@@ -83,7 +84,9 @@ export function PlayCard({ card, revealed, onReveal, onDone, onRule, nonDrinking
   return (
     <motion.div
       key={card.id} {...(wild ? {} : paint)} initial={{ rotateY: -88, opacity: 0.4 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-      style={{ x, rotate, touchAction: 'pan-y', transformPerspective: 1100 }} drag={swipe ? 'x' : false} dragSnapToOrigin dragElastic={0.6}
+      style={{ x, rotate, touchAction: 'pan-y', transformPerspective: 1100 }} drag={swipe ? 'x' : false} dragControls={controls} dragListener={false} dragSnapToOrigin dragElastic={0.6}
+      /* A swipe starts only on the card itself. Buttons and fields on the card get plain taps, so a finger that moves a little does not eat the tap. */
+      onPointerDown={(e) => { if (!(e.target as HTMLElement).closest('button, a, input, textarea, select, [role="switch"]')) controls.start(e); }}
       onDragEnd={(_, info) => {
         if (info.offset.x > SWIPE) { haptic('success'); onDone(); }
         else if (info.offset.x < -SWIPE) { haptic('success'); onDone(); }

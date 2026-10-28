@@ -330,7 +330,7 @@ export async function adminRetire(ids: string[]): Promise<Result<number>> {
 }
 
 
-export interface ReviewCard { id: string; text: string; kind: string; deckId: string | null; adult: boolean; intensity: number; category: string; source: string; packId: string | null }
+export interface ReviewCard { id: string; text: string; kind: string; deckId: string | null; adult: boolean; intensity: number; category: string; source: string; packId: string | null; note: string | null }
 
 /** The next cards waiting for a decision (oldest first) and how many are left in total. */
 export async function adminReviewQueue(limit = 10): Promise<Result<{ total: number; cards: ReviewCard[] }>> {
@@ -364,6 +364,22 @@ export async function adminReviewedCards(which: 'removed' | 'approved', limit = 
   if (error) return { ok: false, error: msg(error) };
   const d = data as { total: number; cards: ReviewCard[] };
   return { ok: true, data: { total: d.total, cards: d.cards ?? [] } };
+}
+
+/** Removes a card from every game and keeps the reason, so it can be rewritten and sent back to review. */
+export async function adminRemoveCard(id: string, reason: string): Promise<Result> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.rpc('admin_remove_card', { p_card: id, p_reason: reason.trim() || null });
+  return error ? { ok: false, error: msg(error) } : { ok: true };
+}
+
+/** Removed cards go back to the review list. With no ids, every removed card that has a reason goes back. */
+export async function adminSendBack(ids?: string[]): Promise<Result<number>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data, error } = await sb.rpc('admin_send_back', { p_cards: ids ?? null });
+  return error ? { ok: false, error: msg(error) } : { ok: true, data: data as number };
 }
 
 export async function adminRestoreCard(id: string): Promise<Result> {

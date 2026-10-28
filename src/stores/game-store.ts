@@ -8,7 +8,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { safeStorage } from '@/lib/storage';
+import { lazyStorage } from '@/lib/storage';
 import { drawForHeat } from '@/lib/game/steering';
 import { calculateHeat, heatPace, QueuedCard } from '@/lib/game/escalation-engine';
 import { advanceTurn, TurnState } from '@/lib/game/turn-rotation';
@@ -485,7 +485,7 @@ export const useGameStore = create<GameState>()(
         if (Array.isArray(s?.bufferCards)) s.bufferCards = s.bufferCards.filter((c) => !gone(c));
         return s as never;
       },
-      storage: safeStorage(),
+      storage: lazyStorage(),
       skipHydration: true,
       partialize: (state) => ({
         cardQueue: state.cardQueue,

@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { safeStorage } from '@/lib/storage';
+import { lazyStorage } from '@/lib/storage';
 import { useProfileStore } from '@/stores/profile-store';
 import { isConnected } from '@/stores/account-store';
 import { rpcSpend, rpcRefund } from '@/lib/supabase/account';
@@ -73,7 +73,7 @@ export const useWalletStore = create<WalletState>()(
     {
       name: 'tagai-wallet',
       version: 1,
-      storage: safeStorage(),
+      storage: lazyStorage(),
       skipHydration: true,
       partialize: (s) => ({ transactions: s.transactions }),
     }

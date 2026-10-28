@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { safeStorage } from '@/lib/storage';
+import { lazyStorage } from '@/lib/storage';
 import type { TalkTopic } from '@/lib/data/talk-topics';
 import { talkCost, tallyOf, type TalkPick, type TalkTally } from '@/lib/game/talk';
 
@@ -55,7 +55,7 @@ export const useTalkStore = create<TalkState>()(
         return talkCost(unused);
       },
     }),
-    { name: 'tagai-talk', version: 1, storage: safeStorage(), skipHydration: true,
+    { name: 'tagai-talk', version: 1, storage: lazyStorage(), skipHydration: true,
       partialize: (s) => ({ active: s.active, queue: s.queue, index: s.index, reached: s.reached, results: s.results, players: s.players, roster: s.roster, picks: s.picks }) },
   ),
 );

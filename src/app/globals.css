@@ -73,6 +73,7 @@ html {
   font-size: 93.75%; /* 15px base: the interface runs a little smaller than the browser default */
   background: rgb(var(--bg));
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* no double-tap-to-zoom wait on taps; pinch zoom still works */
   text-size-adjust: 100%;
   overflow-x: clip; /* nothing may widen the layout viewport and push the fixed tab bar off centre */
 }
