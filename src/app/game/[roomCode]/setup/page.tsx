@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { DeckArt } from '@/components/ui/DeckArt';
 import { Avatar, Button, Chip, Icon, RollNumber, Screen, Splash, Stepper, toast } from '@/components/ui';
 import { MIN_POT, formatPot } from '@/lib/game/pot';
 import { useRoom } from '@/hooks/use-room';
@@ -218,7 +219,7 @@ export default function SetupPage() {
                       <li key={id} className="border-b-2 border-line/60 py-3">
                         <button disabled={!d.ready} role="checkbox" aria-checked={on} onClick={() => toggleDeck(id)}
                           className={cn('flex w-full items-start gap-3 rounded-xl border-2 p-3 text-left transition-colors', on ? 'border-accent bg-accent/10' : 'border-line', !d.ready && 'opacity-50')}>
-                          <span aria-hidden data-deck={id} style={{ transform: `rotate(${(id.length % 3 - 1) * 4}deg)` }} className="sign mt-0.5 flex h-[3.4rem] w-11 shrink-0 items-end justify-end rounded-md border-[3px] border-[#0c0a08] bg-accent p-1 text-xl leading-none text-onaccent">{id === 'adult' ? '18+' : '?'}</span>
+                          <span aria-hidden data-deck={id} style={{ transform: `rotate(${(id.length % 3 - 1) * 4}deg)` }} className="mt-0.5 flex h-[3.4rem] w-11 shrink-0 items-center justify-center rounded-md border-[3px] border-[#0c0a08] bg-accent text-onaccent"><DeckArt id={id} size={34} /></span>
                           <span className="min-w-0 flex-1">
                             <span className="sign block text-[1.15rem] leading-tight">{d.name}</span>
                             <span className="block text-base text-muted">{d.blurb}</span>
@@ -315,10 +316,10 @@ export default function SetupPage() {
           <section data-mode={accentDeck?.mode} className="rounded-card bg-accent p-5 text-onaccent">
             <div className="text-lg font-bold">{cards} cards, about {formatDuration(cards)}</div>
             <ul aria-label="Decks in this game" className="-mx-1 mt-3 flex snap-x gap-3 overflow-x-auto px-1 pb-2">
-              {[...picks.decks.filter((id) => id !== 'chaos' || picks.decks.length === 1).filter((id) => !(picks.decks.includes('chaos') && id !== 'chaos')).map((id) => ({ key: id, name: DECK_BY_ID[id]?.name ?? id, mark: id === 'adult' ? '18+' : '?' })),
-                ...picks.sources.map((x) => ({ key: `${x.kind}-${x.id}`, name: x.name, mark: '?' }))].map((c, i) => (
+              {[...picks.decks.filter((id) => id !== 'chaos' || picks.decks.length === 1).filter((id) => !(picks.decks.includes('chaos') && id !== 'chaos')).map((id) => ({ key: id, name: DECK_BY_ID[id]?.name ?? id, mark: '', art: id as string | null })),
+                ...picks.sources.map((x) => ({ key: `${x.kind}-${x.id}`, name: x.name, mark: '?', art: null as string | null }))].map((c, i) => (
                 <li key={c.key} className="w-24 shrink-0 snap-start">
-                  <div style={{ transform: `rotate(${(i % 3 - 1) * 3}deg)` }} className="sign flex h-32 w-full items-end justify-end rounded-lg border-[3px] border-[#0c0a08] bg-onaccent/15 p-2 text-3xl leading-none">{c.mark}</div>
+                  <div data-deck={c.art ?? undefined} style={{ transform: `rotate(${(i % 3 - 1) * 3}deg)` }} className={cn('sign flex h-32 w-full items-center justify-center rounded-lg border-[3px] border-[#0c0a08] text-3xl leading-none', c.art ? 'bg-accent text-onaccent' : 'bg-onaccent/15')}>{c.art ? <DeckArt id={c.art} size={64} /> : c.mark}</div>
                   <div className="mt-1 truncate text-sm font-bold">{c.name}</div>
                 </li>
               ))}

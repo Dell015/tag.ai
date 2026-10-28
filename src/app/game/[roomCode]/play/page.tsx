@@ -202,9 +202,9 @@ export default function PlayPage() {
   }
 
   const topUpSheet = (
-  <TopUpSheet open={topUp} onClose={() => setTopUp(false)} wallet={wallet} pot={g.pot}
-    cardsLeft={Math.max(0, g.cardCountTarget - g.cardsPlayed)}
-    costLeft={g.cardQueue.slice(g.currentCardIndex).reduce((a, c) => a + cardCost(c), 0)}
+  <TopUpSheet open={topUp} onClose={() => setTopUp(false)} wallet={wallet} pot={g.pot} finished={ended}
+    cardsLeft={ended ? moreCount : Math.max(0, g.cardCountTarget - g.cardsPlayed)}
+    costLeft={ended ? moreCost : g.cardQueue.slice(g.currentCardIndex).reduce((a, c) => a + cardCost(c), 0)}
     onAdd={(n) => {
       if (room.online) {
         // The server takes the coins; this phone's pot follows from the shared total (see the effect above).

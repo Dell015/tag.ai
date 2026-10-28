@@ -14,6 +14,7 @@ import { CardToolView } from './CardTools';
 import { KIND_META, fillDrink, kindOf, penaltyFor, penaltyText } from '@/lib/game/card-kinds';
 import { Icon } from '@/components/ui';
 import { deckOf } from '@/lib/game/decks';
+import { DeckArt } from '@/components/ui/DeckArt';
 
 const SWIPE = 110;
 
@@ -69,8 +70,9 @@ export function PlayCard({ card, revealed, onReveal, onDone, onRule, nonDrinking
         className={cn('relative flex h-full w-full flex-col justify-between overflow-hidden rounded-card p-6 text-left no-select', back.ink ? 'border-2 border-accent text-accent' : 'bg-accent text-onaccent')}>
         <span aria-hidden className="trim absolute inset-x-0 top-0 h-4" />
         <span aria-hidden className="trim absolute inset-x-0 bottom-0 h-4" />
+        {card.deckId && <DeckArt id={card.deckId} size={150} className="pointer-events-none absolute right-5 top-1/2 -translate-y-[62%] -rotate-6 opacity-95" />}
         <span className="mt-5 flex flex-col items-start gap-2">
-          <span className={cn('sign text-[1.9rem]', back.plate && 'rounded-lg bg-bg px-3 py-1 text-text')}>tag.ai</span>
+          <span className={cn('sign text-[1.9rem]', back.plate && 'rounded-lg bg-bg px-3 py-1 text-text')}>TagAi</span>
           <span className="text-lg font-extrabold">{meta.label}{deckName ? `, ${deckName}` : ''}</span>
         </span>
         <span className={cn('display mb-5 self-start text-[5.5rem] leading-[0.85]', back.plate && 'rounded-xl bg-bg px-4 py-2 text-text')}>Tap to<br />reveal</span>

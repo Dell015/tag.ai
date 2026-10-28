@@ -1,6 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { DeckArt } from '@/components/ui/DeckArt';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button, Icon, Screen, Section, Sheet, TextField } from '@/components/ui';
@@ -68,8 +69,8 @@ export default function StacksPage() {
           {decks.map((d, i) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: Math.min(i, 9) * 0.035 }}>
               <Link href={`/stacks/in-game/${d.id}`} data-deck={d.id} aria-label={`${d.name}, ${counts[d.id]} cards`} className={cn(card, 'bg-accent text-onaccent')}>
-                <span className="sign text-[0.6rem] opacity-70">tag.ai</span>
-                <span className="display pointer-events-none absolute right-1.5 top-1 text-[2.6rem] leading-none opacity-20">?</span>
+                <span className="sign text-[0.6rem] opacity-70">TagAi</span>
+                <DeckArt id={d.id} size={52} className="pointer-events-none absolute right-1 top-1 opacity-95" />
                 <span><span className="sign block break-words text-[0.74rem] leading-tight">{d.name}</span><span className="mt-1 block text-xs font-extrabold opacity-80">{counts[d.id]} cards</span></span>
               </Link>
             </motion.div>

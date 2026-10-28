@@ -90,7 +90,7 @@ export default function SettingsPage() {
 
       <Group title="Playing">
         <ToggleRow k="vibration" label="Vibration" hint="Android only. iPhones do not vibrate from web apps." />
-        <ToggleRow k="sounds" label="Sounds" hint="Short blips on reveal and done." />
+        <ToggleRow k="sounds" label="Sounds" hint="Card sounds when you reveal, finish or skip a card." />
         {s.sounds && (
           <Block label="Volume">
             <input type="range" min={0} max={1} step={0.1} value={s.volume} onChange={(e) => s.set('volume', Number(e.target.value))} aria-label="Volume" className="h-tap w-full accent-[rgb(var(--accent))]" />

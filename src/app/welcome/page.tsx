@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useIntroStore } from '@/stores/intro-store';
 import { Button, Logo, AvatarPicker, DeckFan, Icon, Splash } from '@/components/ui';
 import { AuthField, AuthShell, Divider, ErrorNote, GoogleButton, PlayerCard } from '@/components/auth/AuthParts';
 import { emailLooksValid, suggestEmailFix } from '@/lib/email-hint';
@@ -136,7 +137,7 @@ function WelcomeInner() {
           if (adultOk) await confirmAdult();
           await refreshAccount();
           setBusy(false);
-          if (useAccountStore.getState().needsProfile) setStep(2); else router.replace(dest);
+          if (useAccountStore.getState().needsProfile) setStep(2); else { useIntroStore.getState().show('short'); router.replace(dest); }
         }}>
           <AuthField label="Code" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="6 digit code" className="tracking-widest" />
           {error && <ErrorNote>{error}</ErrorNote>}
@@ -164,7 +165,7 @@ function WelcomeInner() {
       if (adultOk) await confirmAdult();
       await refreshAccount();
       setBusy(false);
-      if (useAccountStore.getState().needsProfile) setStep(2); else router.replace(dest);
+      if (useAccountStore.getState().needsProfile) setStep(2); else { useIntroStore.getState().show('short'); router.replace(dest); }
     };
     return (
       <AuthShell
@@ -213,7 +214,7 @@ function WelcomeInner() {
       <form className="mt-6 flex flex-1 flex-col" noValidate onSubmit={async (e) => {
         e.preventDefault();
         if (!valid || busy) return;
-        if (!supabaseConfigured) { setDealt(true); await new Promise((r) => setTimeout(r, 700)); createProfile(name, avatar); router.replace(dest); return; }
+        if (!supabaseConfigured) { setDealt(true); await new Promise((r) => setTimeout(r, 700)); createProfile(name, avatar); useIntroStore.getState().show('short'); router.replace(dest); return; }
         setBusy(true); setError('');
         const r = await completeProfile(name.trim(), avatar);
         if (!r.ok) { setBusy(false); setError(r.error ?? 'Could not save your name.'); return; }
@@ -221,6 +222,7 @@ function WelcomeInner() {
         await new Promise((res) => setTimeout(res, 650));
         await refreshAccount();
         setBusy(false);
+        useIntroStore.getState().show('short');
         router.replace(dest);
       }}>
         <PlayerCard name={name} avatar={avatar} coins={WELCOME_COINS} dealt={dealt} />

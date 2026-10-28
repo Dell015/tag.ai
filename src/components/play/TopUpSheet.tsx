@@ -5,8 +5,10 @@ import { Button, NumberStepper, Sheet } from '@/components/ui';
 import { formatPot } from '@/lib/game/pot';
 
 /** Add coins from the host's wallet to the pot. */
-export function TopUpSheet({ open, onClose, wallet, pot, cardsLeft, costLeft, onAdd, title = 'Top up the pot' }: {
+export function TopUpSheet({ open, onClose, wallet, pot, cardsLeft, costLeft, onAdd, title = 'Top up the pot', finished = false }: {
   open: boolean; onClose: () => void; wallet: number; pot: number; cardsLeft: number; costLeft: number; onAdd: (coins: number) => void; title?: string;
+  /** The game ran out of cards: the numbers describe the next batch, not the cards left. */
+  finished?: boolean;
 }) {
   const need = Math.max(1, Math.ceil(costLeft - pot));
   const [coins, setCoins] = useState(0);
@@ -14,7 +16,9 @@ export function TopUpSheet({ open, onClose, wallet, pot, cardsLeft, costLeft, on
   const short = wallet < 1;
   return (
     <Sheet open={open} onClose={onClose} title={title}>
-      <p className="-mt-2 text-lg text-muted">The pot has {formatPot(pot)} coins. {cardsLeft} cards are left, which needs about {formatPot(costLeft)}.</p>
+      <p className="-mt-2 text-lg text-muted">{finished
+        ? `The pot has ${formatPot(pot)} coins. ${cardsLeft} more cards cost ${formatPot(costLeft)}. After adding, tap Keep going.`
+        : `The pot has ${formatPot(pot)} coins. ${cardsLeft} cards are left, which needs about ${formatPot(costLeft)}.`}</p>
       <div className="my-6 flex items-center justify-between gap-3">
         <span className="text-xl font-bold">Add</span>
         <NumberStepper label="coins to add" value={amount} min={1} max={Math.max(1, Math.floor(wallet))} onChange={setCoins} />

@@ -1,7 +1,7 @@
 {
-  "name": "tag.ai",
-  "short_name": "tag.ai",
-  "description": "The pass-the-phone drinking game for barkadas.",
+  "name": "TagAi",
+  "short_name": "TagAi",
+  "description": "Take the card or take the shot. The drinking game for barkadas.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

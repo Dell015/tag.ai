@@ -9,12 +9,13 @@ import { ToastHost } from "@/components/ui/Toast";
 import { MotionProvider } from "@/components/ui/MotionProvider";
 import { AuthSync } from "@/components/AuthSync";
 import { AgeGateOverlay } from "@/components/AgeGateOverlay";
+import { BrandIntro } from "@/components/brand/BrandIntro";
 
 export const metadata: Metadata = {
-  title: "tag.ai, the barkada drinking game",
+  title: "TagAi, the barkada drinking game",
   description:
-    "Pass the phone, answer the card, take the shot. A drinking game built for Filipino barkadas.",
-  applicationName: "tag.ai",
+    "Take the card or take the shot. A drinking game built for Filipino barkadas.",
+  applicationName: "TagAi",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg", apple: "/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "tag.ai", statusBarStyle: "black" },
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SettingsApplier />
         <MotionProvider><div className="mx-auto min-h-dvh w-full">{children}</div></MotionProvider>
         <AgeGateOverlay />
+        <BrandIntro />
         <OfflineBanner />
         <ToastHost />
       </body>
