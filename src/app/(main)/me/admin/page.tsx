@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Badge, Button, Chip, ConfirmSheet, EmptyState, Screen, TextField, toast } from '@/components/ui';
 import { Select } from '@/components/ui/Select';
 import { adminCodes, adminCreateCode, adminSetCodeActive, type AdminCode } from '@/lib/supabase/codes';
+import { adminDismissReports, adminPhotos, adminPlayerReports, adminRemovePhoto, type PhotoPlayer, type ReportedPlayer } from '@/lib/supabase/moderation';
+import { Avatar } from '@/components/ui';
 import { CardReview } from '@/components/admin/CardReview';
 import { AuditLog } from '@/components/admin/AuditLog';
 import { useAccountStore } from '@/stores/account-store';
@@ -19,8 +21,8 @@ import { KIND_META, type CardKind } from '@/lib/game/card-kinds';
 import { DECK_BY_ID, type DeckId } from '@/lib/game/decks';
 import type { CardCategory } from '@/types/game';
 
-type Tab = 'review' | 'queue' | 'pay' | 'audit' | 'cards' | 'words' | 'coins' | 'codes' | 'mail';
-const TABS: { id: Tab; label: string }[] = [{ id: 'review', label: 'Review cards' }, { id: 'queue', label: 'Queue' }, { id: 'pay', label: 'Payments' }, { id: 'audit', label: 'Audit log' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'codes', label: 'Codes' }, { id: 'mail', label: 'Mail' }];
+type Tab = 'review' | 'queue' | 'pay' | 'audit' | 'cards' | 'words' | 'coins' | 'codes' | 'photos' | 'mail';
+const TABS: { id: Tab; label: string }[] = [{ id: 'review', label: 'Review cards' }, { id: 'queue', label: 'Queue' }, { id: 'pay', label: 'Payments' }, { id: 'audit', label: 'Audit log' }, { id: 'cards', label: 'Cards' }, { id: 'words', label: 'Words' }, { id: 'coins', label: 'Coins' }, { id: 'codes', label: 'Codes' }, { id: 'photos', label: 'Photos' }, { id: 'mail', label: 'Mail' }];
 
 const CATEGORIES: { id: CardCategory; label: string }[] = [
   { id: 'hot_takes', label: 'Hot takes' }, { id: 'hypotheticals', label: 'Hypotheticals' }, { id: 'memories', label: 'Memories' },
@@ -29,6 +31,73 @@ const CATEGORIES: { id: CardCategory; label: string }[] = [
 ];
 const deckName = (id: string | null) => (id && DECK_BY_ID[id as DeckId]?.name) || 'No deck';
 const kindLabel = (k: string) => KIND_META[k as CardKind]?.label ?? k;
+
+function ReportedPlayers() {
+  const [items, setItems] = useState<ReportedPlayer[] | null>(null);
+  const [ask, setAsk] = useState<ReportedPlayer | null>(null);
+  const load = useCallback(async () => { const r = await adminPlayerReports(); setItems(r.ok ? r.data ?? [] : []); }, []);
+  useEffect(() => { void load(); }, [load]);
+  if (!items || items.length === 0) return null;
+  const done = async (r: { ok: boolean; error?: string }, msg: string) => {
+    if (!r.ok) { toast(r.error ?? 'Failed.', { tone: 'warn' }); return; }
+    toast(msg, { tone: 'ok' }); void load();
+  };
+  return (
+    <section aria-label="Reported players" className="mb-6">
+      <h2 className="mb-2 text-2xl">Reported players</h2>
+      <ul className="space-y-3">
+        {items.map((p) => (
+          <li key={p.userId} className="rounded-2xl border-2 border-line/60 bg-panel p-4">
+            <div className="flex items-center gap-3">
+              <Avatar value={p.avatar} name={p.name} size={56} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-lg font-extrabold">{p.name} <span className="text-sm font-bold text-muted">{p.code}</span></p>
+                <p className="text-sm text-muted">{p.reports} {p.reports === 1 ? 'report' : 'reports'}{p.photoReported ? ', photo reported' : ''}</p>
+              </div>
+            </div>
+            {p.reasons.length > 0 && <p className="mt-2 text-base">{p.reasons.join(', ')}</p>}
+            {p.postBody && <p className="mt-1 text-base text-muted">Card: {p.postBody}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {p.avatar.startsWith('p:') && <Button variant="danger" onClick={() => setAsk(p)}>Remove photo</Button>}
+              <Button variant="secondary" onClick={() => void adminDismissReports(p.userId).then((r) => done(r, 'Dismissed'))}>Dismiss</Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <ConfirmSheet open={!!ask} title="Remove this photo?" body={ask ? `${ask.name} goes back to a colour and the file is deleted. They are not told.` : ''} confirmLabel="Remove photo" danger
+        onConfirm={() => { if (ask) void adminRemovePhoto(ask.userId).then((r) => done(r, 'Photo removed')); }} onClose={() => setAsk(null)} />
+    </section>
+  );
+}
+
+function Photos() {
+  const [items, setItems] = useState<PhotoPlayer[] | null>(null);
+  const [ask, setAsk] = useState<PhotoPlayer | null>(null);
+  const load = useCallback(async () => { const r = await adminPhotos(); setItems(r.ok ? r.data ?? [] : []); }, []);
+  useEffect(() => { void load(); }, [load]);
+  const remove = async (p: PhotoPlayer) => {
+    const r = await adminRemovePhoto(p.userId);
+    if (!r.ok) { toast(r.error ?? 'Failed.', { tone: 'warn' }); return; }
+    toast('Photo removed', { tone: 'ok' }); void load();
+  };
+  return (
+    <div>
+      <p className="text-base text-muted">Every player photo, newest first. Removing one puts the player back on a colour. They are not told.</p>
+      {items && items.length === 0 && <p className="mt-4 text-base text-muted">No photos yet.</p>}
+      <ul className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
+        {(items ?? []).map((p) => (
+          <li key={p.userId} className="flex flex-col items-center gap-1.5">
+            <Avatar value={p.avatar} name={p.name} size={88} />
+            <p className="max-w-full truncate text-sm font-bold">{p.name}</p>
+            <button onClick={() => setAsk(p)} className="h-tap px-2 text-sm font-extrabold text-danger">Remove</button>
+          </li>
+        ))}
+      </ul>
+      <ConfirmSheet open={!!ask} title="Remove this photo?" body={ask ? `${ask.name} goes back to a colour and the file is deleted. They are not told.` : ''} confirmLabel="Remove photo" danger
+        onConfirm={() => { if (ask) void remove(ask); }} onClose={() => setAsk(null)} />
+    </div>
+  );
+}
 
 function ReportedPosts() {
   const [items, setItems] = useState<ReportedPost[] | null>(null);
@@ -410,7 +479,7 @@ export default function AdminPage() {
       <div className="mt-4">
         <Select label="Section" value={tab} onChange={(e) => setTab(e.target.value as Tab)} options={TABS} />
       </div>
-      <div className="mt-4">{tab === 'review' ? <CardReview /> : tab === 'queue' ? <><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'audit' ? <AuditLog /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'codes' ? <Codes /> : tab === 'mail' ? <Mail /> : <Words />}</div>
+      <div className="mt-4">{tab === 'review' ? <CardReview /> : tab === 'queue' ? <><ReportedPlayers /><ReportedPosts /><Queue /></> : tab === 'pay' ? <Payments /> : tab === 'audit' ? <AuditLog /> : tab === 'cards' ? <Cards /> : tab === 'coins' ? <Coins /> : tab === 'codes' ? <Codes /> : tab === 'photos' ? <Photos /> : tab === 'mail' ? <Mail /> : <Words />}</div>
     </Screen>
   );
 }

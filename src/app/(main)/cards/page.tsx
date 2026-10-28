@@ -14,6 +14,7 @@ import { cardTextClass } from '@/lib/card-text';
 import { SUGGEST_DECKS, SUGGEST_KINDS } from '@/lib/game/suggestions';
 import { Chip } from '@/components/ui';
 import { cn } from '@/lib/cn';
+import { REPORT_REASONS, reportPlayer } from '@/lib/supabase/moderation';
 
 type Sort = 'new' | 'top';
 type Dir = 'desc' | 'asc';
@@ -58,6 +59,7 @@ export default function CardsPage() {
   const [compose, setCompose] = useState(false);
   const [more, setMore] = useState<FeedPost | null>(null);
   const [del, setDel] = useState<FeedPost | null>(null);
+  const [who, setWho] = useState<FeedPost | null>(null);
 
   useEffect(() => { try { setAdult(window.localStorage.getItem(ADULT_KEY) === '1'); } catch { /* ignore */ } }, []);
 
@@ -83,6 +85,13 @@ export default function CardsPage() {
     if (!r.ok) { toast(r.error ?? 'Could not report.', { tone: 'warn' }); return; }
     setPosts((cur) => cur?.filter((x) => x.id !== p.id) ?? cur);
     toast('Reported. It is hidden for you.', {});
+  };
+
+  const reportWho = async (p: FeedPost, kind: 'player' | 'photo', reason: string | null) => {
+    setWho(null);
+    const r = await reportPlayer(p.authorId, kind, reason, p.id);
+    if (!r.ok) { toast(r.error ?? 'Could not report.', { tone: 'warn' }); return; }
+    toast('Reported. An admin will look at it.', { tone: 'ok' });
   };
 
   const remove = async (p: FeedPost) => {
@@ -161,8 +170,21 @@ export default function CardsPage() {
           <div className="space-y-3 pb-2">
             {more.mine
               ? <Button full variant="danger" onClick={() => { setDel(more); setMore(null); }}>Delete my card</Button>
-              : <Button full variant="secondary" onClick={() => void report(more)}>Report this card</Button>}
+              : <>
+                <Button full variant="secondary" onClick={() => void report(more)}>Report this card</Button>
+                <Button full variant="secondary" onClick={() => { setWho(more); setMore(null); }}>Report this player</Button>
+              </>}
             <Button full variant="ghost" onClick={() => setMore(null)}>Close</Button>
+          </div>
+        )}
+      </Sheet>
+      <Sheet open={!!who} onClose={() => setWho(null)} title={who ? `Report ${who.authorName}` : undefined}>
+        {who && (
+          <div className="space-y-3 pb-2">
+            <p className="-mt-2 text-base text-muted">Only admins see this. The player is not told.</p>
+            {REPORT_REASONS.map((r) => <Button key={r} full variant="secondary" onClick={() => void reportWho(who, 'player', r)}>{r}</Button>)}
+            <Button full variant="secondary" onClick={() => void reportWho(who, 'photo', 'Photo')}>Their photo is not OK</Button>
+            <Button full variant="ghost" onClick={() => setWho(null)}>Cancel</Button>
           </div>
         )}
       </Sheet>
