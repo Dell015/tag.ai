@@ -6,12 +6,14 @@ import { useState, type ReactNode } from 'react';
 import { Button, Chip, ConfirmSheet, ListRow, Plate, Screen, Section, SegmentedControl, Sheet, TextField, Toggle, toast } from '@/components/ui';
 import { PRESET_TOPICS, normalizeTopic } from '@/lib/game/comfort-filters';
 import { DRINK_RULE_TEMPLATES, MAX_CUSTOM_RULES } from '@/lib/game/setup-options';
-import { useSettingsStore, type Language, type MotionPref, type PotStyle, type TextSize } from '@/stores/settings-store';
+import { useSettingsStore, type MotionPref, type TextSize } from '@/stores/settings-store';
 import { useProfileStore } from '@/stores/profile-store';
 import { useGameStore } from '@/stores/game-store';
 import { useWalletStore } from '@/stores/wallet-store';
 
 const BUILD = 'a1';
+/** Where feedback emails go. Change this when the TagAi domain has a mailbox. */
+const FEEDBACK_EMAIL = 'randelserafica1505@gmail.com';
 
 function Group({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return <Section title={title} hint={hint}><Plate>{children}</Plate></Section>;
@@ -74,50 +76,44 @@ export default function SettingsPage() {
 
   return (
     <Screen title="Settings" back="/me">
-      <Group title="Game defaults">
-        <ListRow label="Topics to skip" hint="Cards on these topics never show up." value={s.skipTopics.length ? `${s.skipTopics.length} skipped` : 'None'} onClick={() => setSheet('topics')} />
-        <Block label="Default drink rules">
+      <Group title="Game defaults" hint="Used every time you start a game.">
+        <ListRow label="Topics to skip" hint="Cards about these are left out of your games." value={s.skipTopics.length ? `${s.skipTopics.length} skipped` : 'None'} onClick={() => setSheet('topics')} />
+        <Block label="Drink rules" hint="How the table drinks. Everyone sees these before the game starts.">
           <div className="flex flex-wrap gap-2">
             {DRINK_RULE_TEMPLATES.map((t) => <Chip key={t.id} selected={s.defaultDrinkRule === t.id} onClick={() => s.set('defaultDrinkRule', t.id)}>{t.name}</Chip>)}
           </div>
         </Block>
-        <ToggleRow k="nonDrinkingDefault" label="Non-drinking by default" hint="Forfeits instead of drinks." />
-        <ListRow label="My custom rules" hint={`Up to ${MAX_CUSTOM_RULES}. Added to every game you host.`} value={s.customRules.length} onClick={() => setSheet('rules')} />
-        <Block label="Default pot style" hint="Who covers the coin pot.">
-          <SegmentedControl<PotStyle> label="Pot style" value={s.potStyle} onChange={(v) => s.set('potStyle', v)} options={[{ id: 'solo', label: 'I pay it all' }, { id: 'split', label: 'Split' }, { id: 'chipin', label: 'Chip in' }]} />
-        </Block>
+        <ToggleRow k="nonDrinkingDefault" label="Non-drinking by default" hint="Cards ask for forfeits instead of drinks. You can also switch it on when you set up a game." />
+        <ListRow label="My custom rules" hint={`Your own table rules, up to ${MAX_CUSTOM_RULES}. Shown to everyone before each game you host.`} value={s.customRules.length} onClick={() => setSheet('rules')} />
       </Group>
 
       <Group title="Playing">
         <ToggleRow k="vibration" label="Vibration" hint="Android only. iPhones do not vibrate from web apps." />
-        <ToggleRow k="sounds" label="Sounds" hint="The sound in the opening animation." />
+        <ToggleRow k="sounds" label="Sounds" hint="Plays the sound in the TagAi opening animation." />
         {s.sounds && (
           <Block label="Volume">
             <input type="range" min={0} max={1} step={0.1} value={s.volume} onChange={(e) => s.set('volume', Number(e.target.value))} aria-label="Volume" className="h-tap w-full accent-[rgb(var(--accent))]" />
           </Block>
         )}
         <ToggleRow k="keepAwake" label="Keep screen awake" hint="The screen stays on during a game." />
-        <ToggleRow k="swipe" label="Swipe gestures" hint="Off means buttons only." />
+        <ToggleRow k="swipe" label="Swipe gestures" hint="Swipe a card to go to the next one. Off means buttons only." />
         <Block label="Undo time" hint="How long the Undo button stays on screen.">
           <SegmentedControl<'3' | '5' | '8'> label="Undo time" value={String(s.undoSeconds) as '3' | '5' | '8'} onChange={(v) => s.set('undoSeconds', Number(v) as 3 | 5 | 8)} options={[{ id: '3', label: '3 s' }, { id: '5', label: '5 s' }, { id: '8', label: '8 s' }]} />
         </Block>
-        <ToggleRow k="confirmTrash" label="Confirm before trashing" hint="Undo already covers a mistake." />
-        <ToggleRow k="showPips" label="Show intensity squares" />
-        <ToggleRow k="showRules" label="Show rules line" hint="The drink rules under the heat bar." />
+        <ToggleRow k="confirmTrash" label="Confirm before trashing" hint="Ask first. A trashed card is gone until you restore it under Cards, Trashed." />
+        <ToggleRow k="showPips" label="Show intensity squares" hint="Five small squares on each card. More filled means a harder card." />
+        <ToggleRow k="showRules" label="Show rules line" hint="Shows the drink rules next to the card count." />
         <ToggleRow k="leftHanded" label="Left-handed layout" hint="Mirrors the order of the action buttons." />
       </Group>
 
       <Group title="Display and access">
-        <Block label="Card text size">
+        <Block label="Card text size" hint="Makes the words on cards bigger.">
           <SegmentedControl<TextSize> label="Card text size" value={s.textSize} onChange={(v) => s.set('textSize', v)} options={[{ id: 'normal', label: 'Normal' }, { id: 'large', label: 'Large' }, { id: 'xlarge', label: 'Extra large' }]} />
         </Block>
-        <Block label="Motion">
+        <Block label="Motion" hint="System follows your phone. Reduced keeps movement to a minimum.">
           <SegmentedControl<MotionPref> label="Motion" value={s.motion} onChange={(v) => s.set('motion', v)} options={[{ id: 'system', label: 'System' }, { id: 'reduce', label: 'Reduced' }, { id: 'full', label: 'Full' }]} />
         </Block>
         <ToggleRow k="highContrast" label="High contrast" hint="Stronger borders and lighter secondary text." />
-        <Block label="Language" hint="Interface labels. Card content is already in Taglish.">
-          <SegmentedControl<Language> label="Language" value={s.language} onChange={(v) => { s.set('language', v); if (v !== 'en') toast('Only English is ready so far', {}); }} options={[{ id: 'en', label: 'English' }, { id: 'fil', label: 'Filipino' }, { id: 'taglish', label: 'Taglish' }]} />
-        </Block>
       </Group>
 
       <Group title="Cards">
@@ -125,17 +121,17 @@ export default function SettingsPage() {
       </Group>
 
       <Group title="Your data">
-        <ListRow label="Export my data" hint="Downloads a JSON file." onClick={exportData} />
-        <ListRow label="Clear game in progress" danger onClick={() => setAsk('game')} />
-        <ListRow label={connected ? 'Sign out' : 'Reset profile'} danger onClick={() => setAsk('profile')} />
-        <ListRow label="Clear all local data" danger onClick={() => setAsk('all')} />
-        {s.hiddenUnlocked && <ToggleRow k="testPurchases" label="Test purchases" hint="Developer. Lets you add test coins in the Shop." />}
+        <ListRow label="Export my data" hint="Saves your name, settings and saved cards to a file." onClick={exportData} />
+        <ListRow label="Clear game in progress" hint="Ends the game on this phone." danger onClick={() => setAsk('game')} />
+        <ListRow label={connected ? 'Sign out' : 'Reset profile'} hint={connected ? 'Your coins and cards stay in your account.' : 'Removes your name and coins from this phone.'} danger onClick={() => setAsk('profile')} />
+        <ListRow label="Clear all local data" hint="Erases settings and everything saved on this phone." danger onClick={() => setAsk('all')} />
+        {s.hiddenUnlocked && <ToggleRow k="testPurchases" label="Test purchases" hint="For testing. Lets you add test coins in the Shop." />}
       </Group>
 
       <Group title="About">
         <ListRow label="Terms" href="/legal/terms" />
         <ListRow label="Privacy" href="/legal/privacy" />
-        <ListRow label="Send feedback" hint="Opens your mail app." onClick={() => { window.location.href = 'mailto:hello@tag.ai?subject=tag.ai%20feedback'; }} />
+        <ListRow label="Send feedback" hint="Opens your mail app." onClick={() => { window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=TagAi%20feedback`; }} />
         <ListRow label="Version" value={`0.1 (${BUILD})`} onClick={versionTap} />
       </Group>
 
@@ -171,7 +167,7 @@ export default function SettingsPage() {
 
       <ConfirmSheet open={ask === 'game'} title="Clear the game in progress?" body="The current game on this phone ends and cannot be resumed." confirmLabel="Clear game" danger onConfirm={() => { const left = useGameStore.getState().settlePot(); if (left > 0) useWalletStore.getState().apply('refund', left, 'Unused pot returned'); resetGame(); toast('Game cleared', {}); }} onClose={() => setAsk(null)} />
       <ConfirmSheet open={ask === 'profile'} title={connected ? 'Sign out?' : 'Reset your profile?'} body={connected ? 'Your coins and saved cards stay in your account. Sign in again with your email to get them back.' : 'Your name, coins, saved and trashed cards on this phone are removed.'} confirmLabel={connected ? 'Sign out' : 'Reset profile'} danger onConfirm={() => { if (connected) { void signOutServer().then(() => router.replace('/welcome')); return; } useWalletStore.getState().clear(); signOut(); router.replace('/welcome'); }} onClose={() => setAsk(null)} />
-      <ConfirmSheet open={ask === 'all'} title="Clear all local data?" body="Everything tag.ai stored on this phone is erased, including settings." confirmLabel="Clear everything" danger onConfirm={wipe} onClose={() => setAsk(null)} />
+      <ConfirmSheet open={ask === 'all'} title="Clear all local data?" body="Everything TagAi saved on this phone is erased, including settings. Your account is not deleted." confirmLabel="Clear everything" danger onConfirm={wipe} onClose={() => setAsk(null)} />
     </Screen>
   );
 }

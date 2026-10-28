@@ -81,7 +81,7 @@ export default function LobbyPage() {
   };
   const share = async () => {
     try {
-      if (navigator.share) { await navigator.share({ title: 'Join my game on Tag.ai', text: `Room code ${code}`, url: link }); return; }
+      if (navigator.share) { await navigator.share({ title: 'Join my game on TagAi', text: `Room code ${code}`, url: link }); return; }
       await navigator.clipboard.writeText(link); toast('Link copied.', { tone: 'ok' });
     } catch { /* cancelled */ }
   };

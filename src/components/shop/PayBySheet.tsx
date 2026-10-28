@@ -79,7 +79,7 @@ export function PayBySheet({ pkg, existing, onClose }: { pkg: CoinPackage | null
     <Sheet open={!!pkg || !!existing} onClose={onClose} title={req ? `${req.coins} coins for P${req.price_php}` : pkg ? `${pkg.coins} coins for P${pkg.price}` : undefined}>
       {pkg && !req && (
         <div className="pb-2">
-          <p className="rounded-xl bg-raised px-4 py-3 text-lg font-semibold">This part of tag.ai is still being built.</p>
+          <p className="rounded-xl bg-raised px-4 py-3 text-lg font-semibold">This part of TagAi is still being built.</p>
           <p className="mt-3 text-lg text-muted">For now you can pay with a QR code. Your coins are added within {PAY_WAIT_MINUTES} minutes, usually much faster.</p>
           {error && <p role="alert" className="mt-3 text-base font-bold text-danger">{error}</p>}
           <div className="mt-6 space-y-3">

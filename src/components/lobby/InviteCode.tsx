@@ -8,7 +8,7 @@ export function InviteCode({ code, size = 112 }: { code: string; size?: number }
   const link = `${appOrigin()}/join?code=${code}`;
   const share = async () => {
     try {
-      if (navigator.share) { await navigator.share({ title: 'Join my game on Tag.ai', text: `Room code ${code}`, url: link }); return; }
+      if (navigator.share) { await navigator.share({ title: 'Join my game on TagAi', text: `Room code ${code}`, url: link }); return; }
       await navigator.clipboard.writeText(link); toast('Link copied.', { tone: 'ok' });
     } catch { /* cancelled */ }
   };

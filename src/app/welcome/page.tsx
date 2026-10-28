@@ -84,7 +84,7 @@ function WelcomeInner() {
 
   if (step === 1) {
     return (
-      <AuthShell step={1} onBack={() => setStep(0)} title="When were you born?" subtitle="tag.ai is a drinking game, so it is for adults only.">
+      <AuthShell step={1} onBack={() => setStep(0)} title="When were you born?" subtitle="TagAi is a drinking game, so it is for adults only.">
         <AgeForm
           onAdult={() => { setAdultOk(true); setCreating(true); setStep(supabaseConfigured ? 6 : 2); }}
           onUnderage={() => { setAgeLock(); setLockLeft(ageLockLeft()); setStep(3); }}
@@ -96,7 +96,7 @@ function WelcomeInner() {
   if (step === 3) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 safe-top safe-bottom">
-        <h1 className="text-6xl">tag.ai is for adults.</h1>
+        <h1 className="text-6xl">TagAi is for adults.</h1>
         <p className="mt-4 text-lg text-muted">Come back when you&apos;re 18.{lockLeft > 0 && <> You can try again in {lockText(lockLeft)}.</>}</p>
       </div>
     );

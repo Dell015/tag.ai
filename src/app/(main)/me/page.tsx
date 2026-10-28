@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { Avatar, AvatarPicker, CoinAmount, CoinStack, stackFor, Icon, ListRow, Plate, Screen, Section, toast } from '@/components/ui';
 import { completeProfile } from '@/lib/supabase/account';
 import { refreshAccount } from '@/components/AuthSync';
@@ -69,24 +70,26 @@ export default function MePage() {
           className="h-cta min-w-0 flex-1 rounded-xl border-2 border-line bg-transparent px-4 text-3xl font-extrabold focus:border-accent"
         />
       </div>
-      <button onClick={() => setEditing((v) => !v)} className="mt-4 h-tap text-base font-extrabold text-accent">{editing ? 'Done' : 'Or pick a colour'}</button>
+      <button onClick={() => setEditing((v) => !v)} className="mt-4 h-tap text-base font-extrabold text-accent">{editing ? 'Done' : 'Use a colour instead of a photo'}</button>
       {editing && <div className="mb-2"><AvatarPicker value={profile.avatar} onChange={(a) => void save({ avatar: a })} /></div>}
 
-      <div className="mt-5 flex items-center justify-between rounded-2xl border-b-4 border-black/35 bg-[#FFC72C] px-5 py-4 text-[#181310]">
+      <p className="mt-1 text-sm text-muted">This is the name and photo your friends see.</p>
+
+      <Link href="/me/wallet" aria-label="Balance, open your wallet" className="mt-5 flex items-center justify-between rounded-2xl border-b-4 border-black/35 bg-[#FFC72C] px-5 py-4 text-[#181310] active:translate-y-px">
         <div>
-          <p className="text-sm font-extrabold">Balance</p>
+          <p className="text-sm font-extrabold">Balance, tap for history</p>
           <CoinAmount value={profile.coins} className="display text-[2.6rem]" />
         </div>
         <CoinStack count={stackFor(profile.coins)} size={72} />
-      </div>
+      </Link>
 
       <Section className="mt-6" title="Your stuff">
         <Plate>
           <ListRow icon="mail" tone="blue" label="Notifications" hint={unread ? `${unread} new` : 'Invites, updates and gifts'} value={unread || undefined} href="/me/inbox" />
           <ListRow icon="wallet" tone="yellow" label="Wallet" hint="Balance and history" href="/me/wallet" />
-          <ListRow icon="heart" tone="pink" label="Saved cards" value={saved} href="/me/saved" />
-          <ListRow icon="plus" tone="green" label="Suggest a card" hint="Write a card, friends like it" href="/me/suggest" />
-          <ListRow icon="up" tone="orange" label="Leaderboard" hint="Most cheered cards and card makers" href="/me/leaderboard" />
+          <ListRow icon="heart" tone="pink" label="Saved cards" hint="Cards you hearted in a game" value={saved} href="/me/saved" />
+          <ListRow icon="plus" tone="green" label="Suggest a card" hint="Write a card for the game" href="/me/suggest" />
+          <ListRow icon="up" tone="orange" label="Leaderboard" hint="Top cards and card makers from the Cards tab" href="/me/leaderboard" />
           {connected && <ListRow icon="users" tone="green" label="Friends" hint={requests ? `${requests} new ${requests === 1 ? 'request' : 'requests'}` : 'See who is online, invite them to a room'} value={requests || undefined} href="/me/friends" />}
           <ListRow icon="users" tone="blue" label="Invite friends" hint="You and a friend each get 30 coins" href="/me/referral" />
         </Plate>
@@ -94,7 +97,7 @@ export default function MePage() {
       <Section title="App">
         <Plate>
           <ListRow icon="sliders" tone="green" label="Settings" hint="Game defaults, playing, display" href="/me/settings" />
-          <ListRow icon="info" tone="blue" label="Help" hint="How to play and FAQ" href="/help" />
+          <ListRow icon="info" tone="blue" label="Help" hint="How to play and answers to common questions" href="/help" />
         </Plate>
       </Section>
     </Screen>

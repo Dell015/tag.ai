@@ -55,7 +55,7 @@ export default function InboxPage() {
   return (
     <Screen title="Notifications" back="/me">
       {!supabaseConfigured ? (
-        <EmptyState art={<Spot name="bubble" />} title="No inbox here." body="Messages from tag.ai arrive once you are signed in with your email." />
+        <EmptyState art={<Spot name="bubble" />} title="No inbox here." body="Messages from TagAi arrive once you are signed in with your email." />
       ) : loaded && messages.length === 0 && requests.length === 0 ? (
         <EmptyState art={<Spot name="bubble" />} title="Nothing yet." body="Friend requests, room invites and coin gifts show up here." />
       ) : (

@@ -3,6 +3,7 @@ import { forwardRef, useEffect, useId, useState, type InputHTMLAttributes, type 
 import { cn } from '@/lib/cn';
 import { haptic } from '@/lib/haptics';
 import { Icon } from '@/components/ui';
+import { Logo } from '@/components/ui/Logo';
 import { avatarColor } from '@/components/ui/Avatar';
 
 /** One screen of the sign up flow: back button, progress, title, then the content. */
@@ -134,7 +135,7 @@ export function PlayerCard({ name, avatar, coins, dealt }: { name: string; avata
             </div>
           ) : (
             <div style={{ background: '#181310', border: '3px solid #FFC72C' }} className="flex h-full w-full items-center justify-center rounded-card">
-              <span className="sign text-2xl text-[#FFC72C]">tag.ai</span>
+              <Logo className="text-3xl" />
             </div>
           )}
         </div>

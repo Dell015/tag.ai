@@ -329,10 +329,19 @@ export default function SetupPage() {
           <ul className="mt-5 space-y-2 text-lg">
             <li><b>{template?.name ?? 'Classic'}.</b> <span className="text-muted">{template?.summary}</span></li>
             <li><b>Pot:</b> <span className="text-muted">{formatPot(total)} coins for {cards} cards, plus free wild cards{online ? '. Paid by everyone.' : ''}</span></li>
-            {cfg.nonDrinkingMode && <li><b>Non-drinking mode</b> is on.</li>}
             {cfg.customDrinkRules.map((r, i) => <li key={i}>{r}</li>)}
             <li className="text-muted">Anyone can skip a card. Nobody has to answer. Nobody drives.</li>
           </ul>
+
+          {isHost ? (
+            <button onClick={() => set({ nonDrinkingMode: !cfg.nonDrinkingMode })} role="switch" aria-checked={cfg.nonDrinkingMode}
+              className="mt-5 flex min-h-[4.5rem] w-full items-center justify-between gap-3 rounded-xl border-2 border-line px-4 text-left">
+              <span><span className="block text-xl font-extrabold">Non-drinking mode</span><span className="text-base text-muted">Cards ask for dares and forfeits instead of drinks.</span></span>
+              <span className={cn('h-8 w-14 shrink-0 rounded-full p-1 transition-colors', cfg.nonDrinkingMode ? 'bg-accent' : 'bg-raised')}>
+                <span className={cn('block h-6 w-6 rounded-full bg-text transition-transform', cfg.nonDrinkingMode && 'translate-x-6 bg-onaccent')} />
+              </span>
+            </button>
+          ) : cfg.nonDrinkingMode && <p className="mt-5 text-lg"><b>Non-drinking mode</b> <span className="text-muted">is on. Cards ask for forfeits instead of drinks.</span></p>}
 
           <section className="mt-7" aria-label="Play order">
             <h3 className="text-3xl">Who plays when</h3>

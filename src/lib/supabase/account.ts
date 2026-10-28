@@ -627,3 +627,27 @@ export async function adminAuditLog(args: ReturnType<typeof rpcArgs>): Promise<R
   const rows = ((data ?? []) as (AuditRow & { total: number | string })[]);
   return { ok: true, data: { rows: rows.map((r) => { const { total, ...rest } = r; void total; return { ...rest, amount: rest.amount == null ? null : Number(rest.amount) }; }), total: rows.length ? Number(rows[0].total) : 0 } };
 }
+
+/** A card the player suggested, with what happened to it. */
+export interface MySuggestion { id: string; text: string; kind: string; deckId: string; status: 'pending' | 'approved' | 'rejected'; reason: string | null; createdAt: number }
+
+/** Sends a card for review. The database checks length, blocked words, links, duplicates and the 5 a day limit and says why when it refuses. */
+export async function submitSuggestion(text: string, kind: 'truth' | 'dare', deckId: string): Promise<Result<null>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { error } = await sb.from('suggestions').insert({ text, kind, deck_id: deckId });
+  if (error) return { ok: false, error: msg(error) };
+  return { ok: true, data: null };
+}
+
+/** The signed-in player's own suggestions, newest first. */
+export async function mySuggestions(): Promise<Result<MySuggestion[]>> {
+  const sb = getBrowserClient();
+  if (!sb) return noClient;
+  const { data: u } = await sb.auth.getUser();
+  if (!u.user) return { ok: false, error: 'Sign in first' };
+  const { data, error } = await sb.from('suggestions').select('id,text,kind,deck_id,status,reject_reason,created_at').eq('author_id', u.user.id).order('created_at', { ascending: false }).limit(50);
+  if (error) return { ok: false, error: msg(error) };
+  const rows = (data ?? []) as { id: string; text: string; kind: string; deck_id: string; status: MySuggestion['status']; reject_reason: string | null; created_at: string }[];
+  return { ok: true, data: rows.map((r) => ({ id: r.id, text: r.text, kind: r.kind, deckId: r.deck_id, status: r.status, reason: r.reject_reason, createdAt: Date.parse(r.created_at) })) };
+}

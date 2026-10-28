@@ -86,7 +86,7 @@ export function startGame(room: Room, trashedCardIds: string[], opts2: { keepSta
   const paid = room.online ? funded : plan.source || plan.picks ? queue.cards.filter((c) => c.cardType !== 'wild').length : total;
 
   useGameStore.getState().initializeBasket(queue, plan.source || plan.picks ? 'barkada' : modeForBasket(basket));
-  if (!room.online) useWalletStore.getState().apply('pot', -paid, 'Pot for a tag.ai game');
+  if (!room.online) useWalletStore.getState().apply('pot', -paid, 'Pot for a TagAi game');
   useGameStore.getState().fundPot(paid);
   useGameStore.setState({
     turnRotation: {

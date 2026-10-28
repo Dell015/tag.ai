@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Badge, Button, Screen, toast } from '@/components/ui';
+import { Button, Screen, toast } from '@/components/ui';
 import { appOrigin } from '@/lib/app-url';
 import { useProfileStore } from '@/stores/profile-store';
 import { useAccountStore } from '@/stores/account-store';
@@ -16,12 +16,12 @@ export default function ReferralPage() {
   const link = `${origin}/r/${code}`;
   const copy = async () => { try { await navigator.clipboard.writeText(link); toast('Link copied', { tone: 'ok' }); } catch { toast('Could not copy. Press and hold the link.', {}); } };
   const share = async () => {
-    try { if (navigator.share) { await navigator.share({ title: 'tag.ai', text: `Play tag.ai with me. We both get ${REFERRAL_COINS} coins.`, url: link }); return; } } catch { return; }
+    try { if (navigator.share) { await navigator.share({ title: 'TagAi', text: `Play TagAi with me. We both get ${REFERRAL_COINS} coins.`, url: link }); return; } } catch { return; }
     copy();
   };
   return (
     <Screen title="Invite friends" back="/me">
-      {!signedIn && <p className="mb-3 flex items-center gap-2 text-base text-muted"><Badge tone="line">Sample</Badge> Sign in to earn coins for invites.</p>}
+      {!signedIn && <p className="mb-3 text-base text-muted">Sign in to earn coins for invites. Your link works once you have an account.</p>}
       <p className="text-2xl font-extrabold">You and your friend each get {REFERRAL_COINS} coins when they play their first game.</p>
       <div className="mt-6 break-all rounded-xl border-2 border-line p-4 text-xl font-bold">{link}</div>
       <div className="mt-3 grid grid-cols-2 gap-3">

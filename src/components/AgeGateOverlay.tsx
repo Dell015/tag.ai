@@ -26,13 +26,13 @@ export function AgeGateOverlay() {
     <div role="dialog" aria-modal="true" aria-label="Age check" className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-bg px-5 safe-top safe-bottom">
       {blocked > 0 ? (
         <div className="flex flex-1 flex-col justify-center">
-          <h1 className="text-6xl">tag.ai is for adults.</h1>
+          <h1 className="text-6xl">TagAi is for adults.</h1>
           <p className="mt-4 text-lg text-muted">Come back when you&apos;re 18. You can try again in {lockText(blocked)}.</p>
         </div>
       ) : (
         <>
           <h1 className="mt-8 text-6xl">When were you born?</h1>
-          <p className="mt-4 text-lg text-muted">tag.ai is a drinking game, so it is for adults only. We need to check once.</p>
+          <p className="mt-4 text-lg text-muted">TagAi is a drinking game, so it is for adults only. We need to check once.</p>
           <AgeForm
             busy={busy}
             onAdult={async () => {
