@@ -1,4 +1,4 @@
-/** Tiny UI sounds made with WebAudio (no asset files). Off by default; see Settings, Sounds. */
+/** Sounds for the opening animation only. Off by default; see Settings, Sounds. */
 import { useSettingsStore } from '@/stores/settings-store';
 
 
@@ -18,6 +18,7 @@ function audio(): AudioContext | null {
   } catch { /* ignore */ }
   ctx ??= new Ctor();
   if (ctx.state === 'suspended') void ctx.resume();
+  preload(ctx);
   return ctx;
 }
 
@@ -57,6 +58,40 @@ function env(c: AudioContext, t0: number, peak: number, attack: number, decay: n
   return g;
 }
 
+/** Real card recordings (Kenney Casino Audio, CC0), in public/sounds. Synthesised sounds stand in until they load. */
+const SAMPLES = ['slide-1', 'slide-2', 'slide-3', 'slide-4', 'slide-5', 'slide-6', 'slide-7', 'slide-8', 'place-3'];
+const buffers = new Map<string, AudioBuffer>();
+let loading = false;
+
+function preload(c: AudioContext): void {
+  if (loading) return;
+  loading = true;
+  for (const name of SAMPLES) {
+    void fetch(`/sounds/${name}.mp3`)
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error('missing'))))
+      .then((data) => new Promise<AudioBuffer>((res, rej) => { c.decodeAudioData(data, res, rej); }))
+      .then((buf) => { buffers.set(name, buf); })
+      .catch(() => { /* the synthesised sound plays instead */ });
+  }
+}
+
+/** Plays one recording picked at random from the group (`slide`, `place`...). Returns false if none has loaded. */
+function sample(c: AudioContext, group: string, t0: number, v: number, o: { rate?: number; gain?: number; only?: number } = {}): boolean {
+  const names = SAMPLES.filter((n) => n === group || n.startsWith(`${group}-`));
+  const ready = names.filter((n) => buffers.has(n));
+  if (ready.length === 0) return false;
+  const pick = o.only ? `${group}-${o.only}` : ready[Math.floor(Math.random() * ready.length)];
+  const buf = buffers.get(pick) ?? buffers.get(ready[0])!;
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  src.playbackRate.value = (o.rate ?? 1) * (0.96 + Math.random() * 0.08);
+  const g = c.createGain();
+  g.gain.value = Math.min(1, (o.gain ?? 0.9) * v);
+  src.connect(g).connect(c.destination);
+  src.start(t0);
+  return true;
+}
+
 type Send = (node: AudioNode, wet: number) => void;
 
 /** A card leaving the thumb: a bright paper snap, a short slide on the table and a small tap. */
@@ -91,55 +126,6 @@ function lay(c: AudioContext, t0: number, v: number, send: Send, weight = 1) {
   body.connect(bg); send(bg, 0.2); body.start(t0); body.stop(t0 + 0.2);
 }
 
-/** A card slid away: a quick airy swish. */
-function swish(c: AudioContext, t0: number, v: number, send: Send) {
-  const n = noise(c, 0.2);
-  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.8;
-  bp.frequency.setValueAtTime(900, t0); bp.frequency.exponentialRampToValueAtTime(3600, t0 + 0.16);
-  const g = env(c, t0, 0.3 * v, 0.05, 0.12);
-  n.connect(bp).connect(g); send(g, 0.25); n.start(t0);
-}
-
-/** The glass ring used by the clink and the end of the game. */
-function ring(c: AudioContext, t0: number, v: number, send: Send, amp = 1) {
-  const base = 1750 * (0.9 + Math.random() * 0.2);
-  const parts: [number, number, number][] = [[1, 0.5, 0.55], [2.32, 0.32, 0.38], [4.25, 0.2, 0.22], [6.63, 0.11, 0.12]];
-  for (const [ratio, a, decay] of parts) {
-    const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = base * ratio;
-    const og = env(c, t0, a * 0.4 * v * amp, 0.0015, decay);
-    o.connect(og); send(og, 0.35); o.start(t0); o.stop(t0 + decay + 0.1);
-  }
-  const tick = noise(c, 0.02);
-  const th = c.createBiquadFilter(); th.type = 'highpass'; th.frequency.value = 4500;
-  const tg = env(c, t0, 0.25 * v * amp, 0.001, 0.012);
-  tick.connect(th).connect(tg); send(tg, 0.2); tick.start(t0);
-}
-
-/** The sounds while playing: card flip, card put down, swish, a tap, a riffle and the end of the game. */
-export type SoundName = 'reveal' | 'done' | 'skip' | 'pass' | 'wild' | 'end';
-
-export function play(name: SoundName): void {
-  const { sounds, volume } = useSettingsStore.getState();
-  if (!sounds) return;
-  try {
-    const c = audio();
-    if (!c) return;
-    const t0 = c.currentTime + 0.01;
-    const r = room(c);
-    const send: Send = (node, wet) => {
-      node.connect(c.destination);
-      const w = c.createGain(); w.gain.value = wet; node.connect(w).connect(r);
-    };
-    if (name === 'reveal') flick(c, t0, volume, send, { slide: 0.1 });
-    else if (name === 'done') lay(c, t0, volume, send);
-    else if (name === 'skip') swish(c, t0, volume, send);
-    else if (name === 'pass') lay(c, t0, volume, send, 0.6);
-    else if (name === 'wild') { for (let i = 0; i < 5; i += 1) flick(c, t0 + i * 0.045, volume * 0.8, send, { slide: 0.05, tap: 0.04 }); ring(c, t0 + 0.28, volume, send, 0.7); }
-    else { for (let i = 0; i < 6; i += 1) flick(c, t0 + i * 0.05, volume * 0.7, send, { slide: 0.05, tap: 0.04 }); lay(c, t0 + 0.38, volume, send, 1.2); ring(c, t0 + 0.4, volume, send, 0.8); }
-  } catch { /* audio blocked: the game is silent */ }
-}
-
-
 export function playBrand(name: BrandSound): void {
   const { sounds, volume } = useSettingsStore.getState();
   if (!sounds) return;
@@ -156,21 +142,7 @@ export function playBrand(name: BrandSound): void {
     const jitter = 0.9 + Math.random() * 0.2;
 
     if (name === 'deal') {
-      // A card leaving the thumb: a bright paper snap, then a short soft slide on the table.
-      const snap = noise(c, 0.05);
-      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
-      bp.frequency.setValueAtTime(5200 * jitter, t0); bp.frequency.exponentialRampToValueAtTime(1900, t0 + 0.04);
-      const g1 = env(c, t0, 0.55 * v, 0.002, 0.04);
-      snap.connect(bp).connect(g1); send(g1, 0.25); snap.start(t0);
-      const slide = noise(c, 0.12);
-      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
-      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 700;
-      const g2 = env(c, t0 + 0.012, 0.16 * v, 0.02, 0.09);
-      slide.connect(hp).connect(lp).connect(g2); send(g2, 0.3); slide.start(t0 + 0.012);
-      const tap = c.createOscillator(); tap.type = 'sine';
-      tap.frequency.setValueAtTime(240 * jitter, t0 + 0.035); tap.frequency.exponentialRampToValueAtTime(110, t0 + 0.08);
-      const g3 = env(c, t0 + 0.035, 0.12 * v, 0.002, 0.05);
-      tap.connect(g3); send(g3, 0.2); tap.start(t0 + 0.035); tap.stop(t0 + 0.12);
+      if (!sample(c, 'slide', t0, v, { rate: 1.15, gain: 0.7 })) flick(c, t0, v, send);
     } else if (name === 'pour') {
       // Liquid: a steady stream with bubbling, rising in pitch as the glass fills.
       const dur = 1.25;
@@ -210,17 +182,8 @@ export function playBrand(name: BrandSound): void {
       const th = c.createBiquadFilter(); th.type = 'highpass'; th.frequency.value = 4500;
       const tg = env(c, t0, 0.25 * v, 0.001, 0.012);
       tick.connect(th).connect(tg); send(tg, 0.2); tick.start(t0);
-    } else {
-      // The card landing: a short papery slap with a soft low body, not a drum.
-      const slap = noise(c, 0.12);
-      const lp = c.createBiquadFilter(); lp.type = 'lowpass';
-      lp.frequency.setValueAtTime(3200, t0); lp.frequency.exponentialRampToValueAtTime(500, t0 + 0.1);
-      const sg = env(c, t0, 0.5 * v, 0.003, 0.1);
-      slap.connect(lp).connect(sg); send(sg, 0.35); slap.start(t0);
-      const body = c.createOscillator(); body.type = 'sine';
-      body.frequency.setValueAtTime(150, t0); body.frequency.exponentialRampToValueAtTime(70, t0 + 0.14);
-      const bg = env(c, t0, 0.32 * v, 0.004, 0.16);
-      body.connect(bg); send(bg, 0.25); body.start(t0); body.stop(t0 + 0.25);
+    } else if (!sample(c, 'place', t0, v, { rate: 0.85, gain: 1, only: 3 })) {
+      lay(c, t0, v, send, 1.2);
     }
   } catch { /* audio blocked: the intro is silent */ }
 }

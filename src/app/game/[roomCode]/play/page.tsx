@@ -20,7 +20,6 @@ import { getCurrentPlayer, getNextPlayer } from '@/lib/game/turn-rotation';
 import { rooms } from '@/lib/data/rooms';
 import { ruleLine } from '@/lib/game/setup-options';
 import { haptic } from '@/lib/haptics';
-import { play as playSound } from '@/lib/sound';
 import { DECK_BY_ID, MORE_CARDS, type DeckId } from '@/lib/game/decks';
 import { buildBasketQueue, buildPoolQueue } from '@/lib/game/card-queue-builder';
 import { buildLibrary } from '@/lib/data/start-game';
@@ -76,7 +75,7 @@ export default function PlayPage() {
   useWakeLock(st.keepAwake && !ended && g.cardQueue.length > 0);
 
   // The undo bar makes no sense once the recap is up.
-  useEffect(() => { if (ended) { useToastStore.setState({ toasts: [] }); setUndoBar(null); playSound('end'); } }, [ended]);
+  useEffect(() => { if (ended) { useToastStore.setState({ toasts: [] }); setUndoBar(null); } }, [ended]);
   useEffect(() => {
     if (!undoBar) return;
     const t = setTimeout(() => setUndoBar(null), st.undoSeconds * 1000);
@@ -265,7 +264,6 @@ export default function PlayPage() {
   const isHearted = !!card && hearted.includes(card.id);
 
   const reveal = () => {
-    playSound(card?.cardType === 'wild' ? 'wild' : 'reveal');
     g.flipCard();
     if (card?.cardType === 'wild' && card.wildCardType) g.applyWildCardEffect(card.wildCardType);
     else if (card?.rule) g.setRule(card.rule);
@@ -274,7 +272,6 @@ export default function PlayPage() {
   const resolve = (kind: 'dismiss' | 'skip' | 'trash' | 'again') => {
     if (!card) return;
     last.current = { id: card.id, kind };
-    playSound(kind === 'skip' ? 'skip' : 'done');
     if (!hasSeenHints) markHintsSeen();
     if (kind === 'dismiss') g.dismissCard();
     else if (kind === 'again') g.againCard();
@@ -374,7 +371,7 @@ export default function PlayPage() {
       </footer>
 
       <AnimatePresence>
-        {g.showPassPrompt && !ended && <PassOverlay name={current.name} avatar={current.avatarUrl} onReady={() => { playSound('pass'); g.dismissPassPrompt(); }} />}
+        {g.showPassPrompt && !ended && <PassOverlay name={current.name} avatar={current.avatarUrl} onReady={() => { g.dismissPassPrompt(); }} />}
       </AnimatePresence>
 
       <PauseSheet
