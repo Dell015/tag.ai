@@ -84,9 +84,20 @@ describe('buildBasketQueue', () => {
     expect(real.length).toBeGreaterThan(0);
     expect(real.every((c) => c.adult && c.deckId === 'adult')).toBe(true);
   });
-  it('skips filtered topics and never builds a deck that is not ready', () => {
-    const q = buildBasketQueue({ ...opts, comfortFilters: ['Sexual Content'], basket: { adult: 10, social: 10 } }, library);
-    expect(q.cards.filter((c) => c.cardType !== 'wild').some((c) => c.deckId === 'social')).toBe(false);
+  it('skips filtered topics', () => {
+    const q = buildBasketQueue({ ...opts, comfortFilters: ['Social media'], basket: { social: 10 } }, library);
+    expect(q.cards.filter((c) => c.cardType !== 'wild').some((c) => c.social)).toBe(false);
+  });
+  it('the Social media deck holds only its own cards, and no other deck takes them', () => {
+    const q = buildBasketQueue({ ...opts, basket: { social: 20 } }, library);
+    const real = q.cards.filter((c) => c.cardType !== 'wild');
+    expect(real.length).toBeGreaterThan(0);
+    expect(real.every((c) => c.social && c.deckId === 'social')).toBe(true);
+    for (const id of ['icebreaker', 'family', 'life', 'deep', 'barkada', 'lovers', 'spicy'] as const) {
+      expect(deckPool(DECK_BY_ID[id], library).some((c) => c.social), id).toBe(false);
+    }
+    expect(deckPool(DECK_BY_ID.chaos, library).some((c) => c.social)).toBe(true);
+    expect(deckPool(DECK_BY_ID.social, library).length).toBeGreaterThanOrEqual(100);
   });
   it('Family rules heat only when it is the only deck', () => {
     expect(modeForBasket({ family: 10 })).toBe('family');

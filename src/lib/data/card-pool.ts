@@ -1,4 +1,5 @@
 import { CURATED_CARDS } from '@/lib/data/cards';
+import { SOCIAL_CARDS } from '@/lib/data/social-cards';
 import { ADULT_CARDS } from '@/lib/data/adult-cards';
 import { TOOL_CARDS, ADULT_TOOL_CARDS } from '@/lib/data/tool-cards';
 import { PACK_CARDS, SHOP_ITEMS } from '@/lib/data/shop-catalogue';
@@ -11,7 +12,7 @@ export const adultPackIds = new Set(SHOP_ITEMS.filter((i) => i.adult).map((i) =>
 export function libraryCards(adult: boolean): QueuedCard[] {
   const remote = getRemoteContent();
   if (remote) return adult ? remote.cards : remote.cards.filter((c) => !c.adult);
-  return adult ? [...CURATED_CARDS, ...TOOL_CARDS, ...ADULT_CARDS, ...ADULT_TOOL_CARDS] : [...CURATED_CARDS, ...TOOL_CARDS];
+  return adult ? [...CURATED_CARDS, ...TOOL_CARDS, ...SOCIAL_CARDS, ...ADULT_CARDS, ...ADULT_TOOL_CARDS] : [...CURATED_CARDS, ...TOOL_CARDS, ...SOCIAL_CARDS];
 }
 
 export function ownedPackCards(owned: string[], adult: boolean): QueuedCard[] {

@@ -26,7 +26,7 @@ export interface DeckDef {
   includesAdult?: boolean;
 }
 
-const real = (c: QueuedCard) => c.cardType !== 'wild' && !c.adult;
+const real = (c: QueuedCard) => c.cardType !== 'wild' && !c.adult && !c.social;
 const inCats = (c: QueuedCard, cats: string[]) => cats.includes(c.category);
 const RISKY = ['sexual_content', 'past_relationships', 'death', 'trauma', 'mental_health', 'politics', 'religion'];
 
@@ -47,8 +47,8 @@ export const DECKS: DeckDef[] = [
     has: (c) => real(c) && c.intensity >= 3 },
   { id: 'adult', name: 'Adult', blurb: 'Flirty to frank, for adults only', price: 1, mode: 'spicy', ready: true, adult: true,
     has: (c) => c.cardType !== 'wild' && !!c.adult },
-  { id: 'social', name: 'Social media', blurb: 'The juiciest stories and debates from the internet', price: 1, mode: 'spicy', ready: false,
-    has: () => false },
+  { id: 'social', name: 'Social media', blurb: 'The juiciest stories and debates from the internet', price: 1, mode: 'spicy', ready: true,
+    has: (c) => c.cardType !== 'wild' && !!c.social },
   { id: 'chaos', name: 'Shuffle everything', blurb: 'Every card from every deck in one pile, 18+ cards included', price: 1, mode: 'chaos', ready: true, includesAdult: true,
     has: (c) => c.cardType !== 'wild' },
 ];

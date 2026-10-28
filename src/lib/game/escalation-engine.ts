@@ -35,6 +35,8 @@ export interface QueuedCard {
   topics: string[];
   /** 18+ card. Only drawn when the 18+ cards setting is on. */
   adult?: boolean;
+  /** Belongs to the Social media deck only (and Shuffle everything). Other decks skip it. */
+  social?: boolean;
   /** Set to override the group size worked out from the wording. */
   people?: { min: number; max: number | null };
   /** The deck this card was bought from. Sets what it costs from the pot. */
@@ -78,7 +80,8 @@ const FAMILY_MODE_MAX_HEAT = 2.0;
  * How fast heat moves for a game of this length. Short games (10 cards) move twice as fast; longer ones
  * are slowed so the meter fills about two thirds of the way through, not in the first 12 cards.
  */
-export const heatPace = (cardCountTarget: number): number => Math.max(0.15, Math.min(2, 20.5 / Math.max(1, cardCountTarget)));
+export const heatPace = (cardCountTarget: number): number =>
+  cardCountTarget >= 20 ? Math.max(0.15, Math.min(1, 20.5 / cardCountTarget)) : Math.min(2, 20 / Math.max(1, cardCountTarget));
 
 export function calculateHeat(input: EscalationInput): EscalationOutput {
   const { currentHeat, event, consecutiveSkips, gameMode, pace = 1 } = input;
